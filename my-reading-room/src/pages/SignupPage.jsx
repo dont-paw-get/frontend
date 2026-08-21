@@ -154,16 +154,6 @@ export default function SignupPage() {
                 />
                 <span>여성</span>
               </label>
-              <label className="signup-radio">
-                <input
-                  type="radio"
-                  name="gender"
-                  value="기타"
-                  checked={form.gender === '기타'}
-                  onChange={handleChange}
-                />
-                <span>기타</span>
-              </label>
             </div>
           </div>
 
