@@ -119,6 +119,25 @@
   opacity: 0.85;
 }
 
+/* 회원가입 버튼 */
+.login-signup-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.login-signup-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* 푸터 링크 */
 .login-footer {
   display: flex;
@@ -127,13 +146,18 @@
   font-size: 12px;
 }
 
-.login-footer a {
+.login-footer-link {
+  background: none;
+  border: none;
+  padding: 0;
   color: var(--text);
+  font-size: 12px;
   text-decoration: none;
+  cursor: pointer;
   transition: color 0.2s;
 }
 
-.login-footer a:hover {
+.login-footer-link:hover {
   color: var(--accent);
 }
 
