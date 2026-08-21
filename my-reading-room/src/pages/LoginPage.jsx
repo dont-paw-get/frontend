@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+
   return (
     <div className="login-page">
       <div className="login-bg">
@@ -28,10 +31,14 @@ export default function LoginPage() {
           <button className="login-btn" type="submit">로그인</button>
         </form>
 
+        <button className="login-signup-btn" onClick={() => navigate('/signup')}>
+          회원가입
+        </button>
+
         <div className="login-footer">
-          <a href="#signup">회원가입</a>
+          <button className="login-footer-link" onClick={() => navigate('/signup')}>회원가입</button>
           <span className="login-divider">|</span>
-          <a href="#find">아이디/비밀번호 찾기</a>
+          <a className="login-footer-link" href="#find">아이디/비밀번호 찾기</a>
         </div>
       </div>
     </div>
