@@ -65,11 +65,55 @@
     color: var(--text);
 }
 
+.gnb-profile-wrap {
+    position: relative;
+}
+
+.gnb-profile-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
 .gnb-profile {
     width: 32px;
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
+}
+
+/* 드롭다운 */
+.gnb-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 120px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    overflow: hidden;
+}
+
+.gnb-dropdown-item {
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    background: none;
+    color: var(--text-h);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.gnb-dropdown-item:hover {
+    background: var(--accent-bg);
+    color: var(--accent);
 }
 
 .gnb-theme {

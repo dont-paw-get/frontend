@@ -5,20 +5,30 @@ import { ThemeProvider } from './store/ThemeProvider';
 import MyLibrary from './pages/MyLibrary';
 import RegisterBook from './pages/RegisterBook';
 import MyPage from './pages/MyPage';
+import LoginPage from './pages/LoginPage';
+
+function AppLayout() {
+  return (
+    <>
+      <Gnb />
+      <Routes>
+        <Route path="/library" element={<MyLibrary />} />
+        <Route path="/register" element={<RegisterBook />} />
+        <Route path="/mypage" element={<MyPage />} />
+        <Route path="*" element={<Navigate to="/library" replace />} />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
   return (
     <ThemeProvider>
       <BooksProvider>
         <BrowserRouter>
-          <Gnb />
-
           <Routes>
-            <Route path="/" element={<Navigate to="/library" replace />} />
-            <Route path="/library" element={<MyLibrary />} />
-            <Route path="/register" element={<RegisterBook />} />
-            <Route path="/mypage" element={<MyPage />} />
-            <Route path="*" element={<Navigate to="/library" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/*" element={<AppLayout />} />
           </Routes>
         </BrowserRouter>
       </BooksProvider>
