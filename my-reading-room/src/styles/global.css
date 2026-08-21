@@ -1,0 +1,28 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bookshelf-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.book-slot {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.book-slot:hover {
+  filter: brightness(1.1);
+}

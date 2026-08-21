@@ -1,0 +1,100 @@
+.gnb {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.gnb-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.gnb-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.gnb-title {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.gnb-title-main {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-h);
+}
+
+.gnb-menu {
+    display: flex;
+    gap: 20px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.gnb-menu a {
+    text-decoration: none;
+    font-size: 13px;
+    color: var(--text);
+    transition: color 0.2s;
+}
+
+.gnb-menu a:hover,
+.gnb-menu a.on {
+    color: var(--text-h);
+    font-weight: 600;
+}
+
+.gnb-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gnb-badge {
+    font-size: 12px;
+    color: var(--text);
+}
+
+.gnb-profile {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.gnb-theme {
+    display: flex;
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px;
+}
+
+.gnb-theme button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.gnb-theme button.on {
+    background: var(--accent);
+    color: #fff;
+}
