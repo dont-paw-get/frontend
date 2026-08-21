@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '../store/themeStore';
 import './Gnb.css';
 
@@ -21,6 +22,14 @@ function MoonIcon() {
 
 export default function Gnb() {
     const { theme, setTheme } = useTheme();
+    const [showDropdown, setShowDropdown] = useState(false);
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        setShowDropdown(false);
+        // TODO: 실제 로그아웃 로직 (토큰 삭제 등) 추가
+        navigate('/login');
+    };
 
     return (
         <nav className="gnb">
@@ -57,7 +66,24 @@ export default function Gnb() {
                     </button>
                 </div>
                 <span className="gnb-badge">러시안 블루 사서 Lv.5</span>
-                <img className="gnb-profile" src="/profile.png" alt="사서 프로필" />
+
+                <div className="gnb-profile-wrap">
+                    <button
+                        className="gnb-profile-btn"
+                        onClick={() => setShowDropdown((prev) => !prev)}
+                        aria-label="프로필 메뉴"
+                    >
+                        <img className="gnb-profile" src="/profile.png" alt="사서 프로필" />
+                    </button>
+
+                    {showDropdown && (
+                        <div className="gnb-dropdown">
+                            <button className="gnb-dropdown-item" onClick={handleLogout}>
+                                로그아웃
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </nav>
     );
