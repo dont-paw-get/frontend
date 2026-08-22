@@ -41,8 +41,8 @@ export const LIBRARIANS = [
     icon: '🐱',
     genres: ['소설', '에세이', '시', '자기계발', '심리학', '인문학'],
     specialty: '대화/독서이력 기반 추천',
-    image: '/cursors/cat_03_lib.png',
-    imageHover: '/cursors/cat_04_lib.png',
+    image: '/cursors/cat_03.png',
+    imageHover: '/cursors/cat_04.png',
   },
   {
     id: 'stork',
