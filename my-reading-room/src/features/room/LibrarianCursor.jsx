@@ -14,7 +14,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
         position: 'absolute',
         left: 'var(--mx, 50%)',
         top: 'var(--my, 50%)',
-        transform: 'translate(-8px, -8px)',
+        transform: 'translate(-16px, -16px)',
         zIndex: 99,
         pointerEvents: 'none',
       }}
