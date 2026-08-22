@@ -65,7 +65,7 @@ export default function Gnb() {
                         <MoonIcon />
                     </button>
                 </div>
-                <span className="gnb-badge">러시안 블루 사서 Lv.5</span>
+                <span className="gnb-badge">고양이 사서</span>
 
                 <div className="gnb-profile-wrap">
                     <button

@@ -1,38 +1,58 @@
-// 장르 목록 (책 등록 + 검색/추천 공용)
+/**
+ * 사서 캐릭터 및 장르/무드 레지스트리.
+ * 백엔드(backend-librarian/app/librarian/librarians.py)와 동기화된 데이터입니다.
+ *
+ * cat: 대화/독서이력 기반 추천 (주력), 간단한 무드 추천도 가능
+ * stork: 날씨/시간대 기반 분위기 매칭 추천 (주력)
+ */
+
+// 장르 목록 — 백엔드 fake_agent.py의 _GENRE_BOOKS 키와 동기화
 export const GENRES = [
-  // 소설(픽션)
-  '추리·미스터리',
-  '로맨스',
-  '공포·스릴러',
-  '무협',
-  'SF',
-  '판타지',
-  // 일반(논픽션)
-  '자기계발',
-  '경제·경영',
+  '소설',
   '에세이',
-  '역사·문화',
-  '인문·철학',
+  '시',
+  '자기계발',
+  '심리학',
+  '인문학',
+  '미스터리',
+  '판타지',
+  'SF',
+  '여행',
+  '과학',
+  '역사',
+  '힐링',
+  '로맨스',
+  '예술',
+  '스릴러',
+  '추리',
+  '공포',
+  '모험',
+  '철학',
 ];
 
-// 무드 목록 (등록용, 검색 안내에는 노출하지 않음)
-export const MOODS = ['설렘', '위로', '긴장', '몰입', '잔잔', '먹먹'];
+// 무드 목록 — 백엔드 curation/mood.py의 무드 enum과 동기화
+export const MOODS = ['cozy', 'adventurous', 'reflective', 'dreamy', 'thrilling', 'calm'];
 
-// 사서 캐릭터. 각 사서는 특화 장르(복수)를 담당.
+// 사서 캐릭터 2종 (백엔드 LIBRARIAN_REGISTRY와 1:1 대응)
 export const LIBRARIANS = [
   {
     id: 'cat',
-    name: '러시안 블루 사서',
+    name: '고양이 사서',
     icon: '🐱',
-    genres: ['추리·미스터리', '로맨스'],
-    image: '/cursors/cat_03_lib.png', // 기본
-    imageHover: '/cursors/cat_04_lib.png', // 책에 커서 올렸을 때
+    genres: ['소설', '에세이', '시', '자기계발', '심리학', '인문학'],
+    specialty: '대화/독서이력 기반 추천',
+    image: '/cursors/cat_03_lib.png',
+    imageHover: '/cursors/cat_04_lib.png',
   },
-  { id: 'stork', name: '넓적부리황새 사서', icon: '🐦', genres: ['공포·스릴러', '무협'] },
-  { id: 'alien', name: '에일리언 사서', icon: '👽', genres: ['SF', '판타지'] },
-  { id: 'redpanda', name: '레서판다 사서', icon: '🦝', genres: ['자기계발', '경제·경영'] },
-  { id: 'snail', name: '바다달팽이 사서', icon: '🐌', genres: ['에세이', '역사·문화'] },
-  { id: 'gecko', name: '게코 사서', icon: '🦎', genres: ['인문·철학'] },
+  {
+    id: 'stork',
+    name: '황새 사서',
+    icon: '🪿',
+    genres: ['미스터리', '판타지', 'SF', '여행', '과학', '역사'],
+    specialty: '날씨/시간대 기반 분위기 매칭 추천',
+    image: null,
+    imageHover: null,
+  },
 ];
 
 export const DEFAULT_LIBRARIAN_ID = 'cat';
@@ -44,4 +64,9 @@ export function getLibrarian(id) {
 // 특정 장르를 담당하는 사서 찾기 (없으면 null)
 export function librarianForGenre(genre) {
   return LIBRARIANS.find((l) => l.genres.includes(genre)) || null;
+}
+
+// 현재 사서가 아닌 다른 사서 반환 (switchTo용)
+export function getOtherLibrarian(currentId) {
+  return LIBRARIANS.find((l) => l.id !== currentId) || null;
 }

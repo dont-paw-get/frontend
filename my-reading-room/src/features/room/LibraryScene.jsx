@@ -124,7 +124,7 @@ export default function LibraryScene() {
   const switchLibrarian = (id) => {
     setLibrarianId(id);
     const lib = getLibrarian(id);
-    setChatAnswer({ text: `${lib.icon} ${lib.name}로 바꿨어요. ${lib.genres.join('·')} 추천을 물어봐 주세요.` });
+    setChatAnswer({ text: `${lib.icon} ${lib.name}로 바꿨어요! ${lib.specialty}을 물어보세요 📚` });
   };
   const [previewCount, setPreviewCount] = useState(6);
   const [activeIdx, setActiveIdx] = useState(0);
