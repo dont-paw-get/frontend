@@ -6,15 +6,32 @@
  * @param {object} librarian - { name, icon, image }
  * @param {{text:string}|null} answer - 표시할 답변(없으면 말풍선 숨김)
  */
+// 표시 크기(px)
+const IMG_SIZE = 200;
+
+// 이미지별 손끝(뻗은 앞발) 위치 비율 — 실제 이미지 알파 채널 측정값.
+// 호버 시 앞발 자세가 달라 위치가 다르므로 상태별로 오프셋을 분리한다.
+const FINGERTIP = {
+  default: { x: 0.26, y: 0.287 }, // cat_03
+  hover: { x: 0.143, y: 0.357 }, // cat_04
+};
+
 export default function LibrarianCursor({ librarian, answer, hovering }) {
-  const imgSrc = hovering && librarian.imageHover ? librarian.imageHover : librarian.image;
+  const useHover = hovering && librarian.imageHover;
+  const imgSrc = useHover ? librarian.imageHover : librarian.image;
+
+  // 손끝이 실제 커서 지점(--mx, --my)에 오도록 이미지를 이동
+  const tip = useHover ? FINGERTIP.hover : FINGERTIP.default;
+  const offsetX = -(tip.x * IMG_SIZE);
+  const offsetY = -(tip.y * IMG_SIZE);
+
   return (
     <div
       style={{
         position: 'absolute',
         left: 'var(--mx, 50%)',
         top: 'var(--my, 50%)',
-        transform: 'translate(-20px, -66px)',
+        transform: `translate(${offsetX}px, ${offsetY}px)`,
         zIndex: 99,
         pointerEvents: 'none',
       }}
@@ -25,7 +42,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
           <img
             src={imgSrc}
             alt={librarian.name}
-            style={{ width: 200, height: 200, objectFit: 'contain', display: 'block', userSelect: 'none' }}
+            style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: 'contain', display: 'block', userSelect: 'none' }}
             draggable={false}
           />
         ) : (
