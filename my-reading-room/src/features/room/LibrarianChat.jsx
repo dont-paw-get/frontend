@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
+import { sendChatMessage } from '../../api/chatApi';
+
+// 간단한 세션 ID (탭 단위로 유지, 새로고침 시 재생성)
+const SESSION_ID = `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
- * 답변 텍스트는 따라다니는 사서 말풍선(LibrarianCursor)에 표시되고,
- * 사서 변경 버튼은 여기(정적 패널)에 노출된다.
+ * 백엔드(/chat)로 먼저 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
  *
  * @param {object} librarian - 현재 사서
  * @param {{text,switchTo}|null} answer - 현재 답변
@@ -18,12 +21,33 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
   const [mode, setMode] = useState('search'); // 'search' | 'recommend'
   const [input, setInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = answerQuestion({ text: input, mode, books, librarian });
-    onAnswer(res);
+    if (!input.trim() || loading) return;
+
+    const message = input.trim();
     setInput('');
+    setLoading(true);
+
+    // 1. 백엔드 API 호출 시도
+    const apiResult = await sendChatMessage({
+      message,
+      librarianId: librarian.id,
+      sessionId: SESSION_ID,
+    });
+
+    if (apiResult) {
+      // 백엔드 응답 사용
+      onAnswer(apiResult);
+    } else {
+      // 2. 백엔드 실패 시 로컬 fallback
+      const localResult = answerQuestion({ text: message, mode, books, librarian });
+      onAnswer(localResult);
+    }
+
+    setLoading(false);
   };
 
   const box = { position: 'absolute', right: 16, bottom: 16, zIndex: 20, width: open ? 300 : 'auto', fontSize: 13, cursor: 'auto' };
@@ -117,12 +141,14 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={mode === 'recommend' ? '예: 로맨스 추천해줘' : '저자·제목·장르로 검색'}
-          style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)' }}
+          placeholder={loading ? '사서가 답변 중...' : mode === 'recommend' ? '예: 로맨스 추천해줘' : '저자·제목·장르로 검색'}
+          disabled={loading}
+          style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
         />
         <button
           type="submit"
-          style={{ padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+          disabled={loading}
+          style={{ padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
         >
           ↵
         </button>
