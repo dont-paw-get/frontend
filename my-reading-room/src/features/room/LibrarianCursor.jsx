@@ -25,7 +25,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
           <img
             src={imgSrc}
             alt={librarian.name}
-            style={{ width: 150, height: 150, objectFit: 'contain', display: 'block', userSelect: 'none' }}
+            style={{ width: 300, height: 300, objectFit: 'contain', display: 'block', userSelect: 'none' }}
             draggable={false}
           />
         ) : (
