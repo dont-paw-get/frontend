@@ -145,7 +145,7 @@ export default function Book3D({
 
       {/* 넓은 투명 히트박스: 얇은 책도 hover/클릭이 잘 잡히도록 */}
       <mesh>
-        <boxGeometry args={[Math.max(size[0] * 2.2, 0.4), size[1] * 1.05, Math.max(size[2], 0.4)]} />
+        <boxGeometry args={[Math.max(size[0] * 3, 0.5), size[1] * 1.1, Math.max(size[2] * 1.3, 0.5)]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
     </group >
