@@ -14,7 +14,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
         position: 'absolute',
         left: 'var(--mx, 50%)',
         top: 'var(--my, 50%)',
-        transform: 'translate(-16px, -16px)',
+        transform: 'translate(-20px, -66px)',
         zIndex: 99,
         pointerEvents: 'none',
       }}
@@ -25,7 +25,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
           <img
             src={imgSrc}
             alt={librarian.name}
-            style={{ width: 300, height: 300, objectFit: 'contain', display: 'block', userSelect: 'none' }}
+            style={{ width: 200, height: 200, objectFit: 'contain', display: 'block', userSelect: 'none' }}
             draggable={false}
           />
         ) : (
