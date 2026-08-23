@@ -18,11 +18,11 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .gnb-service-name {
-    height: 28px;
+    height: 25px;
     width: auto;
     object-fit: contain;
 }
