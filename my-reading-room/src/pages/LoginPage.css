@@ -3,35 +3,76 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-color: #f5e6d0;
 }
 
+/* 배경 이미지 */
 .login-bg-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 0;
 }
 
-.login-signup-btn {
+/* 버튼 이미지 레이어: 전체 화면 크기로 배경 위에 겹침 */
+.login-layer-img {
   position: absolute;
-  bottom: 48px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+/* 호버 시 이미지 레이어 밝아짐 */
+.login-layer-img--hover {
+  filter: brightness(1.25) drop-shadow(0 3px 10px rgba(0, 0, 0, 0.25));
+}
+
+/* 히트 영역: 투명 버튼으로 bbox 크기만큼만 배치 */
+.login-hit-area {
+  position: absolute;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* 클릭 시 눌리는 느낌은 인접 이미지 레이어에 전파 (CSS sibling 불가하므로 JS로 처리됨) */
+.login-hit-area:active+.login-layer-img,
+.login-page .login-layer-img--hover {
+  /* hover는 JS 클래스로 처리 */
+}
+
+/* 툴팁 */
+.login-hit-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
-  padding: 12px 36px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  font-size: 15px;
+  padding: 6px 14px;
+  background: rgba(42, 24, 9, 0.85);
+  color: #f7efe2;
+  font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
   backdrop-filter: blur(4px);
-  transition: background 0.2s, color 0.2s;
 }
 
-.login-signup-btn:hover {
-  background: var(--accent);
-  color: #fff;
+.login-hit-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(42, 24, 9, 0.85);
 }
