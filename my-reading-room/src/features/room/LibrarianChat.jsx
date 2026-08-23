@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
 import { streamChatMessage } from '../../api/chatApi';
+import { extractBooksFromAnswer } from './bookExtractor';
 
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
@@ -14,12 +16,27 @@ import { streamChatMessage } from '../../api/chatApi';
  */
 export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch }) {
   const { books } = useBooks();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState('recommend'); // 'recommend' (AI 추천 에이전트) | 'search' (로컬 서재 검색)
   const [input, setInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
+
+  // 답변 텍스트에서 추천 도서 정보 자동 추출
+  const recommendedBooks = answer?.text && !loading ? extractBooksFromAnswer(answer.text) : [];
+
+  const handleRegisterBook = (book) => {
+    navigate('/register', {
+      state: {
+        book: {
+          title: book.title,
+          author: book.author,
+        },
+      },
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,7 +77,15 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     setLoading(false);
   };
 
-  const box = { position: 'absolute', right: 16, bottom: 16, zIndex: 20, width: open ? 300 : 'auto', fontSize: 13, cursor: 'auto' };
+  const box = {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    zIndex: 20,
+    width: open ? 320 : 'auto',
+    fontSize: 13,
+    cursor: 'auto',
+  };
 
   if (!open) {
     return (
@@ -68,9 +93,17 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         <button
           onClick={() => setOpen(true)}
           style={{
-            display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 999,
-            border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.3)', cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '10px 16px',
+            borderRadius: 999,
+            border: 'none',
+            background: 'var(--accent)',
+            color: '#fff',
+            fontWeight: 700,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            cursor: 'pointer',
           }}
         >
           <span style={{ fontSize: 18 }}>{librarian.icon}</span>
@@ -83,8 +116,16 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
   return (
     <div
       style={{
-        ...box, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14,
-        padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)', color: 'var(--text-h)',
+        ...box,
+        background: 'var(--bg)',
+        border: '1px solid var(--border)',
+        borderRadius: 14,
+        padding: 12,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+        color: 'var(--text-h)',
+        maxHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -155,6 +196,64 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         </div>
       </div>
 
+      {/* 추천 도서 바로 등록 카드 리스트 */}
+      {recommendedBooks.length > 0 && (
+        <div
+          style={{
+            marginBottom: 10,
+            padding: '8px 10px',
+            background: 'var(--code-bg)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            maxHeight: 160,
+            overflowY: 'auto',
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
+            📚 추천 도서 바로 서재에 등록하기:
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {recommendedBooks.map((b, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 6,
+                  padding: '6px 8px',
+                  background: 'var(--bg)',
+                  borderRadius: 6,
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                  <span style={{ fontWeight: 600 }}>{b.title}</span>
+                  {b.author && <span style={{ fontSize: 11, color: 'var(--text)', marginLeft: 4 }}>({b.author})</span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRegisterBook(b)}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    border: '1px solid var(--accent-border, var(--accent))',
+                    background: 'var(--accent)',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  등록 ➔
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 입력 */}
       <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 6 }}>
         <input
@@ -181,3 +280,4 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     </div>
   );
 }
+
