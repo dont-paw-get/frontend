@@ -1,14 +1,11 @@
 import { useState } from 'react';
 import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
-import { sendChatMessage } from '../../api/chatApi';
-
-// 간단한 세션 ID (탭 단위로 유지, 새로고침 시 재생성)
-const SESSION_ID = `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+import { streamChatMessage } from '../../api/chatApi';
 
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
- * 백엔드(/chat)로 먼저 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
+ * 백엔드(/api/v1/chat)로 스트리밍 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
  *
  * @param {object} librarian - 현재 사서
  * @param {{text,switchTo}|null} answer - 현재 답변
@@ -18,10 +15,11 @@ const SESSION_ID = `session-${Date.now()}-${Math.random().toString(36).slice(2, 
 export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch }) {
   const { books } = useBooks();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState('search'); // 'search' | 'recommend'
+  const [mode, setMode] = useState('recommend'); // 'recommend' (AI 추천 에이전트) | 'search' (로컬 서재 검색)
   const [input, setInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,18 +29,30 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     setInput('');
     setLoading(true);
 
-    // 1. 백엔드 API 호출 시도
-    const apiResult = await sendChatMessage({
-      message,
-      librarianId: librarian.id,
-      sessionId: SESSION_ID,
-    });
+    if (mode === 'recommend') {
+      // 🌟 [도서 추천 모드] 백엔드 AI 추천 에이전트 호출 (도서 검색 도구 활용 및 실시간 스트리밍)
+      onAnswer({ text: `${librarian.icon} 추천 도서를 찾고 있어요냥... 🐾` });
 
-    if (apiResult) {
-      // 백엔드 응답 사용
-      onAnswer(apiResult);
+      const result = await streamChatMessage({
+        message,
+        sessionId,
+        onChunk: (_chunk, fullText) => {
+          onAnswer({ text: fullText });
+        },
+      });
+
+      if (result) {
+        if (result.sessionId) {
+          setSessionId(result.sessionId);
+        }
+        onAnswer({ text: result.text });
+      } else {
+        // 백엔드 실패 시 로컬 fallback
+        const localResult = answerQuestion({ text: message, mode, books, librarian });
+        onAnswer(localResult);
+      }
     } else {
-      // 2. 백엔드 실패 시 로컬 fallback
+      // 🔍 [일반 검색 모드] 내 서재 보유 도서 즉시 로컬 검색
       const localResult = answerQuestion({ text: message, mode, books, librarian });
       onAnswer(localResult);
     }
@@ -104,36 +114,45 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
           onChange={(e) => setMode(e.target.value)}
           style={{ flex: 1, padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)' }}
         >
-          <option value="search">일반 검색</option>
-          <option value="recommend">도서 추천</option>
+          <option value="recommend">✨ 도서 추천 (AI)</option>
+          <option value="search">🔍 일반 검색 (내 서재)</option>
         </select>
 
-        {mode === 'search' && (
-          <div onMouseEnter={() => setShowHelp(true)} onMouseLeave={() => setShowHelp(false)} style={{ position: 'relative' }}>
-            <span
+        <div onMouseEnter={() => setShowHelp(true)} onMouseLeave={() => setShowHelp(false)} style={{ position: 'relative' }}>
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22,
+              borderRadius: '50%', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'help',
+            }}
+          >
+            ?
+          </span>
+          {showHelp && (
+            <div
               style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22,
-                borderRadius: '50%', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'help',
+                position: 'absolute', bottom: '130%', right: 0, width: 220, background: 'var(--bg)',
+                border: '1px solid var(--border)', borderRadius: 8, padding: 10,
+                boxShadow: '0 6px 18px rgba(0,0,0,0.35)', lineHeight: 1.6, zIndex: 30,
               }}
             >
-              ?
-            </span>
-            {showHelp && (
-              <div
-                style={{
-                  position: 'absolute', bottom: '130%', right: 0, width: 200, background: 'var(--bg)',
-                  border: '1px solid var(--border)', borderRadius: 8, padding: 10,
-                  boxShadow: '0 6px 18px rgba(0,0,0,0.35)', lineHeight: 1.6, zIndex: 30,
-                }}
-              >
-                이렇게 물어보세요
-                <br />· 저자로 검색 (예: 김영하)
-                <br />· 제목으로 검색 (예: 아몬드)
-                <br />· 장르로 검색 (예: 로맨스)
-              </div>
-            )}
-          </div>
-        )}
+              <strong>{mode === 'recommend' ? '✨ AI 도서 추천 질문 팁' : '🔍 일반 검색 팁'}</strong>
+              <br />
+              {mode === 'recommend' ? (
+                <>
+                  · 따뜻하고 힐링되는 소설 추천해줘
+                  <br />· 반전이 멋진 추리/스릴러 있어?
+                  <br />· 요즘 읽기 좋은 에세이 알려줘
+                </>
+              ) : (
+                <>
+                  · 저자로 검색 (예: 김영하)
+                  <br />· 제목으로 검색 (예: 아몬드)
+                  <br />· 장르로 검색 (예: 소설)
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 입력 */}
@@ -141,7 +160,13 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={loading ? '사서가 답변 중...' : mode === 'recommend' ? '예: 로맨스 추천해줘' : '저자·제목·장르로 검색'}
+          placeholder={
+            loading
+              ? '사서가 답변 중...'
+              : mode === 'recommend'
+              ? '예: 따뜻하고 힐링되는 소설 추천해줘'
+              : '저자·제목·장르로 내 서재 검색'
+          }
           disabled={loading}
           style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
         />
