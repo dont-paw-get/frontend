@@ -35,7 +35,7 @@ export default function SignupPage() {
     <div className="signup-page">
       <div className="signup-panel">
         <div className="signup-header">
-          <img className="signup-logo" src="/logo.jpg" alt="로고" />
+          <img className="signup-logo" src="/logo.png" alt="로고" />
           <h1 className="signup-title">회원가입</h1>
           <p className="signup-subtitle">나만의 사서와 함께할 준비를 해볼까요?</p>
         </div>
