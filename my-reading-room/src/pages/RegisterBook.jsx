@@ -48,8 +48,8 @@ export default function RegisterBook() {
       setAuthor(book.author || '');
       setColorIdx(book.colorIdx ?? 0);
       setThickness(book.thickness ?? 0.22);
-      if (book.totalPage) setTotalPage(String(book.totalPage));
-      if (book.currentPage !== undefined) setCurrentPage(String(book.currentPage));
+      setTotalPage(String(book.totalPage || 300));
+      setCurrentPage(String(book.currentPage !== undefined ? book.currentPage : 0));
       setOcrDone(true);
       setEditing(true);
       setFromRecommendation(true);

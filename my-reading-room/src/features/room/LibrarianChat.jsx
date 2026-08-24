@@ -30,9 +30,14 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
   const handleRegisterBook = (book) => {
     navigate('/register', {
       state: {
+        fromAIRecommendation: true,
         book: {
           title: book.title,
           author: book.author,
+          totalPage: book.totalPage ?? 300,
+          currentPage: book.currentPage ?? 0,
+          colorIdx: book.colorIdx ?? 0,
+          thickness: book.thickness ?? 0.22,
         },
       },
     });
