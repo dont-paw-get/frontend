@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 
@@ -11,7 +11,6 @@ const BUTTONS = [
     id: 'login',
     src: '/button/button_login.png',
     tooltip: '로그인',
-    // 불투명 영역 bbox (비율)
     left: 55.9, top: 61.9, width: 5.6, height: 8.8,
   },
   {
@@ -26,21 +25,25 @@ const BUTTONS = [
     tooltip: '비밀번호 찾기',
     left: 50.2, top: 62.1, width: 4.3, height: 7.2,
   },
+  {
+    id: 'eye',
+    src: '/button/button_eye.png',
+    tooltip: '비밀번호 보기',
+    left: 59.5, top: 53.9, width: 1.6, height: 2.7,
+  },
 ];
 
-function LoginButton({ btn, onClick }) {
+function LoginButton({ btn, onClick, active }) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <>
-      {/* 전체 화면 이미지 레이어 (시각적 표시용, 클릭 불가) */}
       <img
-        className={`login-layer-img${hovered ? ' login-layer-img--hover' : ''}`}
+        className={`login-layer-img${hovered || active ? ' login-layer-img--hover' : ''}`}
         src={btn.src}
         alt=""
         draggable={false}
       />
-      {/* 클릭 가능 히트 영역 (bbox만큼만) */}
       <button
         className="login-hit-area"
         style={{
@@ -62,11 +65,16 @@ function LoginButton({ btn, onClick }) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [eyeActive, setEyeActive] = useState(false);
+
+  const handleEyeClick = useCallback(() => {
+    setEyeActive(true);
+    setTimeout(() => setEyeActive(false), 3000);
+  }, []);
 
   const handleClick = (id) => {
     switch (id) {
       case 'login':
-        // TODO: 실제 로그인 처리 (지금은 메인으로 이동)
         navigate('/library');
         break;
       case 'signup':
@@ -75,6 +83,9 @@ export default function LoginPage() {
       case 'password':
         // TODO: 비밀번호 찾기 페이지
         break;
+      case 'eye':
+        handleEyeClick();
+        break;
     }
   };
 
@@ -82,9 +93,29 @@ export default function LoginPage() {
     <div className="login-page">
       <img className="login-bg-img" src="/login-bg.png" alt="Don't Paw-get Your Book" />
 
+      {/* 로고 (3D 젤리 스티커 효과) */}
+      <img
+        className="login-logo-3d"
+        src="/button/logo_or.png"
+        alt="Don't Paw-get Logo"
+        draggable={false}
+      />
+
       {BUTTONS.map((btn) => (
-        <LoginButton key={btn.id} btn={btn} onClick={() => handleClick(btn.id)} />
+        <LoginButton
+          key={btn.id}
+          btn={btn}
+          onClick={() => handleClick(btn.id)}
+          active={btn.id === 'eye' && eyeActive}
+        />
       ))}
+
+      {/* 비밀번호 표시 상태 인디케이터 */}
+      {eyeActive && (
+        <div className="login-eye-indicator">
+          비밀번호 표시 중...
+        </div>
+      )}
     </div>
   );
 }
