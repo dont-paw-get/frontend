@@ -69,6 +69,11 @@
   filter: grayscale(0.5);
 }
 
+/* 입력 필드 이미지: 투명하게 */
+.login-layer-img--input {
+  opacity: 0;
+}
+
 /* 입력 필드: 이미지 위에 투명하게 겹침 */
 .login-input-field {
   position: absolute;
@@ -83,12 +88,13 @@
 }
 
 .login-input-field::placeholder {
-  color: rgba(42, 24, 9, 0.4);
+  color: rgba(42, 24, 9, 0.35);
   font-size: 13px;
+  font-weight: 400;
 }
 
 .login-input-field:focus {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
 

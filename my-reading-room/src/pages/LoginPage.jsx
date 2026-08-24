@@ -112,9 +112,9 @@ export default function LoginPage() {
         draggable={false}
       />
 
-      {/* 입력 필드 이미지 레이어 */}
-      <img className="login-layer-img" src="/Input_field/id.png" alt="" draggable={false} />
-      <img className="login-layer-img" src="/Input_field/pw.png" alt="" draggable={false} />
+      {/* 입력 필드 이미지 레이어 (투명) */}
+      <img className="login-layer-img login-layer-img--input" src="/Input_field/id.png" alt="" draggable={false} />
+      <img className="login-layer-img login-layer-img--input" src="/Input_field/pw.png" alt="" draggable={false} />
 
       {/* 실제 입력 필드 (이미지 위에 투명하게 겹침) */}
       <input
@@ -126,7 +126,7 @@ export default function LoginPage() {
           height: `${INPUT_FIELDS.id.height}%`,
         }}
         type="text"
-        placeholder="아이디를 입력하세요"
+        placeholder="아이디"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
         autoComplete="username"
@@ -140,7 +140,7 @@ export default function LoginPage() {
           height: `${INPUT_FIELDS.pw.height}%`,
         }}
         type={eyeActive ? 'text' : 'password'}
-        placeholder="비밀번호를 입력하세요"
+        placeholder="비밀번호"
         value={userPw}
         onChange={(e) => setUserPw(e.target.value)}
         autoComplete="current-password"
