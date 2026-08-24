@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRef, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useBooks } from '../store/booksStore';
 import { colorPresets, recognizeCover, extractDominantColorIndex, loadImage } from '../features/register/ocrUtils';
 
@@ -21,6 +21,7 @@ function deriveStatus(currentPage, totalPage) {
 export default function RegisterBook() {
   const { addBook } = useBooks();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const captureInputRef = useRef(null);
   const uploadInputRef = useRef(null);
@@ -29,6 +30,7 @@ export default function RegisterBook() {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrDone, setOcrDone] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [fromRecommendation, setFromRecommendation] = useState(false);
 
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -37,6 +39,22 @@ export default function RegisterBook() {
 
   const [totalPage, setTotalPage] = useState('');
   const [currentPage, setCurrentPage] = useState('');
+
+  // AI 도서 추천 등 외부 state로 넘어온 도서 정보 자동 채움
+  useEffect(() => {
+    if (location.state?.book) {
+      const { book } = location.state;
+      setTitle(book.title || '');
+      setAuthor(book.author || '');
+      setColorIdx(book.colorIdx ?? 0);
+      setThickness(book.thickness ?? 0.22);
+      setTotalPage(String(book.totalPage || 300));
+      setCurrentPage(String(book.currentPage !== undefined ? book.currentPage : 0));
+      setOcrDone(true);
+      setEditing(true);
+      setFromRecommendation(true);
+    }
+  }, [location.state]);
 
   async function handleFile(file) {
     if (!file) return;
@@ -90,7 +108,33 @@ export default function RegisterBook() {
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px', textAlign: 'left' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: 24 }}>책 등록</h2>
+      <h2 style={{ textAlign: 'center', marginBottom: 16 }}>책 등록</h2>
+
+      {fromRecommendation && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'var(--accent-bg, rgba(0, 229, 255, 0.1))',
+            border: '1px solid var(--accent-border, var(--accent))',
+            borderRadius: 10,
+            padding: '10px 16px',
+            marginBottom: 20,
+            fontSize: 14,
+            color: 'var(--text-h)',
+          }}
+        >
+          <span>✨ <strong>AI 사서 추천 도서</strong> 정보가 자동으로 입력되었습니다냥! 🐾 (필요 시 수정 가능)</span>
+          <button
+            type="button"
+            onClick={() => setFromRecommendation(false)}
+            style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 13 }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
