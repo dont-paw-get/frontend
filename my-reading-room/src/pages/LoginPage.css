@@ -27,8 +27,7 @@
   user-select: none;
   z-index: 1;
   filter:
-    drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25))
-    drop-shadow(0 2px 4px rgba(255, 160, 60, 0.3));
+    drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25)) drop-shadow(0 2px 4px rgba(255, 160, 60, 0.3));
   animation: logo-jelly-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -37,9 +36,11 @@
     opacity: 0;
     transform: scale(0.7) translateY(10px);
   }
+
   50% {
     transform: scale(1.05) translateY(-3px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -63,6 +64,34 @@
   filter: brightness(1.25) drop-shadow(0 3px 10px rgba(0, 0, 0, 0.25));
 }
 
+.login-layer-img--disabled {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+/* 입력 필드: 이미지 위에 투명하게 겹침 */
+.login-input-field {
+  position: absolute;
+  z-index: 4;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #2a1809;
+  font-size: 14px;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.login-input-field::placeholder {
+  color: rgba(42, 24, 9, 0.4);
+  font-size: 13px;
+}
+
+.login-input-field:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
 /* 히트 영역 */
 .login-hit-area {
   position: absolute;
@@ -73,7 +102,12 @@
   z-index: 3;
 }
 
-.login-hit-area:active ~ .login-layer-img {
+.login-hit-area--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.login-hit-area:active~.login-layer-img {
   transform: scale(0.97);
 }
 
@@ -120,6 +154,13 @@
 }
 
 @keyframes eye-fade {
-  0%, 80% { opacity: 1; }
-  100% { opacity: 0; }
+
+  0%,
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
