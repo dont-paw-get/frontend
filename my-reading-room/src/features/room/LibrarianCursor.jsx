@@ -27,9 +27,13 @@ function getShortBubbleText(rawText, librarian) {
   if (!rawText) return '';
   const text = rawText.trim();
 
-  // 1. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 그대로 표시
+  // 1. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 마크다운 기호 정제 후 표시
   if (text.length <= 80 && text.split('\n').length <= 2) {
-    return text;
+    return text
+      .replace(/^#{1,4}\s+/gm, '')
+      .replace(/\*\*/g, '')
+      .replace(/^[-*•]\s+/gm, '')
+      .trim();
   }
 
   // 2. 도서 추천 결과 등 장문인 경우 요약 리액션 문구 생성

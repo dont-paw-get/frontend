@@ -4,6 +4,7 @@ import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
 import { streamChatMessage } from '../../api/chatApi';
 import { extractBooksFromAnswer } from './bookExtractor';
+import MarkdownRenderer from './MarkdownRenderer';
 
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
@@ -87,7 +88,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     right: 16,
     bottom: 16,
     zIndex: 20,
-    width: open ? 320 : 'auto',
+    width: open ? 340 : 'auto',
     fontSize: 13,
     cursor: 'auto',
   };
@@ -128,7 +129,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         padding: 12,
         boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
         color: 'var(--text-h)',
-        maxHeight: '80vh',
+        maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -200,6 +201,23 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
           )}
         </div>
       </div>
+
+      {/* 사서 답변 메시지 뷰 (마크다운 포매팅 렌더링) */}
+      {answer?.text && (
+        <div
+          style={{
+            marginBottom: 8,
+            padding: '10px 12px',
+            background: 'var(--code-bg)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            maxHeight: 180,
+            overflowY: 'auto',
+          }}
+        >
+          <MarkdownRenderer text={answer.text} />
+        </div>
+      )}
 
       {/* 추천 도서 바로 등록 카드 리스트 */}
       {recommendedBooks.length > 0 && (
