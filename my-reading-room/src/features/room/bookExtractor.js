@@ -62,29 +62,52 @@ export function extractBooksFromAnswer(text) {
     }
   }
 
-  // 1. 『도서명』 (저자 / 페이지) 또는 『도서명』 - 저자 패턴
-  const bracketRegex = /『([^』]+)』(?:(?:\s*[-–—:]\s*|\s*[(（])([^)）\n]+)[)）]|\s*(?:저자|지은이)?\s*[:\s]*([^\n,.]+))?/g;
+  // 0. 마크다운 헤딩 + 키-값 목록 패턴 (백엔드 실제 응답 포맷)
+  //    ### 📖 제목
+  //    - **저자**: 이름
+  //    - **추천 이유**: 설명...
+  // 다음 헤딩(### ...) 또는 텍스트 끝까지를 한 도서 블록으로 취급.
+  const headingBlockRegex = /^###\s*(?:[^\w가-힣\s]*\s*)?([^\n]+?)\s*\n([\s\S]*?)(?=^###\s|$(?![\r\n]))/gm;
+  let headingMatched = false;
   let match;
-  while ((match = bracketRegex.exec(text)) !== null) {
-    addBook(match[1], match[2] || match[3] || '', match[0]);
+  while ((match = headingBlockRegex.exec(text)) !== null) {
+    const title = match[1];
+    const body = match[2] || '';
+    const authorMatch = body.match(/\*\*저자\*\*\s*[:：]\s*([^\n]+)/);
+    const author = authorMatch ? authorMatch[1] : '';
+    if (title.trim()) {
+      headingMatched = true;
+      addBook(title, author, body);
+    }
   }
 
-  // 2. 《도서명》 (저자) 패턴
-  const doubleAngleRegex = /《([^》]+)》(?:(?:\s*[-–—:]\s*|\s*[(（])([^)）\n]+)[)）]|\s*(?:저자|지은이)?\s*[:\s]*([^\n,.]+))?/g;
-  while ((match = doubleAngleRegex.exec(text)) !== null) {
-    addBook(match[1], match[2] || match[3] || '', match[0]);
-  }
+  // 헤딩 패턴으로 아무것도 못 찾았을 때만 아래 fallback 패턴들을 시도
+  if (!headingMatched) {
+    // 1. 『도서명』 (저자 / 페이지) 또는 『도서명』 - 저자 패턴
+    const bracketRegex = /『([^』]+)』(?:(?:\s*[-–—:]\s*|\s*[(（])([^)）\n]+)[)）]|\s*(?:저자|지은이)?\s*[:\s]*([^\n,.]+))?/g;
+    while ((match = bracketRegex.exec(text)) !== null) {
+      addBook(match[1], match[2] || match[3] || '', match[0]);
+    }
 
-  // 3. **도서명** - 저자 패턴
-  const boldRegex = /\*\*([^*]+)\*\*(?:(?:\s*[-–—:]\s*|\s*[(（])([^)）\n]+)[)）]|\s*(?:저자|지은이)?\s*[:\s]*([^\n,.]+))?/g;
-  while ((match = boldRegex.exec(text)) !== null) {
-    addBook(match[1], match[2] || match[3] || '', match[0]);
-  }
+    // 2. 《도서명》 (저자) 패턴
+    const doubleAngleRegex = /《([^》]+)》(?:(?:\s*[-–—:]\s*|\s*[(（])([^)）\n]+)[)）]|\s*(?:저자|지은이)?\s*[:\s]*([^\n,.]+))?/g;
+    while ((match = doubleAngleRegex.exec(text)) !== null) {
+      addBook(match[1], match[2] || match[3] || '', match[0]);
+    }
 
-  // 4. 번호 매김 리스트 패턴: "1. [제목] - [저자]"
-  const numberedListRegex = /(?:^|\n)\s*(?:\d+[.)]|\*|-)\s+([^\n\-–—(]+?)\s*[-–—]\s*([^\n(]+?)(?:\s*[(（]([^)）\n]*)[)）])?(?=\n|$)/g;
-  while ((match = numberedListRegex.exec(text)) !== null) {
-    addBook(match[1], match[2] || '', match[0]);
+    // 3. **도서명** - 저자 패턴 (단, **저자**/**추천 이유** 등 라벨은 제외)
+    const boldRegex = /\*\*([^*]+)\*\*(?:(?:\s*[-–—:]\s*|\s*[(（])([^)）\n]+)[)）]|\s*[-–—:]\s*([^\n,.]+))?/g;
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (/^(저자|지은이|추천\s*이유|줄거리|요약)$/.test(match[1].trim())) continue;
+      addBook(match[1], match[2] || match[3] || '', match[0]);
+    }
+
+    // 4. 번호 매김 리스트 패턴: "1. [제목] - [저자]"
+    const numberedListRegex = /(?:^|\n)\s*(?:\d+[.)]|\*|-)\s+([^\n\-–—(]+?)\s*[-–—]\s*([^\n(]+?)(?:\s*[(（]([^)）\n]*)[)）])?(?=\n|$)/g;
+    while ((match = numberedListRegex.exec(text)) !== null) {
+      if (/^(저자|지은이|추천\s*이유|줄거리|요약)$/.test(match[1].trim())) continue;
+      addBook(match[1], match[2] || '', match[0]);
+    }
   }
 
   return books;
