@@ -153,6 +153,7 @@
 .signup-gender-row {
   display: flex;
   gap: 16px;
+  justify-content: center;
 }
 
 .signup-radio {
