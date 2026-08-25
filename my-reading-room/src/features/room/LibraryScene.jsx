@@ -124,9 +124,16 @@ export default function LibraryScene() {
 
   const switchLibrarian = (id) => {
     setLibrarianId(id);
+    document.documentElement.setAttribute('data-librarian', id);
     const lib = getLibrarian(id);
     setChatAnswer({ text: `${lib.icon} ${lib.name}로 바꿨어요! ${lib.specialty}을 물어보세요 📚` });
   };
+
+  // 초기 로드 시 data-librarian 속성 설정
+  useEffect(() => {
+    document.documentElement.setAttribute('data-librarian', librarianId);
+    return () => document.documentElement.removeAttribute('data-librarian');
+  }, []);
   const [previewCount, setPreviewCount] = useState(6);
   const [activeIdx, setActiveIdx] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -250,7 +257,7 @@ export default function LibraryScene() {
         backgroundSize: 'contain',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
-        backgroundColor: librarianId === 'stork' ? (isDark ? '#2a2640' : '#c8b8e8') : 'var(--bg)',
+        backgroundColor: 'var(--bg)',
         cursor: calibrating ? 'auto' : 'none',
         '--mx': '50%',
         '--my': '50%',
