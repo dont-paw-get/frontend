@@ -250,7 +250,7 @@ export default function LibraryScene() {
         backgroundSize: 'contain',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
-        backgroundColor: librarianId === 'stork' ? '#2a2640' : 'var(--bg)',
+        backgroundColor: librarianId === 'stork' ? (isDark ? '#2a2640' : '#c8b8e8') : 'var(--bg)',
         cursor: calibrating ? 'auto' : 'none',
         '--mx': '50%',
         '--my': '50%',
