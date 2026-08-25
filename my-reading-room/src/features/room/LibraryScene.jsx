@@ -20,7 +20,11 @@ import {
 } from './shelfLayout';
 
 const isDev = import.meta.env.DEV;
-const CALIB_KEY = 'myReadingRoom.calibration';
+const CALIB_KEY_PREFIX = 'myReadingRoom.calibration';
+
+function getCalibKey(librarianId) {
+  return `${CALIB_KEY_PREFIX}.${librarianId}`;
+}
 
 // 카메라를 매 프레임 지정 값으로 세팅 (그림 투시 정합)
 function CameraRig({ fov, position, target }) {
@@ -101,9 +105,9 @@ function CalibrationControls({ camera, shelf, activeIdx, onCamera, onCamComp, on
   return null;
 }
 
-function loadCalibration() {
+function loadCalibration(librarianId) {
   try {
-    const raw = localStorage.getItem(CALIB_KEY);
+    const raw = localStorage.getItem(getCalibKey(librarianId));
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -139,17 +143,23 @@ export default function LibraryScene() {
   const [copied, setCopied] = useState(false);
 
   const [workingConfig, setWorkingConfig] = useState(
-    () => loadCalibration() || { camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES }
+    () => loadCalibration(librarianId) || { camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES }
   );
+
+  // 사서 전환 시 해당 사서의 캘리브레이션 다시 로드
+  useEffect(() => {
+    const saved = loadCalibration(librarianId);
+    setWorkingConfig(saved || { camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES });
+  }, [librarianId]);
 
   useEffect(() => {
     if (!isDev) return;
     try {
-      localStorage.setItem(CALIB_KEY, JSON.stringify(workingConfig));
+      localStorage.setItem(getCalibKey(librarianId), JSON.stringify(workingConfig));
     } catch {
       // 무시
     }
-  }, [workingConfig]);
+  }, [workingConfig, librarianId]);
 
   // ── 편집 핸들러 (함수형 업데이트로 stale closure 방지) ──
   const patchCamera = useCallback((patch) => {
@@ -214,7 +224,7 @@ export default function LibraryScene() {
     setWorkingConfig({ camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES });
     setActiveIdx(0);
     try {
-      localStorage.removeItem(CALIB_KEY);
+      localStorage.removeItem(getCalibKey(librarianId));
     } catch {
       // 무시
     }
