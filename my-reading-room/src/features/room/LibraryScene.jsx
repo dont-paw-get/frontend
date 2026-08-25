@@ -10,7 +10,8 @@ import LibrarianCursor from './LibrarianCursor';
 import BookDetail from './BookDetail';
 import { DEFAULT_LIBRARIAN_ID, getLibrarian } from '../../data/librarians';
 import {
-  BG_SRC,
+  BG_SRC_CAT,
+  BG_SRC_STORK,
   BG_ASPECT,
   DEFAULT_CAMERA,
   DEFAULT_SHELVES,
@@ -245,11 +246,11 @@ export default function LibraryScene() {
         position: 'relative',
         width: '100%',
         aspectRatio: String(BG_ASPECT),
-        backgroundImage: `url(${BG_SRC})`,
+        backgroundImage: `url(${librarianId === 'stork' ? BG_SRC_STORK : BG_SRC_CAT})`,
         backgroundSize: 'contain',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
-        backgroundColor: 'var(--bg)',
+        backgroundColor: librarianId === 'stork' ? '#2a2640' : 'var(--bg)',
         cursor: calibrating ? 'auto' : 'none',
         '--mx': '50%',
         '--my': '50%',
