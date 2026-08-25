@@ -98,6 +98,16 @@
   flex: 1;
 }
 
+/* 한 행에 두 필드 배치 */
+.signup-row {
+  display: flex;
+  gap: 12px;
+}
+
+.signup-field--half {
+  flex: 1;
+}
+
 .signup-id-check-btn {
   padding: 8px 14px;
   border: 1px solid var(--accent);
