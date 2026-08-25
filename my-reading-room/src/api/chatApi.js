@@ -14,9 +14,11 @@ const API_BASE = '/api/v1';
  * @param {string} params.message - 사용자 질문 메시지
  * @param {string|null} [params.sessionId] - 대화 세션 ID (첫 요청 시 null)
  * @param {string} [params.librarianId] - 사서 id ('cat' | 'stork', 미전달 시 백엔드 기본값 cat)
+ * @param {number} [params.latitude] - 사용자 위치 위도 (날씨 연동용, 없으면 백엔드가 서울 기본값 사용)
+ * @param {number} [params.longitude] - 사용자 위치 경도
  * @returns {Promise<{text: string, sessionId: string, switchTo: object|null}|null>} 응답 또는 null(실패 시)
  */
-export async function sendChatMessage({ message, sessionId = null, librarianId = null }) {
+export async function sendChatMessage({ message, sessionId = null, librarianId = null, latitude = null, longitude = null }) {
   try {
     const payload = {
       message,
@@ -27,6 +29,10 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
     }
     if (librarianId) {
       payload.librarian_id = librarianId;
+    }
+    if (latitude != null && longitude != null) {
+      payload.latitude = latitude;
+      payload.longitude = longitude;
     }
 
     const response = await fetch(`${API_BASE}/chat`, {
@@ -60,10 +66,12 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
  * @param {string} params.message - 사용자 질문 메시지
  * @param {string|null} [params.sessionId] - 대화 세션 ID (첫 요청 시 null)
  * @param {string} [params.librarianId] - 사서 id ('cat' | 'stork', 미전달 시 백엔드 기본값 cat)
+ * @param {number} [params.latitude] - 사용자 위치 위도 (날씨 연동용, 없으면 백엔드가 서울 기본값 사용)
+ * @param {number} [params.longitude] - 사용자 위치 경도
  * @param {(chunk: string, fullText: string) => void} [params.onChunk] - 청크 수신 시 콜백
  * @returns {Promise<{text: string, sessionId: string, switchTo: object|null}|null>} 최종 응답 또는 null(실패 시)
  */
-export async function streamChatMessage({ message, sessionId = null, librarianId = null, onChunk }) {
+export async function streamChatMessage({ message, sessionId = null, librarianId = null, latitude = null, longitude = null, onChunk }) {
   try {
     const payload = {
       message,
@@ -74,6 +82,10 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
     }
     if (librarianId) {
       payload.librarian_id = librarianId;
+    }
+    if (latitude != null && longitude != null) {
+      payload.latitude = latitude;
+      payload.longitude = longitude;
     }
 
     const response = await fetch(`${API_BASE}/chat`, {

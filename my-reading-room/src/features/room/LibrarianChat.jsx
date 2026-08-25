@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
 import { streamChatMessage } from '../../api/chatApi';
+import { getUserLocation } from '../../api/geolocation';
 import { extractBooksFromAnswer } from './bookExtractor';
 import MarkdownRenderer from './MarkdownRenderer';
 
@@ -56,10 +57,15 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
       // 🌟 [도서 추천 모드] 백엔드 AI 추천 에이전트 호출 (도서 검색 도구 활용 및 실시간 스트리밍)
       onAnswer({ text: `${librarian.icon} 추천 도서를 찾고 있어요냥... 🐾` });
 
+      // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)
+      const location = await getUserLocation();
+
       const result = await streamChatMessage({
         message,
         sessionId,
         librarianId: librarian.id,
+        latitude: location?.latitude,
+        longitude: location?.longitude,
         onChunk: (_chunk, fullText) => {
           onAnswer({ text: fullText });
         },
