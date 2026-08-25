@@ -1,61 +1,96 @@
 import { useState } from 'react';
 import { useBooks } from '../../store/booksStore';
 
-const STATUS_OPTIONS = ['시작전', '읽는중', '완독'];
+const STATUS_OPTIONS = ['시작전', '읽는 중', '잠시 멈춤', '완독'];
 
 /**
  * BookDetail — 선택된 책의 상세 정보 팝업.
- * 확대된 책 오른쪽에 표시됨.
  *
  * @param {object} book - 선택된 책 데이터
  * @param {()=>void} onClose - 닫기 콜백
  */
 export default function BookDetail({ book, onClose }) {
-  const { updateBook } = useBooks();
-  const [page, setPage] = useState(book.currentPage || 0);
+  const { updateBook, removeBook } = useBooks();
+  const [currentPage, setCurrentPage] = useState(book.currentPage || 0);
+  const [totalPage, setTotalPage] = useState(book.totalPage || 0);
+  const [status, setStatus] = useState(book.status || '시작전');
+  const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const handleStatusChange = (e) => {
-    updateBook(book.id, { status: e.target.value });
+  const handleSave = () => {
+    const cur = Number(currentPage) || 0;
+    const total = Number(totalPage) || 0;
+    updateBook(book.id, { currentPage: cur, totalPage: total, status });
+    setEditing(false);
   };
 
-  const handlePageSave = () => {
-    const cur = Number(page) || 0;
-    const total = book.totalPage || 0;
-    const status = total > 0 && cur >= total ? '완독' : cur > 0 ? '읽는중' : '시작전';
-    updateBook(book.id, { currentPage: cur, status });
+  const handleDelete = () => {
+    removeBook(book.id);
+    onClose();
   };
+
+  const panelStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 280,
+    background: 'var(--bg)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: 20,
+    boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+    color: 'var(--text-h)',
+    zIndex: 25,
+    fontSize: 14,
+    lineHeight: 1.6,
+  };
+
+  const btnStyle = {
+    padding: '6px 12px',
+    borderRadius: 8,
+    border: 'none',
+    fontWeight: 700,
+    cursor: 'pointer',
+    fontSize: 12,
+  };
+
+  // 삭제 확인 팝업
+  if (confirmDelete) {
+    return (
+      <div style={panelStyle}>
+        <p style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600, textAlign: 'center' }}>
+          정말 삭제하시겠습니까?
+        </p>
+        <p style={{ margin: '0 0 20px', fontSize: 12, color: 'var(--text)', textAlign: 'center' }}>
+          삭제된 도서는 복구할 수 없습니다.
+        </p>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <button
+            onClick={handleDelete}
+            style={{ ...btnStyle, background: '#e74c3c', color: '#fff' }}
+          >
+            삭제
+          </button>
+          <button
+            onClick={() => setConfirmDelete(false)}
+            style={{ ...btnStyle, background: 'var(--border)', color: 'var(--text-h)' }}
+          >
+            취소
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 260,
-        background: 'var(--bg)',
-        border: '1px solid var(--border)',
-        borderRadius: 14,
-        padding: 20,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
-        color: 'var(--text-h)',
-        zIndex: 25,
-        fontSize: 14,
-        lineHeight: 1.6,
-      }}
-    >
+    <div style={panelStyle}>
       {/* 닫기 */}
       <button
         onClick={onClose}
         style={{
-          position: 'absolute',
-          top: 10,
-          right: 12,
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--text)',
-          cursor: 'pointer',
-          fontSize: 16,
+          position: 'absolute', top: 10, right: 12,
+          background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', fontSize: 16,
         }}
       >
         ✕
@@ -74,75 +109,89 @@ export default function BookDetail({ book, onClose }) {
       {/* 진행 상태 */}
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
         <span style={{ fontSize: 12, color: 'var(--text)' }}>진행 상태</span>
-        <select
-          value={book.status || '시작전'}
-          onChange={handleStatusChange}
-          style={{
-            padding: '6px 8px',
-            borderRadius: 8,
-            border: '1px solid var(--border)',
-            background: 'var(--code-bg)',
-            color: 'var(--text-h)',
-          }}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
+        {editing ? (
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            style={{
+              padding: '6px 8px', borderRadius: 8,
+              border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
+            }}
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        ) : (
+          <span style={{ fontSize: 14, color: 'var(--text-h)' }}>{status}</span>
+        )}
       </label>
 
-      {/* 현재 읽은 페이지 */}
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
-        <span style={{ fontSize: 12, color: 'var(--text)' }}>
-          현재 읽은 페이지 📖{book.totalPage ? ` (총 ${book.totalPage}쪽)` : ''}
+      {/* 현재 읽은 페이지 / 총 페이지 (같은 행) */}
+      <div style={{ marginBottom: 14 }}>
+        <span style={{ fontSize: 12, color: 'var(--text)', display: 'block', marginBottom: 4 }}>
+          페이지 📖
         </span>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             type="number"
             min={0}
-            max={book.totalPage || undefined}
-            value={page}
-            onChange={(e) => setPage(e.target.value)}
+            value={currentPage}
+            onChange={(e) => setCurrentPage(e.target.value)}
+            disabled={!editing}
+            placeholder="현재"
             style={{
-              flex: 1,
-              padding: '6px 8px',
-              borderRadius: 8,
-              border: '1px solid var(--border)',
-              background: 'var(--code-bg)',
-              color: 'var(--text-h)',
+              flex: 1, padding: '6px 8px', borderRadius: 8,
+              border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
+              opacity: editing ? 1 : 0.7,
             }}
           />
-          <button
-            onClick={handlePageSave}
+          <span style={{ color: 'var(--text)', fontSize: 13 }}>/</span>
+          <input
+            type="number"
+            min={0}
+            value={totalPage}
+            onChange={(e) => setTotalPage(e.target.value)}
+            disabled={!editing}
+            placeholder="총"
             style={{
-              padding: '6px 12px',
-              borderRadius: 8,
-              border: 'none',
-              background: 'var(--accent)',
-              color: '#fff',
-              fontWeight: 700,
-              cursor: 'pointer',
+              flex: 1, padding: '6px 8px', borderRadius: 8,
+              border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
+              opacity: editing ? 1 : 0.7,
             }}
-          >
-            저장
-          </button>
+          />
+          <span style={{ fontSize: 11, color: 'var(--text)' }}>쪽</span>
         </div>
-      </label>
+      </div>
 
-      {/* 스크랩 확인하기 */}
+      {/* 수정/저장 버튼 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        {editing ? (
+          <>
+            <button onClick={handleSave} style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff' }}>
+              저장
+            </button>
+            <button onClick={() => setEditing(false)} style={{ ...btnStyle, flex: 1, background: 'var(--border)', color: 'var(--text-h)' }}>
+              취소
+            </button>
+          </>
+        ) : (
+          <button onClick={() => setEditing(true)} style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff' }}>
+            수정
+          </button>
+        )}
+      </div>
+
+      {/* 삭제 버튼 */}
       <button
+        onClick={() => setConfirmDelete(true)}
         style={{
-          width: '100%',
-          padding: '10px 0',
-          borderRadius: 8,
-          border: '1px solid var(--accent-border)',
-          background: 'var(--accent-bg)',
-          color: 'var(--text-h)',
-          fontWeight: 600,
-          cursor: 'pointer',
+          width: '100%', padding: '10px 0', borderRadius: 8,
+          border: '1px solid #e74c3c', background: 'transparent',
+          color: '#e74c3c', fontWeight: 600, cursor: 'pointer', fontSize: 13,
         }}
       >
-        스크랩 확인하기
+        도서 삭제
       </button>
     </div>
   );
