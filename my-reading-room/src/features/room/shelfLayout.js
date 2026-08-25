@@ -16,9 +16,9 @@ export const BG_ASPECT = 768 / 432;
 
 // 그림 투시에 맞춘 카메라
 export const DEFAULT_CAMERA = {
-  fov: 28,
-  position: [-9.38, -0.89, 24],
-  target: [7.52, -0.13, 0.67],
+  fov: 24,
+  position: [-8.98, 1.76, 24],
+  target: [7.52, -0.15, 0.67],
 };
 
 /**
@@ -28,30 +28,32 @@ export const DEFAULT_CAMERA = {
  *  - rotYdeg: 선반의 좌우 기울기(도)
  *  - width:   선반 폭(이 폭을 넘으면 다음 선반으로)
  *  - depth:   책 앞뒤 깊이
+ *  - capacity: 이 선반의 최대 권수 (0=무제한, 초과 시 다음 선반으로)
  */
 export const DEFAULT_SHELVES = [
   {
-    id: 'top',
-    pos: [-1.09, 0.96, -0.4],
-    rotXdeg: -7,
-    rotYdeg: -3.5,
+    id: 'shelf1',
+    pos: [-2.76, 1, 4.07],
+    rotXdeg: -6,
+    rotYdeg: -0.5,
     rotZdeg: -2.5,
-    width: 2.13,
+    width: 1.2,
     depth: 0.2,
     bookHeight: 0.8,
     heightVar: 0.27,
-    capacity: 10, // 이 권수를 넘으면 다음 선반으로
+    capacity: 8, // 최대 8권, 9번째부터 다음 선반으로
   },
   {
     id: 'shelf2',
-    pos: [-2.8, -0.11, 4.61],
-    rotXdeg: -8.5,
-    rotYdeg: -2,
-    rotZdeg: -4,
-    width: 1.65,
-    depth: 0.2,
-    bookHeight: 0.54,
+    pos: [-2.57, 0, 3.35],
+    rotXdeg: -6,
+    rotYdeg: -0.5,
+    rotZdeg: -2.5,
+    width: 1.2,
+    depth: 0.35,
+    bookHeight: 0.68,
     heightVar: 0.27,
+    capacity: 0, // 무제한 (마지막 선반)
   },
 ];
 
