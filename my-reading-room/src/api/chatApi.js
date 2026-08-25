@@ -13,9 +13,10 @@ const API_BASE = '/api/v1';
  * @param {object} params
  * @param {string} params.message - 사용자 질문 메시지
  * @param {string|null} [params.sessionId] - 대화 세션 ID (첫 요청 시 null)
- * @returns {Promise<{text: string, sessionId: string}|null>} 응답 또는 null(실패 시)
+ * @param {string} [params.librarianId] - 사서 id ('cat' | 'stork', 미전달 시 백엔드 기본값 cat)
+ * @returns {Promise<{text: string, sessionId: string, switchTo: object|null}|null>} 응답 또는 null(실패 시)
  */
-export async function sendChatMessage({ message, sessionId = null }) {
+export async function sendChatMessage({ message, sessionId = null, librarianId = null }) {
   try {
     const payload = {
       message,
@@ -23,6 +24,9 @@ export async function sendChatMessage({ message, sessionId = null }) {
     };
     if (sessionId) {
       payload.session_id = sessionId;
+    }
+    if (librarianId) {
+      payload.librarian_id = librarianId;
     }
 
     const response = await fetch(`${API_BASE}/chat`, {
@@ -40,6 +44,7 @@ export async function sendChatMessage({ message, sessionId = null }) {
     const data = await response.json();
     return {
       text: data.message,
+      switchTo: data.switch_to ?? null,
       sessionId: data.session_id,
     };
   } catch (err) {
@@ -54,10 +59,11 @@ export async function sendChatMessage({ message, sessionId = null }) {
  * @param {object} params
  * @param {string} params.message - 사용자 질문 메시지
  * @param {string|null} [params.sessionId] - 대화 세션 ID (첫 요청 시 null)
+ * @param {string} [params.librarianId] - 사서 id ('cat' | 'stork', 미전달 시 백엔드 기본값 cat)
  * @param {(chunk: string, fullText: string) => void} [params.onChunk] - 청크 수신 시 콜백
- * @returns {Promise<{text: string, sessionId: string}|null>} 최종 응답 또는 null(실패 시)
+ * @returns {Promise<{text: string, sessionId: string, switchTo: object|null}|null>} 최종 응답 또는 null(실패 시)
  */
-export async function streamChatMessage({ message, sessionId = null, onChunk }) {
+export async function streamChatMessage({ message, sessionId = null, librarianId = null, onChunk }) {
   try {
     const payload = {
       message,
@@ -65,6 +71,9 @@ export async function streamChatMessage({ message, sessionId = null, onChunk }) 
     };
     if (sessionId) {
       payload.session_id = sessionId;
+    }
+    if (librarianId) {
+      payload.librarian_id = librarianId;
     }
 
     const response = await fetch(`${API_BASE}/chat`, {
@@ -79,8 +88,10 @@ export async function streamChatMessage({ message, sessionId = null, onChunk }) 
       return null;
     }
 
-    // 응답 헤더에서 발급된 세션 ID 확인
+    // 응답 헤더에서 세션 ID 및 switchTo 확인
     const activeSessionId = response.headers.get('X-Session-Id') || sessionId;
+    const switchToHeader = response.headers.get('X-Switch-To');
+    const switchTo = switchToHeader ? JSON.parse(switchToHeader) : null;
 
     if (!response.body) {
       console.warn('[chatApi] 스트리밍 응답 바디가 없습니다.');
@@ -103,6 +114,7 @@ export async function streamChatMessage({ message, sessionId = null, onChunk }) 
 
     return {
       text: fullText,
+      switchTo,
       sessionId: activeSessionId,
     };
   } catch (err) {
