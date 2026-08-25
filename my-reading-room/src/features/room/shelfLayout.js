@@ -12,17 +12,18 @@ export const BG_ASPECT = 768 / 432;
 // 개발 모드의 캘리브레이션 도구에서 값을 맞춘 뒤,
 // "설정 JSON 복사" 버튼으로 복사한 내용을 아래에 그대로 붙여넣으면
 // 모든 사용자에게 그 배치가 적용된다.
+// 사서(cat/stork)별로 배경 그림이 다르므로 카메라/선반 배치도 독립적으로 관리한다.
 // ─────────────────────────────────────────────────────────────
 
-// 그림 투시에 맞춘 카메라
-export const DEFAULT_CAMERA = {
-  fov: 24,
-  position: [-8.98, 1.76, 24],
-  target: [7.52, -0.15, 0.67],
+// 그림 투시에 맞춘 카메라 (고양이 서재)
+const CAT_CAMERA = {
+  fov: 28,
+  position: [-9.38, -0.89, 24],
+  target: [7.52, -0.13, 0.67],
 };
 
 /**
- * 각 선반(그림에 그려진 칸)의 3D 배치 정보. 배열 순서 = 책이 채워지는 순서(위 선반부터).
+ * 고양이 서재 선반 배치.
  *  - id:      식별용 이름
  *  - pos:     선반 바닥면 중심 [x, y, z]
  *  - rotYdeg: 선반의 좌우 기울기(도)
@@ -30,7 +31,41 @@ export const DEFAULT_CAMERA = {
  *  - depth:   책 앞뒤 깊이
  *  - capacity: 이 선반의 최대 권수 (0=무제한, 초과 시 다음 선반으로)
  */
-export const DEFAULT_SHELVES = [
+const CAT_SHELVES = [
+  {
+    id: 'top',
+    pos: [-1.09, 0.96, -0.4],
+    rotXdeg: -7,
+    rotYdeg: -3.5,
+    rotZdeg: -2.5,
+    width: 2.13,
+    depth: 0.2,
+    bookHeight: 0.8,
+    heightVar: 0.27,
+    capacity: 10, // 이 권수를 넘으면 다음 선반으로
+  },
+  {
+    id: 'shelf2',
+    pos: [-2.8, -0.11, 4.61],
+    rotXdeg: -8.5,
+    rotYdeg: -2,
+    rotZdeg: -4,
+    width: 1.65,
+    depth: 0.2,
+    bookHeight: 0.54,
+    heightVar: 0.27,
+  },
+];
+
+// 그림 투시에 맞춘 카메라 (황새 서재)
+const STORK_CAMERA = {
+  fov: 24,
+  position: [-8.98, 1.76, 24],
+  target: [7.52, -0.15, 0.67],
+};
+
+// 황새 서재 선반 배치
+const STORK_SHELVES = [
   {
     id: 'shelf1',
     pos: [-2.76, 1, 4.07],
@@ -56,6 +91,31 @@ export const DEFAULT_SHELVES = [
     capacity: 0, // 무제한 (마지막 선반)
   },
 ];
+
+// 사서 id별 기본 카메라/선반 배치
+export const CAMERA_BY_LIBRARIAN = {
+  cat: CAT_CAMERA,
+  stork: STORK_CAMERA,
+};
+
+export const SHELVES_BY_LIBRARIAN = {
+  cat: CAT_SHELVES,
+  stork: STORK_SHELVES,
+};
+
+// 하위 호환용 기본값 (고양이 기준)
+export const DEFAULT_CAMERA = CAT_CAMERA;
+export const DEFAULT_SHELVES = CAT_SHELVES;
+
+/** 사서 id에 맞는 기본 카메라 설정을 반환 (없으면 고양이 기준) */
+export function getDefaultCamera(librarianId) {
+  return CAMERA_BY_LIBRARIAN[librarianId] || CAT_CAMERA;
+}
+
+/** 사서 id에 맞는 기본 선반 배치를 반환 (없으면 고양이 기준) */
+export function getDefaultShelves(librarianId) {
+  return SHELVES_BY_LIBRARIAN[librarianId] || CAT_SHELVES;
+}
 
 // 선반에 bookHeight가 없을 때 기본 책 높이
 const FALLBACK_BOOK_HEIGHT = 1.1;
