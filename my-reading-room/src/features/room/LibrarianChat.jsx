@@ -59,6 +59,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
       const result = await streamChatMessage({
         message,
         sessionId,
+        librarianId: librarian.id,
         onChunk: (_chunk, fullText) => {
           onAnswer({ text: fullText });
         },
@@ -68,7 +69,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         if (result.sessionId) {
           setSessionId(result.sessionId);
         }
-        onAnswer({ text: result.text });
+        onAnswer({ text: result.text, switchTo: result.switchTo });
       } else {
         // 백엔드 실패 시 로컬 fallback
         const localResult = answerQuestion({ text: message, mode, books, librarian });
@@ -286,8 +287,8 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
             loading
               ? '사서가 답변 중...'
               : mode === 'recommend'
-              ? '예: 따뜻하고 힐링되는 소설 추천해줘'
-              : '저자·제목·장르로 내 서재 검색'
+                ? '예: 따뜻하고 힐링되는 소설 추천해줘'
+                : '저자·제목·장르로 내 서재 검색'
           }
           disabled={loading}
           style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
