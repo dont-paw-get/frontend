@@ -12,7 +12,6 @@ export default function SignupPage() {
     birthDate: '',
     gender: '',
   });
-  const [nicknameChecked, setNicknameChecked] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeAI, setAgreeAI] = useState(false);
@@ -21,13 +20,7 @@ export default function SignupPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (name === 'nickname') setNicknameChecked(false);
     if (name === 'password' && !pwTouched) setPwTouched(true);
-  };
-
-  const handleNicknameCheck = () => {
-    // TODO: 실제 중복 확인 API 호출
-    setNicknameChecked(true);
   };
 
   const handleSubmit = (e) => {
@@ -100,71 +93,58 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* 닉네임 + 중복 확인 */}
+          {/* 닉네임 */}
           <div className="signup-field">
             <label htmlFor="signup-nickname">닉네임</label>
-            <div className="signup-id-row">
-              <input
-                id="signup-nickname"
-                name="nickname"
-                type="text"
-                placeholder="사용할 닉네임 입력"
-                value={form.nickname}
-                onChange={handleChange}
-                autoComplete="username"
-                required
-              />
-              <button
-                type="button"
-                className="signup-id-check-btn"
-                onClick={handleNicknameCheck}
-                disabled={!form.nickname}
-              >
-                중복 확인
-              </button>
-            </div>
-            {nicknameChecked && (
-              <span className="signup-success">사용 가능한 닉네임입니다</span>
-            )}
-          </div>
-
-          {/* 생년월일 */}
-          <div className="signup-field">
-            <label htmlFor="signup-birth">생년월일</label>
             <input
-              id="signup-birth"
-              name="birthDate"
-              type="date"
-              value={form.birthDate}
+              id="signup-nickname"
+              name="nickname"
+              type="text"
+              placeholder="사용할 닉네임 입력"
+              value={form.nickname}
               onChange={handleChange}
+              autoComplete="username"
               required
             />
           </div>
 
-          {/* 성별 */}
-          <div className="signup-field">
-            <label>성별</label>
-            <div className="signup-gender-row">
-              <label className="signup-radio">
-                <input
-                  type="radio"
-                  name="gender"
-                  value="남성"
-                  checked={form.gender === '남성'}
-                  onChange={handleChange}
-                />
-                <span>남성</span>
-              </label>
-              <label className="signup-radio">
-                <input
-                  type="radio"
-                  name="gender"
-                  value="여성"
-                  checked={form.gender === '여성'}
-                  onChange={handleChange}
-                />
-                <span>여성</span>
-              </label>
+          {/* 생년월일 + 성별 (같은 행) */}
+          <div className="signup-row">
+            <div className="signup-field signup-field--half">
+              <label htmlFor="signup-birth">생년월일</label>
+              <input
+                id="signup-birth"
+                name="birthDate"
+                type="date"
+                value={form.birthDate}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="signup-field signup-field--half">
+              <label>성별</label>
+              <div className="signup-gender-row">
+                <label className="signup-radio">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="남성"
+                    checked={form.gender === '남성'}
+                    onChange={handleChange}
+                  />
+                  <span>남성</span>
+                </label>
+                <label className="signup-radio">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="여성"
+                    checked={form.gender === '여성'}
+                    onChange={handleChange}
+                  />
+                  <span>여성</span>
+                </label>
+              </div>
             </div>
           </div>
 
