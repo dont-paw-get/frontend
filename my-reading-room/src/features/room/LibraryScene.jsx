@@ -13,8 +13,8 @@ import {
   BG_SRC_CAT,
   BG_SRC_STORK,
   BG_ASPECT,
-  DEFAULT_CAMERA,
-  DEFAULT_SHELVES,
+  getDefaultCamera,
+  getDefaultShelves,
   placeBooks,
   makePreviewBooks,
 } from './shelfLayout';
@@ -143,13 +143,13 @@ export default function LibraryScene() {
   const [copied, setCopied] = useState(false);
 
   const [workingConfig, setWorkingConfig] = useState(
-    () => loadCalibration(librarianId) || { camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES }
+    () => loadCalibration(librarianId) || { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) }
   );
 
-  // 사서 전환 시 해당 사서의 캘리브레이션 다시 로드
+  // 사서 전환 시 해당 사서의 캘리브레이션 다시 로드 (없으면 그 사서의 기본값)
   useEffect(() => {
     const saved = loadCalibration(librarianId);
-    setWorkingConfig(saved || { camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES });
+    setWorkingConfig(saved || { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) });
   }, [librarianId]);
 
   useEffect(() => {
@@ -221,7 +221,7 @@ export default function LibraryScene() {
   };
 
   const resetToDefaults = () => {
-    setWorkingConfig({ camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES });
+    setWorkingConfig({ camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) });
     setActiveIdx(0);
     try {
       localStorage.removeItem(getCalibKey(librarianId));
@@ -232,7 +232,9 @@ export default function LibraryScene() {
 
   const copyJson = async () => {
     const { camera, shelves } = workingConfig;
-    const text = `export const DEFAULT_CAMERA = ${JSON.stringify(camera, null, 2)};\n\nexport const DEFAULT_SHELVES = ${JSON.stringify(shelves, null, 2)};`;
+    const camName = librarianId === 'stork' ? 'STORK_CAMERA' : 'CAT_CAMERA';
+    const shelvesName = librarianId === 'stork' ? 'STORK_SHELVES' : 'CAT_SHELVES';
+    const text = `// ${librarian.name} (${librarianId}) 서재 배치\nconst ${camName} = ${JSON.stringify(camera, null, 2)};\n\nconst ${shelvesName} = ${JSON.stringify(shelves, null, 2)};`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -242,8 +244,8 @@ export default function LibraryScene() {
     }
   };
 
-  // 캘리브레이션 중이면 작업용 설정, 아니면 배포용 기본 설정
-  const activeConfig = calibrating ? workingConfig : { camera: DEFAULT_CAMERA, shelves: DEFAULT_SHELVES };
+  // 캘리브레이션 중이면 작업용 설정, 아니면 해당 사서의 배포용 기본 설정
+  const activeConfig = calibrating ? workingConfig : { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) };
   const sourceBooks = calibrating ? makePreviewBooks(previewCount) : books;
   const placements = placeBooks(sourceBooks, activeConfig.shelves);
   const { camera } = activeConfig;
