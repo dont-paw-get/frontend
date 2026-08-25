@@ -1,0 +1,16 @@
+name: Deploy to Prod
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'my-reading-room/**'
+      - '.github/workflows/deploy-prod.yml'
+      - '.github/workflows/_deploy-frontend.yml'
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy-frontend.yml
+    with:
+      environment: prod
+    secrets: inherit
