@@ -71,3 +71,72 @@
   color: var(--text-h);
   margin: 0;
 }
+
+/* 닉네임 수정 */
+.mypage-nickname-cell {
+  width: 100%;
+}
+
+.mypage-nickname-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mypage-nickname-edit-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mypage-nickname-edit-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.mypage-nickname-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mypage-nickname-input {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 13px;
+  outline: none;
+  flex: 1;
+}
+
+.mypage-nickname-input:focus {
+  border-color: var(--accent);
+}
+
+.mypage-nickname-save,
+.mypage-nickname-cancel {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mypage-nickname-save {
+  background: var(--accent);
+  color: #fff;
+}
+
+.mypage-nickname-cancel {
+  background: var(--border);
+  color: var(--text-h);
+}
