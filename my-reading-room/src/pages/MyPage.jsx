@@ -3,14 +3,14 @@ import './MyPage.css';
 // 임시 mock 데이터 (추후 API 연동 시 교체)
 const mockUser = {
   profileImage: '/profile.png',
-  userId: 'pawget_reader',
+  nickname: 'pawget_reader',
   email: 'reader@dontpawget.com',
   birthDate: '1995-03-12',
   gender: '남성',
 };
 
 export default function MyPage() {
-  const { profileImage, userId, email, birthDate, gender } = mockUser;
+  const { profileImage, nickname, email, birthDate, gender } = mockUser;
 
   return (
     <section className="mypage">
@@ -22,15 +22,15 @@ export default function MyPage() {
           <img
             className="mypage-avatar"
             src={profileImage}
-            alt={`${userId} 프로필 사진`}
+            alt={`${nickname} 프로필 사진`}
           />
         </div>
 
         {/* 프로필 정보 */}
         <dl className="mypage-info">
           <div className="mypage-info-row">
-            <dt>사용자 ID</dt>
-            <dd>{userId}</dd>
+            <dt>닉네임</dt>
+            <dd>{nickname}</dd>
           </div>
           <div className="mypage-info-row">
             <dt>이메일</dt>

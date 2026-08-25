@@ -8,28 +8,34 @@ export default function SignupPage() {
     email: '',
     password: '',
     passwordConfirm: '',
-    userId: '',
+    nickname: '',
     birthDate: '',
     gender: '',
   });
-  const [idChecked, setIdChecked] = useState(false);
+  const [nicknameChecked, setNicknameChecked] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeAI, setAgreeAI] = useState(false);
+  const [pwTouched, setPwTouched] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (name === 'userId') setIdChecked(false);
+    if (name === 'nickname') setNicknameChecked(false);
+    if (name === 'password' && !pwTouched) setPwTouched(true);
   };
 
-  const handleIdCheck = () => {
+  const handleNicknameCheck = () => {
     // TODO: 실제 중복 확인 API 호출
-    setIdChecked(true);
+    setNicknameChecked(true);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // TODO: 실제 회원가입 API 호출
   };
+
+  const allRequired = agreeTerms && agreePrivacy;
 
   return (
     <div className="signup-page">
@@ -63,12 +69,17 @@ export default function SignupPage() {
               id="signup-pw"
               name="password"
               type="password"
-              placeholder="8자 이상 영문+숫자 조합"
+              placeholder="8자 이상 영문+숫자+특수문자"
               value={form.password}
               onChange={handleChange}
               autoComplete="new-password"
               required
             />
+            {pwTouched && (
+              <span className="signup-hint">
+                비밀번호는 8자 이상이며 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.
+              </span>
+            )}
           </div>
 
           {/* 비밀번호 재확인 */}
@@ -89,16 +100,16 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* 사용자 ID + 중복 확인 */}
+          {/* 닉네임 + 중복 확인 */}
           <div className="signup-field">
-            <label htmlFor="signup-id">사용자 ID</label>
+            <label htmlFor="signup-nickname">닉네임</label>
             <div className="signup-id-row">
               <input
-                id="signup-id"
-                name="userId"
+                id="signup-nickname"
+                name="nickname"
                 type="text"
-                placeholder="영문/숫자 조합"
-                value={form.userId}
+                placeholder="사용할 닉네임 입력"
+                value={form.nickname}
                 onChange={handleChange}
                 autoComplete="username"
                 required
@@ -106,14 +117,14 @@ export default function SignupPage() {
               <button
                 type="button"
                 className="signup-id-check-btn"
-                onClick={handleIdCheck}
-                disabled={!form.userId}
+                onClick={handleNicknameCheck}
+                disabled={!form.nickname}
               >
                 중복 확인
               </button>
             </div>
-            {idChecked && (
-              <span className="signup-success">사용 가능한 아이디입니다</span>
+            {nicknameChecked && (
+              <span className="signup-success">사용 가능한 닉네임입니다</span>
             )}
           </div>
 
@@ -157,7 +168,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* 약관 동의 */}
+          {/* 약관 동의 (3개) */}
           <div className="signup-field signup-terms">
             <label className="signup-checkbox">
               <input
@@ -166,11 +177,28 @@ export default function SignupPage() {
                 onChange={(e) => setAgreeTerms(e.target.checked)}
                 required
               />
-              <span>이용약관 및 개인정보처리방침에 동의합니다</span>
+              <span>[필수] 이용약관 동의</span>
+            </label>
+            <label className="signup-checkbox">
+              <input
+                type="checkbox"
+                checked={agreePrivacy}
+                onChange={(e) => setAgreePrivacy(e.target.checked)}
+                required
+              />
+              <span>[필수] 개인정보 처리방침 동의</span>
+            </label>
+            <label className="signup-checkbox">
+              <input
+                type="checkbox"
+                checked={agreeAI}
+                onChange={(e) => setAgreeAI(e.target.checked)}
+              />
+              <span>[선택] AI 분석 활용 동의</span>
             </label>
           </div>
 
-          <button className="signup-btn" type="submit" disabled={!agreeTerms}>
+          <button className="signup-btn" type="submit" disabled={!allRequired}>
             가입하기
           </button>
         </form>
