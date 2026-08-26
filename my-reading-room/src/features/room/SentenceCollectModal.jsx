@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useBooks } from '../../store/booksStore';
 import { recognizeText } from '../register/ocrUtils';
 
@@ -75,11 +76,11 @@ export default function SentenceCollectModal({ book, onClose }) {
   };
   const labelStyle = { display: 'flex', flexDirection: 'column', gap: 6 };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
       }}
       onClick={onClose}
     >
@@ -256,6 +257,7 @@ export default function SentenceCollectModal({ book, onClose }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
