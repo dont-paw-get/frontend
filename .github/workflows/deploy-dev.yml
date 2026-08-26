@@ -1,0 +1,16 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'my-reading-room/**'
+      - '.github/workflows/deploy-dev.yml'
+      - '.github/workflows/_deploy-frontend.yml'
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy-frontend.yml
+    with:
+      environment: dev
+    secrets: inherit
