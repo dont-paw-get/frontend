@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Leva, useControls, folder } from 'leva';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState, lazy, Suspense } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import Book3D from '../bookshelf3d/Book3D';
 import { useBooks } from '../../store/booksStore';
@@ -26,15 +25,26 @@ function getCalibKey(librarianId) {
   return `${CALIB_KEY_PREFIX}.${librarianId}`;
 }
 
-// 카메라를 매 프레임 지정 값으로 세팅 (그림 투시 정합)
+// dev 캘리브레이션 도구(leva 포함)는 필요 시점에만 로드 → 프로덕션 번들에서 제외
+const CalibrationTools = lazy(() => import('./CalibrationTools'));
+
+// 카메라를 지정 값으로 세팅 (그림 투시 정합).
+// 고정 카메라이므로 매 프레임 대신 값이 바뀔 때만 세팅하고 1프레임 렌더를 요청한다.
 function CameraRig({ fov, position, target }) {
-  useFrame((state) => {
-    const cam = state.camera;
+  const get = useThree((s) => s.get);
+  const invalidate = useThree((s) => s.invalidate);
+  const [px, py, pz] = position;
+  const [tx, ty, tz] = target;
+
+  useLayoutEffect(() => {
+    const cam = get().camera;
     cam.fov = fov;
-    cam.position.set(position[0], position[1], position[2]);
-    cam.lookAt(target[0], target[1], target[2]);
+    cam.position.set(px, py, pz);
+    cam.lookAt(tx, ty, tz);
     cam.updateProjectionMatrix();
-  });
+    invalidate();
+  }, [get, invalidate, fov, px, py, pz, tx, ty, tz]);
+
   return null;
 }
 
@@ -64,46 +74,7 @@ function ShelfGuides({ shelves, activeIdx }) {
   );
 }
 
-// leva 슬라이더 (카메라 + 활성 선반). calibrating일 때만 마운트됨.
-function CalibrationControls({ camera, shelf, activeIdx, onCamera, onCamComp, onShelf, onShelfPos }) {
-  // 카메라 (마운트 시 1회 초기화)
-  useControls(
-    () => ({
-      카메라: folder({
-        fov: { value: camera.fov, min: 10, max: 90, step: 0.5, onChange: (v, _p, c) => c.fromPanel && onCamera({ fov: v }) },
-        posX: { value: camera.position[0], min: -12, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onCamComp('position', 0, v) },
-        posY: { value: camera.position[1], min: -6, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onCamComp('position', 1, v) },
-        posZ: { value: camera.position[2], min: 0.5, max: 24, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onCamComp('position', 2, v) },
-        tgtX: { value: camera.target[0], min: -12, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onCamComp('target', 0, v) },
-        tgtY: { value: camera.target[1], min: -6, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onCamComp('target', 1, v) },
-        tgtZ: { value: camera.target[2], min: -12, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onCamComp('target', 2, v) },
-      }),
-    }),
-    []
-  );
-
-  // 활성 선반 (activeIdx 바뀌면 해당 선반 값으로 리셋됨)
-  useControls(
-    () => ({
-      [`선반 #${activeIdx + 1} (${shelf.id})`]: folder({
-        sPosX: { value: shelf.pos[0], min: -12, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onShelfPos(0, v) },
-        sPosY: { value: shelf.pos[1], min: -8, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onShelfPos(1, v) },
-        sPosZ: { value: shelf.pos[2], min: -12, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onShelfPos(2, v) },
-        rotXdeg: { value: shelf.rotXdeg ?? 0, min: -90, max: 90, step: 0.5, onChange: (v, _p, c) => c.fromPanel && onShelf({ rotXdeg: v }) },
-        rotYdeg: { value: shelf.rotYdeg ?? 0, min: -90, max: 90, step: 0.5, onChange: (v, _p, c) => c.fromPanel && onShelf({ rotYdeg: v }) },
-        rotZdeg: { value: shelf.rotZdeg ?? 0, min: -90, max: 90, step: 0.5, onChange: (v, _p, c) => c.fromPanel && onShelf({ rotZdeg: v }) },
-        width: { value: shelf.width, min: 0.5, max: 12, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onShelf({ width: v }) },
-        depth: { value: shelf.depth, min: 0.2, max: 2, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onShelf({ depth: v }) },
-        bookHeight: { value: shelf.bookHeight ?? 1.1, min: 0.3, max: 3, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onShelf({ bookHeight: v }) },
-        heightVar: { value: shelf.heightVar ?? 0.15, min: 0, max: 1, step: 0.01, onChange: (v, _p, c) => c.fromPanel && onShelf({ heightVar: v }) },
-        capacity: { value: shelf.capacity ?? 0, min: 0, max: 40, step: 1, onChange: (v, _p, c) => c.fromPanel && onShelf({ capacity: v }) },
-      }),
-    }),
-    [activeIdx]
-  );
-
-  return null;
-}
+// 캘리브레이션 leva 컨트롤은 CalibrationTools.jsx(lazy)로 분리되어 프로덕션 번들에서 제외됨.
 
 function loadCalibration(librarianId) {
   try {
@@ -191,23 +162,26 @@ export default function LibraryScene() {
   }, []);
 
   const addShelf = () => {
+    // 추가 후 새 선반의 인덱스 = 현재 선반 개수 (setState updater 밖에서 계산)
+    const newIdx = workingConfig.shelves.length;
     setWorkingConfig((prev) => {
       const base = prev.shelves[activeIdx] || { id: 'shelf', pos: [0, 0, 0], rotXdeg: 0, rotYdeg: 0, rotZdeg: 0, width: 3.5, depth: 0.82, bookHeight: 1.1, heightVar: 0.15 };
       const shelves = [
         ...prev.shelves,
         { ...base, id: `shelf${prev.shelves.length + 1}`, pos: [base.pos[0], base.pos[1] - 1.2, base.pos[2]] },
       ];
-      setActiveIdx(shelves.length - 1);
       return { ...prev, shelves };
     });
+    setActiveIdx(newIdx);
   };
   const deleteShelf = (idx) => {
-    setWorkingConfig((prev) => {
-      if (prev.shelves.length <= 1) return prev;
-      const shelves = prev.shelves.filter((_, i) => i !== idx);
-      setActiveIdx((a) => Math.max(0, Math.min(a, shelves.length - 1)));
-      return { ...prev, shelves };
-    });
+    if (workingConfig.shelves.length <= 1) return;
+    setWorkingConfig((prev) => ({
+      ...prev,
+      shelves: prev.shelves.filter((_, i) => i !== idx),
+    }));
+    // 삭제 후 길이 = 기존 길이 - 1 → 최대 인덱스는 (기존 길이 - 2)
+    setActiveIdx((a) => Math.max(0, Math.min(a, workingConfig.shelves.length - 2)));
   };
   const moveShelf = (idx, dir) => {
     const j = idx + dir;
@@ -244,10 +218,18 @@ export default function LibraryScene() {
     }
   };
 
-  // 캘리브레이션 중이면 작업용 설정, 아니면 해당 사서의 배포용 기본 설정
-  const activeConfig = calibrating ? workingConfig : { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) };
-  const sourceBooks = calibrating ? makePreviewBooks(previewCount) : books;
-  const placements = placeBooks(sourceBooks, activeConfig.shelves);
+  // 캘리브레이션 중이면 작업용 설정, 아니면 해당 사서의 배포용 기본 설정 (cat/stork 분리)
+  const activeConfig = calibrating
+    ? workingConfig
+    : { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) };
+  // 사서/캘리브레이션이 바뀔 때만 선반 참조가 갱신되도록 메모이즈 (placements useMemo 안정화)
+  const shelves = useMemo(() => activeConfig.shelves, [calibrating, librarianId, workingConfig]);
+  const sourceBooks = useMemo(
+    () => (calibrating ? makePreviewBooks(previewCount) : books),
+    [calibrating, previewCount, books]
+  );
+  // 책 배치 계산은 책/선반이 바뀔 때만 (호버 등 잦은 리렌더에서 재계산 방지)
+  const placements = useMemo(() => placeBooks(sourceBooks, shelves), [sourceBooks, shelves]);
   const { camera } = activeConfig;
   const activeShelf = workingConfig.shelves[activeIdx] || workingConfig.shelves[0];
 
@@ -275,9 +257,8 @@ export default function LibraryScene() {
         '--my': '50%',
       }}
     >
-      {isDev && calibrating && <Leva collapsed={false} />}
-
       <Canvas
+        frameloop="demand"
         gl={{ alpha: true, antialias: true }}
         style={{ position: 'absolute', inset: 0 }}
         camera={{ position: camera.position, fov: camera.fov }}
@@ -334,18 +315,6 @@ export default function LibraryScene() {
         </>
       )}
 
-      {isDev && calibrating && (
-        <CalibrationControls
-          camera={workingConfig.camera}
-          shelf={activeShelf}
-          activeIdx={activeIdx}
-          onCamera={patchCamera}
-          onCamComp={setCamComp}
-          onShelf={(patch) => patchShelf(activeIdx, patch)}
-          onShelfPos={(i, v) => setShelfPos(activeIdx, i, v)}
-        />
-      )}
-
       {/* 개발 모드 캘리브레이션 진입 버튼 */}
       {isDev && !calibrating && (
         <button
@@ -356,79 +325,29 @@ export default function LibraryScene() {
         </button>
       )}
 
-      {/* 캘리브레이션 구조 조작 바 (선반 선택/추가/순서/복사) */}
+      {/* 캘리브레이션 도구(leva 포함)는 dev + 활성화 시에만 lazy 로드 */}
       {isDev && calibrating && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            left: 10,
-            background: 'rgba(20,20,24,0.92)',
-            color: '#eee',
-            padding: 10,
-            borderRadius: 8,
-            fontSize: 12,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            maxWidth: 260,
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong>선반 편집</strong>
-            <button onClick={() => setCalibrating(false)} style={{ fontSize: 11 }}>닫기</button>
-          </div>
-
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {workingConfig.shelves.map((s, i) => (
-              <button
-                key={s.id}
-                onClick={() => setActiveIdx(i)}
-                title={s.id}
-                style={{
-                  fontSize: 11,
-                  padding: '2px 7px',
-                  background: i === activeIdx ? '#00e5ff' : '#333',
-                  color: i === activeIdx ? '#000' : '#fff',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer',
-                }}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button onClick={addShelf} style={{ fontSize: 11, padding: '2px 7px' }}>+ 추가</button>
-          </div>
-
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={() => moveShelf(activeIdx, -1)} style={{ fontSize: 11 }}>↑ 순서</button>
-            <button onClick={() => moveShelf(activeIdx, 1)} style={{ fontSize: 11 }}>↓ 순서</button>
-            <button onClick={() => deleteShelf(activeIdx)} style={{ fontSize: 11, color: '#f88' }}>선반 삭제</button>
-          </div>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            미리보기 책 수
-            <input
-              type="number"
-              min={0}
-              max={40}
-              value={previewCount}
-              onChange={(e) => setPreviewCount(Number(e.target.value))}
-              style={{ width: 50, background: '#222', color: '#fff', border: '1px solid #444', borderRadius: 4 }}
-            />
-          </label>
-
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={copyJson} style={{ flex: 1, padding: '6px 0', fontWeight: 700 }}>
-              {copied ? '복사됨!' : '설정 JSON 복사'}
-            </button>
-            <button onClick={resetToDefaults} style={{ fontSize: 11 }}>기본값 초기화</button>
-          </div>
-          <span style={{ color: '#999', lineHeight: 1.4 }}>
-            수치 조절은 우측 leva 슬라이더에서. 다 맞추면 JSON 복사 → shelfLayout.js의 DEFAULT_* 교체.
-          </span>
-        </div>
+        <Suspense fallback={null}>
+          <CalibrationTools
+            workingConfig={workingConfig}
+            activeShelf={activeShelf}
+            activeIdx={activeIdx}
+            setActiveIdx={setActiveIdx}
+            patchCamera={patchCamera}
+            setCamComp={setCamComp}
+            patchShelf={patchShelf}
+            setShelfPos={setShelfPos}
+            addShelf={addShelf}
+            deleteShelf={deleteShelf}
+            moveShelf={moveShelf}
+            previewCount={previewCount}
+            setPreviewCount={setPreviewCount}
+            copyJson={copyJson}
+            copied={copied}
+            resetToDefaults={resetToDefaults}
+            onClose={() => setCalibrating(false)}
+          />
+        </Suspense>
       )}
 
       {/* 마우스를 따라다니는 사서 + 우상단 말풍선(답변) */}

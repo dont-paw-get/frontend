@@ -2,10 +2,12 @@
  * 백엔드 사서 채팅 API 클라이언트 (v1).
  *
  * 개발 환경에서는 Vite proxy를 통해 /api → localhost:8000 으로 프록시됩니다.
+ * 배포 환경에서는 VITE_API_BASE_URL(예: https://api.xxx.com/api/v1)을 빌드 타임에 주입해
+ * 별도 도메인의 백엔드를 직접 호출합니다. 설정되지 않으면 상대 경로(/api/v1)를 사용합니다.
  * 백엔드 서버가 꺼져 있거나 에러 발생 시 null을 반환하여 프론트 로컬 fallback을 사용합니다.
  */
 
-const API_BASE = '/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 /**
  * 위도/경도 값이 유효한 범위인지 검증합니다 (위도 -90~90, 경도 -180~180).
@@ -164,7 +166,7 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
  */
 export async function checkHealth() {
   try {
-    const response = await fetch('/api/v1/health');
+    const response = await fetch(`${API_BASE}/health`);
     return response.ok;
   } catch {
     return false;
