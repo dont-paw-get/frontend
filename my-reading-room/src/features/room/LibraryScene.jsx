@@ -223,7 +223,10 @@ export default function LibraryScene() {
     ? workingConfig
     : { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) };
   // 사서/캘리브레이션이 바뀔 때만 선반 참조가 갱신되도록 메모이즈 (placements useMemo 안정화)
-  const shelves = useMemo(() => activeConfig.shelves, [calibrating, librarianId, workingConfig]);
+  const shelves = useMemo(
+    () => (calibrating ? workingConfig.shelves : getDefaultShelves(librarianId)),
+    [calibrating, workingConfig, librarianId]
+  );
   const sourceBooks = useMemo(
     () => (calibrating ? makePreviewBooks(previewCount) : books),
     [calibrating, previewCount, books]
