@@ -142,23 +142,26 @@ export default function LibraryScene() {
   }, []);
 
   const addShelf = () => {
+    // 추가 후 새 선반의 인덱스 = 현재 선반 개수 (setState updater 밖에서 계산)
+    const newIdx = workingConfig.shelves.length;
     setWorkingConfig((prev) => {
       const base = prev.shelves[activeIdx] || { id: 'shelf', pos: [0, 0, 0], rotXdeg: 0, rotYdeg: 0, rotZdeg: 0, width: 3.5, depth: 0.82, bookHeight: 1.1, heightVar: 0.15 };
       const shelves = [
         ...prev.shelves,
         { ...base, id: `shelf${prev.shelves.length + 1}`, pos: [base.pos[0], base.pos[1] - 1.2, base.pos[2]] },
       ];
-      setActiveIdx(shelves.length - 1);
       return { ...prev, shelves };
     });
+    setActiveIdx(newIdx);
   };
   const deleteShelf = (idx) => {
-    setWorkingConfig((prev) => {
-      if (prev.shelves.length <= 1) return prev;
-      const shelves = prev.shelves.filter((_, i) => i !== idx);
-      setActiveIdx((a) => Math.max(0, Math.min(a, shelves.length - 1)));
-      return { ...prev, shelves };
-    });
+    if (workingConfig.shelves.length <= 1) return;
+    setWorkingConfig((prev) => ({
+      ...prev,
+      shelves: prev.shelves.filter((_, i) => i !== idx),
+    }));
+    // 삭제 후 길이 = 기존 길이 - 1 → 최대 인덱스는 (기존 길이 - 2)
+    setActiveIdx((a) => Math.max(0, Math.min(a, workingConfig.shelves.length - 2)));
   };
   const moveShelf = (idx, dir) => {
     const j = idx + dir;

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Gnb from './components/Gnb';
+import ErrorBoundary from './components/ErrorBoundary';
 import { BooksProvider } from './store/BooksProvider';
 import { ThemeProvider } from './store/ThemeProvider';
 import MyLibrary from './pages/MyLibrary';
@@ -17,14 +18,16 @@ function AppLayout() {
   return (
     <>
       <Gnb />
-      <Suspense fallback={routeFallback}>
-        <Routes>
-          <Route path="/library" element={<MyLibrary />} />
-          <Route path="/register" element={<RegisterBook />} />
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="*" element={<Navigate to="/library" replace />} />
-        </Routes>
-      </Suspense>
+      <ErrorBoundary label="페이지">
+        <Suspense fallback={routeFallback}>
+          <Routes>
+            <Route path="/library" element={<MyLibrary />} />
+            <Route path="/register" element={<RegisterBook />} />
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="*" element={<Navigate to="/library" replace />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 }
