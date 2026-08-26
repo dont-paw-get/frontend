@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useBooks } from '../../store/booksStore';
+import SentenceCollectModal from './SentenceCollectModal';
 
 const STATUS_OPTIONS = ['시작전', '읽는 중', '잠시 멈춤', '완독'];
 
@@ -16,6 +17,7 @@ export default function BookDetail({ book, onClose }) {
   const [status, setStatus] = useState(book.status || '시작전');
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showSentenceModal, setShowSentenceModal] = useState(false);
 
   const handleSave = () => {
     const cur = Number(currentPage) || 0;
@@ -202,16 +204,21 @@ export default function BookDetail({ book, onClose }) {
         </div>
       )}
 
-      {/* 스크랩 확인하기 */}
+      {/* 문장 수집 */}
       <button
+        onClick={() => setShowSentenceModal(true)}
         style={{
           width: '100%', padding: '10px 0', borderRadius: 8,
           border: '1px solid var(--accent-border)', background: 'var(--accent-bg)',
           color: 'var(--text-h)', fontWeight: 600, cursor: 'pointer',
         }}
       >
-        스크랩 확인하기
+        문장 수집
       </button>
+
+      {showSentenceModal && (
+        <SentenceCollectModal book={book} onClose={() => setShowSentenceModal(false)} />
+      )}
     </div>
   );
 }

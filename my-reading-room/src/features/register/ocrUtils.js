@@ -84,6 +84,22 @@ export async function recognizeCover(file) {
 }
 
 /**
+ * 이미지 파일에서 순수 텍스트를 인식 (문장 수집용).
+ * 표지 인식(recognizeCover)과 달리 제목/저자 구조화 없이 원문 텍스트만 반환.
+ * @param {File} file
+ * @returns {Promise<string>} 인식된 텍스트
+ */
+export async function recognizeText(file) {
+  const worker = await createWorker('kor+eng');
+  try {
+    const { data } = await worker.recognize(file);
+    return (data.text || '').trim();
+  } finally {
+    await worker.terminate();
+  }
+}
+
+/**
  * File을 미리보기/색상추출용 <img>로 로드.
  * @param {File} file
  * @returns {Promise<HTMLImageElement>}
