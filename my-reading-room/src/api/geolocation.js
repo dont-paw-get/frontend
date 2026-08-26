@@ -35,10 +35,10 @@ export function isValidCoords(latitude, longitude) {
  * 브라우저가 반환한 좌표가 유효 범위(위도 -90~90, 경도 -180~180)를 벗어나면 null로 처리합니다.
  *
  * @param {object} [options]
- * @param {number} [options.timeout=5000] - 위치 요청 타임아웃(ms)
+ * @param {number} [options.timeout=15000] - 위치 요청 타임아웃(ms). GPS/네트워크 위치 첫 조회는 느릴 수 있어 넉넉히 둠.
  * @returns {Promise<{latitude: number, longitude: number}|null>}
  */
-export function getUserLocation({ timeout = 5000 } = {}) {
+export function getUserLocation({ timeout = 15000 } = {}) {
   if (cachedPosition) {
     return Promise.resolve(cachedPosition);
   }
@@ -71,7 +71,11 @@ export function getUserLocation({ timeout = 5000 } = {}) {
         requestPromise = null;
         resolve(null);
       },
-      { timeout, maximumAge: 10 * 60 * 1000 } // 10분간 캐시 허용
+      {
+        timeout,
+        maximumAge: 10 * 60 * 1000, // 10분 이내 캐시된 위치 재사용 (재조회 안 함 → 타임아웃 회피)
+        enableHighAccuracy: false, // 정확도보다 속도 우선 (책 추천엔 대략 위치면 충분)
+      }
     );
   });
 
