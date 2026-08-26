@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBooks } from '../store/booksStore';
-import { colorPresets, recognizeCover, extractDominantColorIndex, loadImage } from '../features/register/ocrUtils';
+import { colorPresets, extractDominantColorIndex, loadImage } from '../features/register/colorUtils';
 
 const thicknessPresets = [
   { label: '얇음', value: 0.16 },
@@ -64,6 +64,8 @@ export default function RegisterBook() {
     setEditing(false);
 
     try {
+      // tesseract.js(대용량)는 실제 스캔 시점에만 동적 로드
+      const { recognizeCover } = await import('../features/register/ocrUtils');
       const [ocrResult, img] = await Promise.all([recognizeCover(file), loadImage(file)]);
       setTitle(ocrResult.title || '');
       setAuthor(ocrResult.author || '');

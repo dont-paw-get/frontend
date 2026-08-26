@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 /**
@@ -51,6 +51,12 @@ export default function Book3D({
   const [rx, ry, rz] = rotation || [0, rotationY, 0];
   const groupRef = useRef(null);
   const [hovered, setHovered] = useState(false);
+  const invalidate = useThree((s) => s.invalidate);
+
+  // demand 모드: hover/select 전환 시 애니메이션 루프를 킥오프 (이후 useFrame이 self-invalidate)
+  useEffect(() => {
+    invalidate();
+  }, [hovered, selected, invalidate]);
 
   const materials = useMemo(() => {
     const spine = new THREE.MeshStandardMaterial({
@@ -83,7 +89,7 @@ export default function Book3D({
   }, [rx, ry, rz]);
 
   // 상태별 목표 변환값
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const g = groupRef.current;
     if (!g) return;
 
@@ -118,6 +124,18 @@ export default function Book3D({
     g.scale.x = THREE.MathUtils.damp(g.scale.x, targetScaleXY, lambda, delta);
     g.scale.y = THREE.MathUtils.damp(g.scale.y, targetScaleXY, lambda, delta);
     g.scale.z = THREE.MathUtils.damp(g.scale.z, targetScaleZ, lambda, delta);
+
+    // frameloop="demand" 모드: 아직 목표에 도달하지 않았으면 다음 프레임을 요청.
+    // 정지 상태에서는 렌더를 멈춰 유휴 시 GPU/CPU 사용량을 0으로 유지한다.
+    const eps = 0.0006;
+    const settled =
+      Math.abs(g.position.x - targetX) < eps &&
+      Math.abs(g.position.y - targetY) < eps &&
+      Math.abs(g.position.z - targetZ) < eps &&
+      Math.abs(g.rotation.y - (ry + extraRotY)) < eps &&
+      Math.abs(g.scale.x - targetScaleXY) < eps &&
+      Math.abs(g.scale.z - targetScaleZ) < eps;
+    if (!settled) state.invalidate();
   });
 
   return (

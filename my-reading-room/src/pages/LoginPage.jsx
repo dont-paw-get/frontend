@@ -6,7 +6,15 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      <img className="login-bg-img" src="/login-bg.png" alt="Don't Paw-get Your Book" />
+      <img
+        className="login-bg-img"
+        src="/login-bg.webp"
+        alt="Don't Paw-get Your Book"
+        width={2560}
+        height={1440}
+        fetchPriority="high"
+        decoding="async"
+      />
 
       <button className="login-signup-btn" onClick={() => navigate('/signup')}>
         회원가입

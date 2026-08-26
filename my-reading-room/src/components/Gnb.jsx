@@ -34,7 +34,7 @@ export default function Gnb() {
     return (
         <nav className="gnb">
             <NavLink to="/library" className="gnb-left">
-                <img className="gnb-logo" src="/logo.jpg" alt="Don't Paw-get Your Book" />
+                <img className="gnb-logo" src="/logo.webp" alt="Don't Paw-get Your Book" width={36} height={36} decoding="async" />
                 <div className="gnb-title">
                     <span className="gnb-title-main">Don't Paw-get<br />Your Book</span>
                 </div>
