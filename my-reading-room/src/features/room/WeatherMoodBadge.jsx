@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 /**
  * WeatherMoodBadge — 사서 응답의 signals(날씨·시간대·무드)를 컨텍스트 뱃지로 표시.
  *
@@ -50,6 +52,73 @@ const chipStyle = {
   whiteSpace: 'nowrap',
 };
 
+const TEMP_NOTE = '실제 기온과 약 2~3°C 차이가 날 수 있어요.';
+
+/**
+ * WeatherChip — 날씨 칩. 온도가 표시될 때만 hover 시 우리 테마색 커스텀 툴팁을 보여줌.
+ */
+function WeatherChip({ weather }) {
+  const [hover, setHover] = useState(false);
+  const emoji = WEATHER_EMOJI[weather.condition] || '🌡️';
+  const desc = weather.description || '';
+  const source = weather.location_source;
+
+  // "user"이고 온도가 있을 때만 온도 표시 (기상 모델 추정치라 근사 표시 '≈')
+  const showTemp = source === 'user' && weather.temperature != null;
+  const tempText = showTemp ? ` ≈${Math.round(weather.temperature)}°C` : '';
+
+  return (
+    <span
+      style={{ ...chipStyle, position: 'relative', cursor: showTemp ? 'help' : 'default' }}
+      onMouseEnter={() => showTemp && setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {emoji} {desc}{tempText}
+      {source === 'default_seoul' && (
+        <span style={{ color: 'var(--text)', fontWeight: 500 }}>· 📍서울 기준</span>
+      )}
+
+      {showTemp && hover && (
+        <span
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            bottom: 'calc(100% + 6px)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '6px 10px',
+            borderRadius: 8,
+            border: '1px solid var(--border)',
+            background: 'var(--bg)',
+            color: 'var(--text-h)',
+            fontSize: 11,
+            fontWeight: 500,
+            lineHeight: 1.4,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.25)',
+            zIndex: 40,
+          }}
+        >
+          {TEMP_NOTE}
+          <span
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '5px solid transparent',
+              borderRight: '5px solid transparent',
+              borderTop: '5px solid var(--border)',
+            }}
+          />
+        </span>
+      )}
+    </span>
+  );
+}
+
 export default function WeatherMoodBadge({ signals }) {
   if (!signals) return null;
 
@@ -58,26 +127,7 @@ export default function WeatherMoodBadge({ signals }) {
 
   // 날씨 칩 (condition이 있고 none이 아닐 때만)
   if (weather && weather.condition && weather.location_source !== 'none') {
-    const emoji = WEATHER_EMOJI[weather.condition] || '🌡️';
-    const desc = weather.description || '';
-    const source = weather.location_source;
-
-    // "user"이고 온도가 있을 때만 온도 표시 (기상 모델 추정치라 근사 표시 '≈')
-    const showTemp = source === 'user' && weather.temperature != null;
-    const tempText = showTemp ? ` ≈${Math.round(weather.temperature)}°C` : '';
-
-    chips.push(
-      <span
-        key="weather"
-        style={chipStyle}
-        title={showTemp ? '기상 모델 기반 추정치예요. 실제 관측값과 2~3°C 차이가 있을 수 있어요.' : undefined}
-      >
-        {emoji} {desc}{tempText}
-        {source === 'default_seoul' && (
-          <span style={{ color: 'var(--text)', fontWeight: 500 }}>· 📍서울 기준</span>
-        )}
-      </span>
-    );
+    chips.push(<WeatherChip key="weather" weather={weather} />);
   }
 
   // 시간대 칩
