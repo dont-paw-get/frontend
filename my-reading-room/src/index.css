@@ -12,8 +12,10 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* 한글 전용 폰트를 명시(Mac: Apple SD Gothic Neo / Windows: Malgun Gothic)해
+     OS별 한글 fallback이 뒤섞이거나 두부(□)로 깨지는 문제 방지 */
+  --sans: -apple-system, system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif;
+  --heading: -apple-system, system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
@@ -21,7 +23,9 @@
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
-  font-synthesis: none;
+  /* weight만 합성 허용: Windows 한글 폰트에 볼드 웨이트가 없어도 강조가 적용되도록
+     (기존 none은 볼드가 아예 안 걸리는 문제가 있었음) */
+  font-synthesis: weight;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
