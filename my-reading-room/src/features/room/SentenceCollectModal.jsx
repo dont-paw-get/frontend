@@ -86,7 +86,7 @@ export default function SentenceCollectModal({ book, onClose }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: 'min(920px, 92vw)', maxHeight: '86vh', overflowY: 'auto',
+          width: 'min(1280px, 95vw)', maxHeight: '88vh', overflowY: 'auto',
           background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16,
           padding: 24, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', color: 'var(--text-h)',
         }}
@@ -101,7 +101,7 @@ export default function SentenceCollectModal({ book, onClose }) {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 240px', gap: 20, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr 320px', gap: 28, alignItems: 'start' }}>
           {/* 왼쪽: OCR 촬영/선택 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span style={{ fontWeight: 600, fontSize: 13 }}>문장 스캔</span>
@@ -211,7 +211,7 @@ export default function SentenceCollectModal({ book, onClose }) {
           {/* 오른쪽: 저장된 문장 목록 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span style={{ fontWeight: 600, fontSize: 13 }}>저장된 문장 ({quotes.length})</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 420, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 480, overflowY: 'auto' }}>
               {quotes.length === 0 && (
                 <p style={{ fontSize: 12, color: 'var(--text)' }}>아직 저장된 문장이 없어요 📖</p>
               )}
