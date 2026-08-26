@@ -62,12 +62,16 @@ export default function WeatherMoodBadge({ signals }) {
     const desc = weather.description || '';
     const source = weather.location_source;
 
-    // "user"이고 온도가 있을 때만 온도 표시
+    // "user"이고 온도가 있을 때만 온도 표시 (기상 모델 추정치라 근사 표시 '≈')
     const showTemp = source === 'user' && weather.temperature != null;
-    const tempText = showTemp ? ` ${Math.round(weather.temperature)}°C` : '';
+    const tempText = showTemp ? ` ≈${Math.round(weather.temperature)}°C` : '';
 
     chips.push(
-      <span key="weather" style={chipStyle}>
+      <span
+        key="weather"
+        style={chipStyle}
+        title={showTemp ? '기상 모델 기반 추정치예요. 실제 관측값과 2~3°C 차이가 있을 수 있어요.' : undefined}
+      >
         {emoji} {desc}{tempText}
         {source === 'default_seoul' && (
           <span style={{ color: 'var(--text)', fontWeight: 500 }}>· 📍서울 기준</span>
