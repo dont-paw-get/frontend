@@ -48,20 +48,6 @@ export default function BookDetail({ book, onClose }) {
     lineHeight: 1.6,
   };
 
-  const iconBtnStyle = {
-    width: 28,
-    height: 28,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    border: '1px solid var(--border)',
-    background: 'var(--code-bg)',
-    color: 'var(--text-h)',
-    cursor: 'pointer',
-    fontSize: 13,
-  };
-
   const btnStyle = {
     padding: '6px 12px',
     borderRadius: 8,
@@ -101,38 +87,43 @@ export default function BookDetail({ book, onClose }) {
 
   return (
     <div style={panelStyle}>
-      {/* 우측 상단 아이콘 버튼: 수정/삭제/닫기 */}
-      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
+      {/* 우측 상단 버튼: 수정 / 삭제 (세로 배치) */}
+      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
         {!editing && (
           <button
             onClick={() => setEditing(true)}
-            title="수정"
-            aria-label="수정"
-            style={iconBtnStyle}
+            style={{
+              padding: '4px 10px', borderRadius: 6, border: '1px solid var(--accent)',
+              background: 'transparent', color: 'var(--accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+            }}
           >
-            ✎
+            수정
           </button>
         )}
         <button
           onClick={() => setConfirmDelete(true)}
-          title="삭제"
-          aria-label="삭제"
-          style={{ ...iconBtnStyle, color: '#e74c3c', borderColor: 'rgba(231,76,60,0.4)' }}
+          style={{
+            padding: '4px 10px', borderRadius: 6, border: '1px solid #e74c3c',
+            background: 'transparent', color: '#e74c3c', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+          }}
         >
-          🗑
-        </button>
-        <button
-          onClick={onClose}
-          title="닫기"
-          aria-label="닫기"
-          style={{ ...iconBtnStyle, fontSize: 15 }}
-        >
-          ✕
+          삭제
         </button>
       </div>
 
+      {/* 닫기 */}
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute', top: 12, left: 12,
+          background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', fontSize: 16,
+        }}
+      >
+        ✕
+      </button>
+
       {/* 제목 */}
-      <h3 style={{ margin: '0 40px 6px 0', fontSize: 17, fontWeight: 700 }}>
+      <h3 style={{ margin: '0 70px 6px 24px', fontSize: 17, fontWeight: 700 }}>
         {book.title}
       </h3>
 
@@ -201,7 +192,7 @@ export default function BookDetail({ book, onClose }) {
 
       {/* 저장/취소 (편집 모드일 때만) */}
       {editing && (
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           <button onClick={handleSave} style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff' }}>
             저장
           </button>
@@ -210,6 +201,17 @@ export default function BookDetail({ book, onClose }) {
           </button>
         </div>
       )}
+
+      {/* 스크랩 확인하기 */}
+      <button
+        style={{
+          width: '100%', padding: '10px 0', borderRadius: 8,
+          border: '1px solid var(--accent-border)', background: 'var(--accent-bg)',
+          color: 'var(--text-h)', fontWeight: 600, cursor: 'pointer',
+        }}
+      >
+        스크랩 확인하기
+      </button>
     </div>
   );
 }
