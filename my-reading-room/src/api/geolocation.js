@@ -10,7 +10,29 @@ let cachedPosition = null; // { latitude, longitude } | null
 let requestPromise = null; // 중복 요청 방지용 진행 중 Promise
 
 /**
+ * 위도/경도 값이 유효한 범위인지 검증합니다.
+ * (위도: -90~90, 경도: -180~180, 숫자이고 NaN이 아니어야 함)
+ *
+ * @param {number} latitude
+ * @param {number} longitude
+ * @returns {boolean}
+ */
+export function isValidCoords(latitude, longitude) {
+  return (
+    typeof latitude === 'number' &&
+    typeof longitude === 'number' &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+}
+
+/**
  * 사용자의 현재 위치를 가져옵니다. 세션 중 최초 1회만 실제 요청하고 이후엔 캐시를 반환합니다.
+ * 브라우저가 반환한 좌표가 유효 범위(위도 -90~90, 경도 -180~180)를 벗어나면 null로 처리합니다.
  *
  * @param {object} [options]
  * @param {number} [options.timeout=5000] - 위치 요청 타임아웃(ms)
@@ -30,10 +52,16 @@ export function getUserLocation({ timeout = 5000 } = {}) {
   requestPromise = new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        cachedPosition = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
+        const { latitude, longitude } = position.coords;
+
+        if (!isValidCoords(latitude, longitude)) {
+          console.warn('[geolocation] 유효 범위를 벗어난 좌표를 무시합니다:', { latitude, longitude });
+          requestPromise = null;
+          resolve(null);
+          return;
+        }
+
+        cachedPosition = { latitude, longitude };
         requestPromise = null;
         resolve(cachedPosition);
       },

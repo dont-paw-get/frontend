@@ -8,6 +8,25 @@
 const API_BASE = '/api/v1';
 
 /**
+ * 위도/경도 값이 유효한 범위인지 검증합니다 (위도 -90~90, 경도 -180~180).
+ * @param {*} latitude
+ * @param {*} longitude
+ * @returns {boolean}
+ */
+function isValidCoords(latitude, longitude) {
+  return (
+    typeof latitude === 'number' &&
+    typeof longitude === 'number' &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+}
+
+/**
  * 사서에게 일반 JSON 채팅 메시지를 전송합니다 (단건 응답).
  *
  * @param {object} params
@@ -30,9 +49,11 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
     if (librarianId) {
       payload.librarian_id = librarianId;
     }
-    if (latitude != null && longitude != null) {
+    if (isValidCoords(latitude, longitude)) {
       payload.latitude = latitude;
       payload.longitude = longitude;
+    } else if (latitude != null || longitude != null) {
+      console.warn('[chatApi] 유효하지 않은 좌표라 전송하지 않습니다:', { latitude, longitude });
     }
 
     const response = await fetch(`${API_BASE}/chat`, {
@@ -83,9 +104,11 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
     if (librarianId) {
       payload.librarian_id = librarianId;
     }
-    if (latitude != null && longitude != null) {
+    if (isValidCoords(latitude, longitude)) {
       payload.latitude = latitude;
       payload.longitude = longitude;
+    } else if (latitude != null || longitude != null) {
+      console.warn('[chatApi] 유효하지 않은 좌표라 전송하지 않습니다:', { latitude, longitude });
     }
 
     const response = await fetch(`${API_BASE}/chat`, {
