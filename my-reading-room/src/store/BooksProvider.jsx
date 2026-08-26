@@ -65,8 +65,43 @@ export function BooksProvider({ children }) {
     setBooks([]);
   }
 
+  // ── 문장 수집(스크랩) ──
+  function addQuote(bookId, quote) {
+    const newQuote = {
+      id: crypto.randomUUID(),
+      text: quote.text?.trim() || '',
+      memo: quote.memo?.trim() || '',
+      page: Number(quote.page) || null,
+      createdAt: Date.now(),
+    };
+    setBooks((prev) =>
+      prev.map((b) => (b.id === bookId ? { ...b, quotes: [...(b.quotes || []), newQuote] } : b))
+    );
+    return newQuote;
+  }
+
+  function updateQuote(bookId, quoteId, patch) {
+    setBooks((prev) =>
+      prev.map((b) =>
+        b.id === bookId
+          ? { ...b, quotes: (b.quotes || []).map((q) => (q.id === quoteId ? { ...q, ...patch } : q)) }
+          : b
+      )
+    );
+  }
+
+  function removeQuote(bookId, quoteId) {
+    setBooks((prev) =>
+      prev.map((b) =>
+        b.id === bookId ? { ...b, quotes: (b.quotes || []).filter((q) => q.id !== quoteId) } : b
+      )
+    );
+  }
+
   return (
-    <BooksContext.Provider value={{ books, addBook, updateBook, removeBook, clearBooks }}>
+    <BooksContext.Provider
+      value={{ books, addBook, updateBook, removeBook, clearBooks, addQuote, updateQuote, removeQuote }}
+    >
       {children}
     </BooksContext.Provider>
   );
