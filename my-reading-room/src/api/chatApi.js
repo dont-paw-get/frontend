@@ -37,7 +37,7 @@ function isValidCoords(latitude, longitude) {
  * @param {string} [params.librarianId] - 사서 id ('cat' | 'stork', 미전달 시 백엔드 기본값 cat)
  * @param {number} [params.latitude] - 사용자 위치 위도 (날씨 연동용, 없으면 백엔드가 서울 기본값 사용)
  * @param {number} [params.longitude] - 사용자 위치 경도
- * @returns {Promise<{text: string, sessionId: string, switchTo: object|null}|null>} 응답 또는 null(실패 시)
+ * @returns {Promise<{text: string, sessionId: string, switchTo: object|null, signals: object|null}|null>} 응답 또는 null(실패 시)
  */
 export async function sendChatMessage({ message, sessionId = null, librarianId = null, latitude = null, longitude = null }) {
   try {
@@ -75,6 +75,7 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
       text: data.message,
       switchTo: data.switch_to ?? null,
       sessionId: data.session_id,
+      signals: data.signals ?? null,
     };
   } catch (err) {
     console.warn('[chatApi] 백엔드 연결 실패, 로컬 fallback 사용:', err.message);
@@ -92,7 +93,7 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
  * @param {number} [params.latitude] - 사용자 위치 위도 (날씨 연동용, 없으면 백엔드가 서울 기본값 사용)
  * @param {number} [params.longitude] - 사용자 위치 경도
  * @param {(chunk: string, fullText: string) => void} [params.onChunk] - 청크 수신 시 콜백
- * @returns {Promise<{text: string, sessionId: string, switchTo: object|null}|null>} 최종 응답 또는 null(실패 시)
+ * @returns {Promise<{text: string, sessionId: string, switchTo: object|null, signals: object|null}|null>} 최종 응답 또는 null(실패 시)
  */
 export async function streamChatMessage({ message, sessionId = null, librarianId = null, latitude = null, longitude = null, onChunk }) {
   try {
@@ -125,10 +126,20 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
       return null;
     }
 
-    // 응답 헤더에서 세션 ID 및 switchTo 확인
+    // 응답 헤더에서 세션 ID, switchTo, signals 확인
     const activeSessionId = response.headers.get('X-Session-Id') || sessionId;
     const switchToHeader = response.headers.get('X-Switch-To');
     const switchTo = switchToHeader ? JSON.parse(switchToHeader) : null;
+    // signals(날씨·무드)는 스트리밍에서 X-Signals 헤더(JSON 문자열)로 전달됨 (없으면 null)
+    let signals = null;
+    const signalsHeader = response.headers.get('X-Signals');
+    if (signalsHeader) {
+      try {
+        signals = JSON.parse(signalsHeader);
+      } catch {
+        signals = null;
+      }
+    }
 
     if (!response.body) {
       console.warn('[chatApi] 스트리밍 응답 바디가 없습니다.');
@@ -153,6 +164,7 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
       text: fullText,
       switchTo,
       sessionId: activeSessionId,
+      signals,
     };
   } catch (err) {
     console.warn('[chatApi] 스트리밍 실패, 로컬 fallback 사용:', err.message);

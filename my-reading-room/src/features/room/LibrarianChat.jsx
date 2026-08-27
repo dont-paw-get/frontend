@@ -6,6 +6,7 @@ import { streamChatMessage } from '../../api/chatApi';
 import { getUserLocation } from '../../api/geolocation';
 import { extractBooksFromAnswer } from './bookExtractor';
 import MarkdownRenderer from './MarkdownRenderer';
+import WeatherMoodBadge from './WeatherMoodBadge';
 
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
@@ -75,7 +76,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         if (result.sessionId) {
           setSessionId(result.sessionId);
         }
-        onAnswer({ text: result.text, switchTo: result.switchTo });
+        onAnswer({ text: result.text, switchTo: result.switchTo, signals: result.signals });
       } else {
         // 백엔드 실패 시 로컬 fallback
         const localResult = answerQuestion({ text: message, mode, books, librarian });
@@ -208,6 +209,9 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
           )}
         </div>
       </div>
+
+      {/* 날씨·무드 컨텍스트 뱃지 (백엔드 signals 기반) */}
+      {answer?.signals && !loading && <WeatherMoodBadge signals={answer.signals} />}
 
       {/* 사서 답변 메시지 뷰 (마크다운 포매팅 렌더링) */}
       {answer?.text && (
