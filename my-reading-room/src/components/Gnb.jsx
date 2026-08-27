@@ -34,8 +34,8 @@ export default function Gnb() {
     return (
         <nav className="gnb">
             <NavLink to="/library" className="gnb-left">
-                <img className="gnb-logo" src="/logo.png" alt="Don't Paw-get Your Book" />
-                <img className="gnb-service-name" src="/service name.png" alt="Don't Paw-get Your Book" />
+                <img className="gnb-logo" src="/logo.webp" alt="Don't Paw-get Your Book" width={36} height={36} decoding="async" />
+                <img className="gnb-service-name" src="/service name.webp" alt="Don't Paw-get Your Book" width={174} height={25} decoding="async" />
             </NavLink>
 
             <div className="gnb-menu">
@@ -71,7 +71,7 @@ export default function Gnb() {
                         onClick={() => setShowDropdown((prev) => !prev)}
                         aria-label="프로필 메뉴"
                     >
-                        <img className="gnb-profile" src="/profile.png" alt="사서 프로필" />
+                        <img className="gnb-profile" src="/profile.webp" alt="사서 프로필" width={32} height={32} decoding="async" />
                     </button>
 
                     {showDropdown && (

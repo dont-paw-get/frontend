@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
-// 배경 라인드로잉 (public/room/)
-export const BG_SRC_CAT = '/room/room_lineart.png';
-export const BG_SRC_STORK = '/room/room_lineart_stork.png';
+// 배경 라인드로잉 (public/room/) — WebP로 변환, 1920px로 리사이즈 (16:9 비율 유지)
+export const BG_SRC_CAT = '/room/room_lineart.webp';
+export const BG_SRC_STORK = '/room/room_lineart_stork.webp';
 export const BG_SRC = BG_SRC_CAT; // 기본값 (하위 호환)
 // 배경 원본 비율 (원본 픽셀에 맞게 조정)
 export const BG_ASPECT = 768 / 432;
