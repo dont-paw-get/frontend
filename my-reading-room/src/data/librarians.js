@@ -2,8 +2,9 @@
  * 사서 캐릭터 및 장르/무드 레지스트리.
  * 백엔드(backend-librarian/app/librarian/librarians.py)와 동기화된 데이터입니다.
  *
- * cat: 대화/독서이력 기반 추천 (주력), 간단한 무드 추천도 가능
- * stork: 날씨/시간대 기반 분위기 매칭 추천 (주력)
+ * 날씨/시간대/기분 정보는 두 사서 모두 활용 가능 (더 이상 stork만의 전유물이 아님).
+ * cat: 반말·"~냥" 어미, 친근하고 사교적. 모든 장르 추천 가능하며 미스터리 장르에 특화(더 상세)
+ * stork: 존댓말·공손체("~두둥"), 차분하고 정중함. 모든 장르 추천 가능하며 비즈니스 장르에 특화(더 상세)
  */
 
 // 장르 목록 — 백엔드 fake_agent.py의 _GENRE_BOOKS 키와 동기화
@@ -28,6 +29,7 @@ export const GENRES = [
   '공포',
   '모험',
   '철학',
+  '비즈니스',
 ];
 
 // 무드 목록 — 백엔드 curation/mood.py의 무드 enum과 동기화
@@ -39,8 +41,9 @@ export const LIBRARIANS = [
     id: 'cat',
     name: '고양이 사서',
     icon: '🐱',
-    genres: ['소설', '에세이', '시', '자기계발', '심리학', '인문학'],
-    specialty: '대화/독서이력 기반 추천',
+    // 모든 장르 추천 가능, 미스터리 장르는 더 자세하게 (특화)
+    genres: ['소설', '에세이', '시', '자기계발', '심리학', '인문학', '미스터리'],
+    specialty: '미스터리 장르 추천',
     image: '/cursors/cat_03.webp',
     imageHover: '/cursors/cat_04.webp',
   },
@@ -48,8 +51,9 @@ export const LIBRARIANS = [
     id: 'stork',
     name: '황새 사서',
     icon: '🪿',
-    genres: ['미스터리', '판타지', 'SF', '여행', '과학', '역사'],
-    specialty: '날씨/시간대 기반 분위기 매칭 추천',
+    // 모든 장르 추천 가능, 비즈니스 장르는 더 자세하게 (특화)
+    genres: ['판타지', 'SF', '여행', '과학', '역사', '비즈니스'],
+    specialty: '비즈니스 장르 추천',
     image: null,
     imageHover: null,
   },

@@ -1,4 +1,4 @@
-import { GENRES, librarianForGenre, getOtherLibrarian } from '../../data/librarians';
+import { GENRES, librarianForGenre } from '../../data/librarians';
 
 // 장르 키워드 별칭 — 백엔드 장르 체계와 동기화
 const GENRE_ALIASES = {
@@ -22,6 +22,7 @@ const GENRE_ALIASES = {
   '공포': ['공포', '호러', 'horror'],
   '모험': ['모험', 'adventure'],
   '철학': ['철학', 'philosophy'],
+  '비즈니스': ['비즈니스', 'business', '경영', '경제'],
 };
 
 function detectGenre(text) {
@@ -54,29 +55,7 @@ export function answerQuestion({ text, mode, books, librarian }) {
     };
   }
 
-  // 날씨/시간대 관련 키워드 → stork(황새) 사서에게 넘기기
-  const weatherKeywords = ['날씨', '비', '눈', '맑은', '흐린', '오늘 분위기', '시간대', '저녁', '밤'];
-  if (librarian.id === 'cat' && weatherKeywords.some((kw) => q.includes(kw))) {
-    const other = getOtherLibrarian('cat');
-    if (other) {
-      return {
-        text: `날씨/분위기 기반 추천은 우리 ${other.icon} ${other.name}가 더 잘 알아요~냥! 바꿔서 물어보시겠어요? 🐾`,
-        switchTo: other,
-      };
-    }
-  }
-
-  // 대화/이력 관련 키워드 → cat 사서에게 넘기기
-  const historyKeywords = ['독서 이력', '내가 읽은', '이전에', '좋아하는', '취향', '선호'];
-  if (librarian.id === 'stork' && historyKeywords.some((kw) => q.includes(kw))) {
-    const other = getOtherLibrarian('stork');
-    if (other) {
-      return {
-        text: `독서 이력 기반 추천은 ${other.icon} ${other.name}가 전문이에요! 바꿔드릴까요? 📚`,
-        switchTo: other,
-      };
-    }
-  }
+  // 날씨/시간대/기분 정보는 두 사서 모두 활용 가능 (더 이상 stork만의 전유물이 아님) → 강제 전환하지 않음
 
   const isRecommend = mode === 'recommend' || q.includes('추천');
 
