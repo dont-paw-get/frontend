@@ -140,3 +140,194 @@
   background: var(--border);
   color: var(--text-h);
 }
+
+/* ── 계정 설정 섹션 ── */
+.mypage-card--section {
+  align-items: stretch;
+  gap: 18px;
+}
+
+.mypage-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.mypage-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mypage-field:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.mypage-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mypage-field-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mypage-field-value {
+  font-size: 14px;
+  color: var(--text-h);
+}
+
+.mypage-field-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mypage-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 13px;
+  outline: none;
+}
+
+.mypage-text-input:focus {
+  border-color: var(--accent);
+}
+
+.mypage-hint {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.mypage-error {
+  font-size: 12px;
+  color: #e74c3c;
+  margin: 0;
+}
+
+.mypage-success {
+  font-size: 12px;
+  color: var(--accent);
+  margin: 0;
+}
+
+.mypage-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mypage-btn-row--center {
+  justify-content: center;
+}
+
+.mypage-btn {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mypage-btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.mypage-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-h);
+}
+
+.mypage-btn--danger {
+  background: #e74c3c;
+  color: #fff;
+}
+
+/* 알림 토글 */
+.mypage-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.mypage-toggle-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* 계정 탈퇴 */
+.mypage-withdraw-btn {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border: 1px solid #e74c3c;
+  border-radius: 8px;
+  background: transparent;
+  color: #e74c3c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mypage-withdraw-btn:hover {
+  background: #e74c3c;
+  color: #fff;
+}
+
+/* 탈퇴 확인 모달 */
+.mypage-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.mypage-modal {
+  width: min(340px, 90vw);
+  box-sizing: border-box;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.mypage-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-h);
+  margin: 0 0 10px;
+}
+
+.mypage-modal-desc {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0 0 20px;
+}

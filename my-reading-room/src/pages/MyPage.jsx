@@ -10,41 +10,111 @@ const mockUser = {
   gender: '남성',
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 8자 이상, 영문 대/소문자·숫자·특수문자 포함
+const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
 export default function MyPage() {
-  const { profileImage, email, birthDate, gender } = mockUser;
+  const { profileImage, birthDate, gender } = mockUser;
+
+  // ── 닉네임 ──
   const [nickname, setNickname] = useState(mockUser.nickname);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(nickname);
+  const [editingNick, setEditingNick] = useState(false);
+  const [nickDraft, setNickDraft] = useState(nickname);
 
-  const handleEdit = () => {
-    setDraft(nickname);
-    setEditing(true);
-  };
+  // ── 이메일 ──
+  const [email, setEmail] = useState(mockUser.email);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailDraft, setEmailDraft] = useState(email);
+  const [emailError, setEmailError] = useState('');
 
-  const handleSave = () => {
-    const trimmed = draft.trim();
+  // ── 비밀번호 ──
+  const [pwOpen, setPwOpen] = useState(false);
+  const [curPw, setCurPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  // ── 알림 설정 ──
+  const [notifyRecommend, setNotifyRecommend] = useState(true);
+  const [notifyEvent, setNotifyEvent] = useState(false);
+
+  // ── 계정 탈퇴 ──
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+
+  // 닉네임 저장
+  const handleNickSave = () => {
+    const trimmed = nickDraft.trim();
     if (trimmed) {
       setNickname(trimmed);
       // TODO: 실제 API 호출로 닉네임 저장
     }
-    setEditing(false);
+    setEditingNick(false);
+  };
+  const handleNickKeyDown = (e) => {
+    if (e.key === 'Enter') handleNickSave();
+    if (e.key === 'Escape') setEditingNick(false);
   };
 
-  const handleCancel = () => {
-    setEditing(false);
+  // 이메일 저장
+  const handleEmailSave = () => {
+    const trimmed = emailDraft.trim();
+    if (!EMAIL_RE.test(trimmed)) {
+      setEmailError('올바른 이메일 형식을 입력해 주세요.');
+      return;
+    }
+    setEmail(trimmed);
+    setEmailError('');
+    setEditingEmail(false);
+    // TODO: 실제 API 호출로 이메일 변경 (인증 메일 발송 등)
+  };
+  const handleEmailCancel = () => {
+    setEmailDraft(email);
+    setEmailError('');
+    setEditingEmail(false);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSave();
-    if (e.key === 'Escape') handleCancel();
+  // 비밀번호 변경
+  const handlePwSubmit = (e) => {
+    e.preventDefault();
+    setPwSuccess(false);
+    if (!curPw || !newPw || !confirmPw) {
+      setPwError('모든 항목을 입력해 주세요.');
+      return;
+    }
+    if (!PW_RE.test(newPw)) {
+      setPwError('비밀번호는 8자 이상이며 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.');
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setPwError('새 비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    if (newPw === curPw) {
+      setPwError('현재 비밀번호와 다른 비밀번호를 사용해 주세요.');
+      return;
+    }
+    // TODO: 실제 API 호출로 비밀번호 변경 (현재 비밀번호 검증 포함)
+    setPwError('');
+    setPwSuccess(true);
+    setCurPw('');
+    setNewPw('');
+    setConfirmPw('');
+    setPwOpen(false);
+  };
+
+  const handleWithdraw = () => {
+    // TODO: 실제 API 호출로 계정 탈퇴 후 로그아웃/리다이렉트
+    setWithdrawOpen(false);
   };
 
   return (
     <section className="mypage">
       <h2 className="mypage-heading">마이페이지</h2>
 
+      {/* 프로필 카드 */}
       <div className="mypage-card">
-        {/* 프로필 이미지 */}
         <div className="mypage-avatar-wrap">
           <img
             className="mypage-avatar"
@@ -56,34 +126,34 @@ export default function MyPage() {
           />
         </div>
 
-        {/* 프로필 정보 */}
         <dl className="mypage-info">
           <div className="mypage-info-row">
             <dt>닉네임</dt>
             <dd className="mypage-nickname-cell">
-              {editing ? (
+              {editingNick ? (
                 <div className="mypage-nickname-edit">
                   <input
                     className="mypage-nickname-input"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={handleKeyDown}
+                    value={nickDraft}
+                    onChange={(e) => setNickDraft(e.target.value)}
+                    onKeyDown={handleNickKeyDown}
                     autoFocus
                   />
-                  <button className="mypage-nickname-save" onClick={handleSave}>저장</button>
-                  <button className="mypage-nickname-cancel" onClick={handleCancel}>취소</button>
+                  <button className="mypage-nickname-save" onClick={handleNickSave}>저장</button>
+                  <button className="mypage-nickname-cancel" onClick={() => setEditingNick(false)}>취소</button>
                 </div>
               ) : (
                 <div className="mypage-nickname-display">
                   <span>{nickname}</span>
-                  <button className="mypage-nickname-edit-btn" onClick={handleEdit}>수정</button>
+                  <button
+                    className="mypage-nickname-edit-btn"
+                    onClick={() => { setNickDraft(nickname); setEditingNick(true); }}
+                  >
+                    수정
+                  </button>
                 </div>
               )}
             </dd>
-          </div>
-          <div className="mypage-info-row">
-            <dt>이메일</dt>
-            <dd>{email}</dd>
           </div>
           <div className="mypage-info-row">
             <dt>생년월일</dt>
@@ -95,6 +165,140 @@ export default function MyPage() {
           </div>
         </dl>
       </div>
+
+      {/* 계정 설정 카드 */}
+      <div className="mypage-card mypage-card--section">
+        <h3 className="mypage-section-title">계정 설정</h3>
+
+        {/* 이메일 변경 */}
+        <div className="mypage-field">
+          <span className="mypage-field-label">이메일</span>
+          {editingEmail ? (
+            <div className="mypage-field-edit">
+              <input
+                className="mypage-text-input"
+                type="email"
+                value={emailDraft}
+                onChange={(e) => setEmailDraft(e.target.value)}
+                placeholder="이메일 주소"
+                autoFocus
+              />
+              <div className="mypage-btn-row">
+                <button className="mypage-btn mypage-btn--primary" onClick={handleEmailSave}>저장</button>
+                <button className="mypage-btn mypage-btn--ghost" onClick={handleEmailCancel}>취소</button>
+              </div>
+              {emailError && <p className="mypage-error">{emailError}</p>}
+            </div>
+          ) : (
+            <div className="mypage-field-display">
+              <span className="mypage-field-value">{email}</span>
+              <button
+                className="mypage-nickname-edit-btn"
+                onClick={() => { setEmailDraft(email); setEmailError(''); setEditingEmail(true); }}
+              >
+                변경
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 비밀번호 변경 */}
+        <div className="mypage-field">
+          <div className="mypage-field-display">
+            <span className="mypage-field-label">비밀번호</span>
+            <button
+              className="mypage-nickname-edit-btn"
+              onClick={() => { setPwOpen((v) => !v); setPwError(''); setPwSuccess(false); }}
+            >
+              {pwOpen ? '닫기' : '변경'}
+            </button>
+          </div>
+
+          {pwSuccess && <p className="mypage-success">비밀번호가 변경되었습니다.</p>}
+
+          {pwOpen && (
+            <form className="mypage-field-edit" onSubmit={handlePwSubmit}>
+              <input
+                className="mypage-text-input"
+                type="password"
+                value={curPw}
+                onChange={(e) => setCurPw(e.target.value)}
+                placeholder="현재 비밀번호"
+                autoComplete="current-password"
+              />
+              <input
+                className="mypage-text-input"
+                type="password"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                placeholder="새 비밀번호"
+                autoComplete="new-password"
+              />
+              <input
+                className="mypage-text-input"
+                type="password"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                placeholder="새 비밀번호 확인"
+                autoComplete="new-password"
+              />
+              <p className="mypage-hint">
+                비밀번호는 8자 이상이며 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.
+              </p>
+              {pwError && <p className="mypage-error">{pwError}</p>}
+              <div className="mypage-btn-row">
+                <button type="submit" className="mypage-btn mypage-btn--primary">변경하기</button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {/* 알림 설정 카드 */}
+      <div className="mypage-card mypage-card--section">
+        <h3 className="mypage-section-title">알림 설정</h3>
+
+        <label className="mypage-toggle-row">
+          <span>추천 알림</span>
+          <input
+            type="checkbox"
+            checked={notifyRecommend}
+            onChange={(e) => setNotifyRecommend(e.target.checked)}
+          />
+        </label>
+        <label className="mypage-toggle-row">
+          <span>이벤트·공지 알림</span>
+          <input
+            type="checkbox"
+            checked={notifyEvent}
+            onChange={(e) => setNotifyEvent(e.target.checked)}
+          />
+        </label>
+      </div>
+
+      {/* 계정 관리 카드 */}
+      <div className="mypage-card mypage-card--section">
+        <h3 className="mypage-section-title">계정 관리</h3>
+        <button className="mypage-withdraw-btn" onClick={() => setWithdrawOpen(true)}>
+          계정 탈퇴
+        </button>
+      </div>
+
+      {/* 탈퇴 확인 모달 */}
+      {withdrawOpen && (
+        <div className="mypage-modal-overlay" onClick={() => setWithdrawOpen(false)}>
+          <div className="mypage-modal" onClick={(e) => e.stopPropagation()}>
+            <p className="mypage-modal-title">정말 탈퇴하시겠습니까?</p>
+            <p className="mypage-modal-desc">
+              탈퇴 시 모든 서재·문장 기록이 삭제되며 복구할 수 없습니다.
+            </p>
+            <div className="mypage-btn-row mypage-btn-row--center">
+              <button className="mypage-btn mypage-btn--danger" onClick={handleWithdraw}>탈퇴</button>
+              <button className="mypage-btn mypage-btn--ghost" onClick={() => setWithdrawOpen(false)}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
