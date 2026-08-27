@@ -3,7 +3,7 @@ import './MyPage.css';
 
 // 임시 mock 데이터 (추후 API 연동 시 교체)
 const mockUser = {
-  profileImage: '/profile.png',
+  profileImage: '/profile.webp',
   nickname: 'pawget_reader',
   email: 'reader@dontpawget.com',
   birthDate: '1995-03-12',
@@ -50,6 +50,9 @@ export default function MyPage() {
             className="mypage-avatar"
             src={profileImage}
             alt={`${nickname} 프로필 사진`}
+            width={97}
+            height={102}
+            decoding="async"
           />
         </div>
 

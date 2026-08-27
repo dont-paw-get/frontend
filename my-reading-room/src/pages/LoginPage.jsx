@@ -8,25 +8,25 @@ import './LoginPage.css';
 const BUTTONS = [
   {
     id: 'login',
-    src: '/button/button_login.png',
+    src: '/button/button_login.webp',
     tooltip: '로그인',
     left: 55.9, top: 61.9, width: 5.6, height: 8.8,
   },
   {
     id: 'signup',
-    src: '/button/button_signup.png',
+    src: '/button/button_signup.webp',
     tooltip: '회원가입',
     left: 40.9, top: 61.5, width: 7.8, height: 8.5,
   },
   {
     id: 'password',
-    src: '/button/button_password.png',
+    src: '/button/button_password.webp',
     tooltip: '비밀번호 찾기',
     left: 50.2, top: 62.1, width: 4.3, height: 7.2,
   },
   {
     id: 'eye',
-    src: '/button/button_eye.png',
+    src: '/button/button_eye.webp',
     tooltip: '비밀번호 보기',
     left: 59.5, top: 53.9, width: 1.6, height: 2.7,
   },
@@ -47,6 +47,9 @@ function LoginButton({ btn, onClick, disabled, active }) {
         className={`login-layer-img${hovered || active ? ' login-layer-img--hover' : ''}${disabled ? ' login-layer-img--disabled' : ''}`}
         src={btn.src}
         alt=""
+        width={2560}
+        height={1440}
+        decoding="async"
         draggable={false}
       />
       <button
@@ -102,19 +105,45 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      <img className="login-bg-img" src="/login-bg.png" alt="Don't Paw-get Your Book" />
+      <img
+        className="login-bg-img"
+        src="/login-bg.webp"
+        alt="Don't Paw-get Your Book"
+        width={1920}
+        height={1080}
+        decoding="async"
+      />
 
       {/* 로고 (3D 젤리 스티커 효과) */}
       <img
         className="login-logo-3d"
-        src="/button/logo_bl.png"
+        src="/button/logo_bl.webp"
         alt="Don't Paw-get Logo"
+        width={2560}
+        height={1440}
+        decoding="async"
         draggable={false}
       />
 
       {/* 입력 필드 이미지 레이어 (투명) */}
-      <img className="login-layer-img login-layer-img--input" src="/Input_field/id.png" alt="" draggable={false} />
-      <img className="login-layer-img login-layer-img--input" src="/Input_field/pw.png" alt="" draggable={false} />
+      <img
+        className="login-layer-img login-layer-img--input"
+        src="/Input_field/id.webp"
+        alt=""
+        width={2560}
+        height={1440}
+        decoding="async"
+        draggable={false}
+      />
+      <img
+        className="login-layer-img login-layer-img--input"
+        src="/Input_field/pw.webp"
+        alt=""
+        width={2560}
+        height={1440}
+        decoding="async"
+        draggable={false}
+      />
 
       {/* 실제 입력 필드 (이미지 위에 투명하게 겹침) */}
       <input
