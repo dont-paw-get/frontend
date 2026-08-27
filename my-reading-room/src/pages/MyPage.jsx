@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import './MyPage.css';
 
-// 임시 mock 데이터 (추후 API 연동 시 교체)
+// 임시 mock 데이터 (추후 Member 서비스 API 연동 시 교체)
+// 사서 이름(닉네임)은 사서 프로필(/librarians)에서 관리하며, 이 페이지는 사용자 계정 정보만 다룸
 const mockUser = {
   profileImage: '/profile.webp',
-  nickname: 'pawget_reader',
+  userId: 'pawget_reader', // 로그인용 사용자 ID
   email: 'reader@dontpawget.com',
   birthDate: '1995-03-12',
   gender: '남성',
@@ -15,12 +16,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export default function MyPage() {
-  const { profileImage, birthDate, gender } = mockUser;
-
-  // ── 닉네임 ──
-  const [nickname, setNickname] = useState(mockUser.nickname);
-  const [editingNick, setEditingNick] = useState(false);
-  const [nickDraft, setNickDraft] = useState(nickname);
+  const { profileImage, userId, birthDate, gender } = mockUser;
 
   // ── 이메일 ──
   const [email, setEmail] = useState(mockUser.email);
@@ -42,20 +38,6 @@ export default function MyPage() {
 
   // ── 계정 탈퇴 ──
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-
-  // 닉네임 저장
-  const handleNickSave = () => {
-    const trimmed = nickDraft.trim();
-    if (trimmed) {
-      setNickname(trimmed);
-      // TODO: 실제 API 호출로 닉네임 저장
-    }
-    setEditingNick(false);
-  };
-  const handleNickKeyDown = (e) => {
-    if (e.key === 'Enter') handleNickSave();
-    if (e.key === 'Escape') setEditingNick(false);
-  };
 
   // 이메일 저장
   const handleEmailSave = () => {
@@ -119,7 +101,7 @@ export default function MyPage() {
           <img
             className="mypage-avatar"
             src={profileImage}
-            alt={`${nickname} 프로필 사진`}
+            alt={`${userId} 프로필 사진`}
             width={97}
             height={102}
             decoding="async"
@@ -128,32 +110,8 @@ export default function MyPage() {
 
         <dl className="mypage-info">
           <div className="mypage-info-row">
-            <dt>닉네임</dt>
-            <dd className="mypage-nickname-cell">
-              {editingNick ? (
-                <div className="mypage-nickname-edit">
-                  <input
-                    className="mypage-nickname-input"
-                    value={nickDraft}
-                    onChange={(e) => setNickDraft(e.target.value)}
-                    onKeyDown={handleNickKeyDown}
-                    autoFocus
-                  />
-                  <button className="mypage-nickname-save" onClick={handleNickSave}>저장</button>
-                  <button className="mypage-nickname-cancel" onClick={() => setEditingNick(false)}>취소</button>
-                </div>
-              ) : (
-                <div className="mypage-nickname-display">
-                  <span>{nickname}</span>
-                  <button
-                    className="mypage-nickname-edit-btn"
-                    onClick={() => { setNickDraft(nickname); setEditingNick(true); }}
-                  >
-                    수정
-                  </button>
-                </div>
-              )}
-            </dd>
+            <dt>사용자 ID</dt>
+            <dd>{userId}</dd>
           </div>
           <div className="mypage-info-row">
             <dt>생년월일</dt>

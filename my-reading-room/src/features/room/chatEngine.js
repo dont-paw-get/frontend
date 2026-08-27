@@ -1,4 +1,4 @@
-import { GENRES, librarianForGenre } from '../../data/librarians';
+import { GENRES, librarianForGenre, findLibrarianByKeyword } from '../../data/librarians';
 
 // 장르 키워드 별칭 — 백엔드 장르 체계와 동기화
 const GENRE_ALIASES = {
@@ -44,14 +44,26 @@ function titleList(books, max = 4) {
  * 백엔드 연동 전까지 프론트 로컬 fallback으로 사용.
  * @returns {{ text: string, switchTo?: object }}
  */
-export function answerQuestion({ text, mode, books, librarian }) {
+export function answerQuestion({ text, mode, books, librarian, librarianNames = {} }) {
   const q = text.trim();
   if (!q) return { text: '무엇을 찾아드릴까요냥? 🐾' };
 
   // 인사
   if (q.includes('안녕') || /^(hi|hello)/i.test(q)) {
+    const myName = librarianNames[librarian.id] || librarian.defaultName || librarian.name;
     return {
-      text: `안녕하세요, 집사님! 🐾 저는 ${librarian.name}예요. ${librarian.specialty}을 잘한답니다. 저자·제목·장르로 찾아드리거나 책을 추천해드릴게요 📚`,
+      text: `안녕하세요, 집사님! 🐾 저는 ${myName}예요. ${librarian.specialty}을 잘한답니다. 저자·제목·장르로 찾아드리거나 책을 추천해드릴게요 📚`,
+    };
+  }
+
+  // 다른 사서의 이름/키워드를 입력하면 전환할지 물어봄
+  // (예: 대표 사서가 고양이일 때 "황새 사서", "슈빌" 등을 입력)
+  const mentioned = findLibrarianByKeyword(q, librarianNames);
+  if (mentioned && mentioned.id !== librarian.id) {
+    const targetName = librarianNames[mentioned.id] || mentioned.defaultName;
+    return {
+      text: `${mentioned.icon} ${targetName} 사서를 찾으시나요? ${mentioned.specialty}에 특히 자세해요. 지금 바꿔드릴까요?`,
+      switchTo: mentioned,
     };
   }
 

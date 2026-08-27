@@ -8,7 +8,8 @@ import { useTheme } from '../../store/themeStore';
 import LibrarianChat from './LibrarianChat';
 import LibrarianCursor from './LibrarianCursor';
 import BookDetail from './BookDetail';
-import { DEFAULT_LIBRARIAN_ID, getLibrarian } from '../../data/librarians';
+import { getLibrarian } from '../../data/librarians';
+import { useLibrarian } from '../../store/librarianStore';
 import {
   BG_SRC_CAT,
   BG_SRC_STORK,
@@ -121,23 +122,17 @@ export default function LibraryScene() {
   const isDark = theme === 'dark';
   const [selectedId, setSelectedId] = useState(null);
   const [calibrating, setCalibrating] = useState(false);
-  const [librarianId, setLibrarianId] = useState(DEFAULT_LIBRARIAN_ID);
+  // 사서 상태는 전역(LibrarianProvider) — Gnb·사서 프로필 페이지와 공유
+  const { activeId: librarianId, setActiveId, librarian, names } = useLibrarian();
   const [chatAnswer, setChatAnswer] = useState(null);
   const [hoveringBook, setHoveringBook] = useState(false);
-  const librarian = getLibrarian(librarianId);
 
   const switchLibrarian = (id) => {
-    setLibrarianId(id);
-    document.documentElement.setAttribute('data-librarian', id);
+    setActiveId(id);
     const lib = getLibrarian(id);
-    setChatAnswer({ text: `${lib.icon} ${lib.name}로 바꿨어요! ${lib.specialty}을 물어보세요 📚` });
+    const displayName = names[id] || lib.defaultName;
+    setChatAnswer({ text: `${lib.icon} ${displayName}로 바꿨어요! ${lib.specialty}을 물어보세요 📚` });
   };
-
-  // 초기 로드 시 data-librarian 속성 설정
-  useEffect(() => {
-    document.documentElement.setAttribute('data-librarian', librarianId);
-    return () => document.documentElement.removeAttribute('data-librarian');
-  }, []);
   const [previewCount, setPreviewCount] = useState(6);
   const [activeIdx, setActiveIdx] = useState(0);
   const [copied, setCopied] = useState(false);

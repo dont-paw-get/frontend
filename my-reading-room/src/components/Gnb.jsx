@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '../store/themeStore';
+import { useLibrarian } from '../store/librarianStore';
 import './Gnb.css';
 
 function SunIcon() {
@@ -22,13 +23,18 @@ function MoonIcon() {
 
 export default function Gnb() {
     const { theme, setTheme } = useTheme();
+    const { librarian } = useLibrarian();
     const [showDropdown, setShowDropdown] = useState(false);
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        setShowDropdown(false);
         // TODO: 실제 로그아웃 로직 (토큰 삭제 등) 추가
         navigate('/login');
+    };
+
+    const goTo = (path) => {
+        setShowDropdown(false);
+        navigate(path);
     };
 
     return (
@@ -63,21 +69,33 @@ export default function Gnb() {
                         <MoonIcon />
                     </button>
                 </div>
-                <span className="gnb-badge">고양이 사서</span>
+                <span className="gnb-badge">
+                    {librarian.icon} {librarian.displayName}
+                </span>
+
+                {/* 로그아웃은 프로필 사진 왼쪽에 별도 노출 */}
+                <button className="gnb-logout-btn" onClick={handleLogout}>
+                    로그아웃
+                </button>
 
                 <div className="gnb-profile-wrap">
                     <button
                         className="gnb-profile-btn"
                         onClick={() => setShowDropdown((prev) => !prev)}
-                        aria-label="프로필 메뉴"
+                        aria-label="사서 메뉴"
+                        aria-expanded={showDropdown}
                     >
                         <img className="gnb-profile" src="/profile.webp" alt="사서 프로필" width={32} height={32} decoding="async" />
                     </button>
 
                     {showDropdown && (
                         <div className="gnb-dropdown">
-                            <button className="gnb-dropdown-item" onClick={handleLogout}>
-                                로그아웃
+                            {/* 두 항목 모두 사서 프로필 페이지로 이동 — 그곳에서 선택(변경)과 이름 편집을 함께 처리 */}
+                            <button className="gnb-dropdown-item" onClick={() => goTo('/librarians')}>
+                                사서 변경
+                            </button>
+                            <button className="gnb-dropdown-item" onClick={() => goTo('/librarians')}>
+                                사서 프로필
                             </button>
                         </div>
                     )}

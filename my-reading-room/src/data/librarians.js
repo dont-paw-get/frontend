@@ -36,11 +36,18 @@ export const GENRES = [
 export const MOODS = ['cozy', 'adventurous', 'reflective', 'dreamy', 'thrilling', 'calm'];
 
 // 사서 캐릭터 2종 (백엔드 LIBRARIAN_REGISTRY와 1:1 대응)
+// typeCode:    DB librarian_type enum (RUSSIAN_BLUE | SHOEBILL)
+// species:     사서 종(품종) 표시명
+// defaultName: 가입 직후 기본 사서 이름 — 사서 프로필에서 사용자가 변경 가능
 export const LIBRARIANS = [
   {
     id: 'cat',
+    typeCode: 'RUSSIAN_BLUE',
     name: '고양이 사서',
+    species: '러시안블루',
+    defaultName: '블루',
     icon: '🐱',
+    persona: '반말과 "~냥" 어미로 친근하게 이야기해요',
     // 모든 장르 추천 가능, 미스터리 장르는 더 자세하게 (특화)
     genres: ['소설', '에세이', '시', '자기계발', '심리학', '인문학', '미스터리'],
     specialty: '미스터리 장르 추천',
@@ -49,8 +56,12 @@ export const LIBRARIANS = [
   },
   {
     id: 'stork',
+    typeCode: 'SHOEBILL',
     name: '황새 사서',
+    species: '슈빌',
+    defaultName: '슈빌',
     icon: '🪿',
+    persona: '존댓말과 공손한 말투로 차분하게 안내해요',
     // 모든 장르 추천 가능, 비즈니스 장르는 더 자세하게 (특화)
     genres: ['판타지', 'SF', '여행', '과학', '역사', '비즈니스'],
     specialty: '비즈니스 장르 추천',
@@ -63,6 +74,43 @@ export const DEFAULT_LIBRARIAN_ID = 'cat';
 
 export function getLibrarian(id) {
   return LIBRARIANS.find((l) => l.id === id) || LIBRARIANS[0];
+}
+
+/**
+ * 사서의 특화 장르 표시 라벨 ("미스터리 장르 추천" → "미스터리").
+ * @param {object} librarian
+ * @returns {string}
+ */
+export function genreLabelForLibrarian(librarian) {
+  return (librarian?.specialty || '').replace(/\s*장르 추천$/, '');
+}
+
+/**
+ * 사서 이름(사용자 지정 이름 포함)이나 캐릭터 키워드로 사서를 찾습니다.
+ * 채팅에서 "황새 사서", "슈빌" 등을 입력했을 때 전환 대상을 감지하는 데 사용합니다.
+ *
+ * @param {string} text - 사용자 입력
+ * @param {Record<string,string>} [names] - { [id]: 사용자 지정 이름 }
+ * @returns {object|null} 매칭된 사서 (없으면 null)
+ */
+export function findLibrarianByKeyword(text, names = {}) {
+  const t = (text || '').toLowerCase().trim();
+  if (!t) return null;
+
+  for (const lib of LIBRARIANS) {
+    const keywords = [
+      names[lib.id],
+      lib.defaultName,
+      lib.name,
+      lib.species,
+      lib.name.replace(/\s*사서$/, ''), // '고양이 사서' → '고양이'
+    ]
+      .filter(Boolean)
+      .map((k) => k.toLowerCase());
+
+    if (keywords.some((k) => t.includes(k))) return lib;
+  }
+  return null;
 }
 
 // 특정 장르를 담당하는 사서 찾기 (없으면 null)
