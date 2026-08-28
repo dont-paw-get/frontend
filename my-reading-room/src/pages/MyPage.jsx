@@ -13,19 +13,12 @@ const mockUser = {
   gender: '남성',
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // 8자 이상, 영문 대/소문자·숫자·특수문자 포함
 const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const { profileImage, userId, birthDate, gender } = mockUser;
-
-  // ── 이메일 ──
-  const [email, setEmail] = useState(mockUser.email);
-  const [editingEmail, setEditingEmail] = useState(false);
-  const [emailDraft, setEmailDraft] = useState(email);
-  const [emailError, setEmailError] = useState('');
+  const { profileImage, userId, email, birthDate, gender } = mockUser;
 
   // ── 비밀번호 ──
   const [pwOpen, setPwOpen] = useState(false);
@@ -43,24 +36,6 @@ export default function MyPage() {
   // ── 계정 탈퇴 ──
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawLoading, setWithdrawLoading] = useState(false);
-
-  // 이메일 저장
-  const handleEmailSave = () => {
-    const trimmed = emailDraft.trim();
-    if (!EMAIL_RE.test(trimmed)) {
-      setEmailError('올바른 이메일 형식을 입력해 주세요.');
-      return;
-    }
-    setEmail(trimmed);
-    setEmailError('');
-    setEditingEmail(false);
-    // TODO: 실제 API 호출로 이메일 변경 (인증 메일 발송 등)
-  };
-  const handleEmailCancel = () => {
-    setEmailDraft(email);
-    setEmailError('');
-    setEditingEmail(false);
-  };
 
   // 비밀번호 변경 (로그인 상태)
   const handlePwSubmit = async (e) => {
@@ -163,36 +138,12 @@ export default function MyPage() {
       <div className="mypage-card mypage-card--section">
         <h3 className="mypage-section-title">계정 설정</h3>
 
-        {/* 이메일 변경 */}
+        {/* 이메일 (변경 불가 — 읽기 전용) */}
         <div className="mypage-field">
           <span className="mypage-field-label">이메일</span>
-          {editingEmail ? (
-            <div className="mypage-field-edit">
-              <input
-                className="mypage-text-input"
-                type="email"
-                value={emailDraft}
-                onChange={(e) => setEmailDraft(e.target.value)}
-                placeholder="이메일 주소"
-                autoFocus
-              />
-              <div className="mypage-btn-row">
-                <button className="mypage-btn mypage-btn--primary" onClick={handleEmailSave}>저장</button>
-                <button className="mypage-btn mypage-btn--ghost" onClick={handleEmailCancel}>취소</button>
-              </div>
-              {emailError && <p className="mypage-error">{emailError}</p>}
-            </div>
-          ) : (
-            <div className="mypage-field-display">
-              <span className="mypage-field-value">{email}</span>
-              <button
-                className="mypage-nickname-edit-btn"
-                onClick={() => { setEmailDraft(email); setEmailError(''); setEditingEmail(true); }}
-              >
-                변경
-              </button>
-            </div>
-          )}
+          <div className="mypage-field-display">
+            <span className="mypage-field-value">{email}</span>
+          </div>
         </div>
 
         {/* 비밀번호 변경 */}
