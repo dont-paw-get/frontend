@@ -56,8 +56,16 @@ async function parseBody(res) {
  */
 export class ApiError extends Error {
   constructor(status, body) {
-    const code = body?.code || body?.error || null;
-    super(body?.message || body?.detail || `요청 실패 (${status})`);
+    // backend-auth는 오류를 detail에 담는다. detail은 문자열이거나
+    // { code, message } 객체(예: EMAIL_NOT_VERIFIED)일 수 있다.
+    const detail = body?.detail;
+    const code = body?.code || detail?.code || body?.error || null;
+    const message =
+      body?.message ||
+      detail?.message ||
+      (typeof detail === 'string' ? detail : null) ||
+      `요청 실패 (${status})`;
+    super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
