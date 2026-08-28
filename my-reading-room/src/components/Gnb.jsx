@@ -51,6 +51,11 @@ export default function Gnb() {
             </div>
 
             <div className="gnb-right">
+                {/* 순서: 로그아웃 - 테마 스위치 - 사서이름+프로필사진(하나의 버튼) */}
+                <button className="gnb-logout-btn" onClick={handleLogout}>
+                    로그아웃
+                </button>
+
                 <div className="gnb-theme">
                     <button
                         className={theme === 'light' ? 'on' : undefined}
@@ -69,14 +74,6 @@ export default function Gnb() {
                         <MoonIcon />
                     </button>
                 </div>
-                <span className="gnb-badge">
-                    {librarian.icon} {librarian.displayName}
-                </span>
-
-                {/* 로그아웃은 프로필 사진 왼쪽에 별도 노출 */}
-                <button className="gnb-logout-btn" onClick={handleLogout}>
-                    로그아웃
-                </button>
 
                 <div className="gnb-profile-wrap">
                     <button
@@ -85,7 +82,8 @@ export default function Gnb() {
                         aria-label="사서 메뉴"
                         aria-expanded={showDropdown}
                     >
-                        <img className="gnb-profile" src="/profile.webp" alt="사서 프로필" width={32} height={32} decoding="async" />
+                        <span className="gnb-profile-name">{librarian.displayName}</span>
+                        <img className="gnb-profile" src="/profile.webp" alt="" width={32} height={32} decoding="async" />
                     </button>
 
                     {showDropdown && (
