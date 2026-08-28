@@ -99,10 +99,7 @@ export default function Gnb() {
 
                     {showDropdown && (
                         <div className="gnb-dropdown">
-                            {/* 두 항목 모두 사서 프로필 페이지로 이동 — 그곳에서 선택(변경)과 이름 편집을 함께 처리 */}
-                            <button className="gnb-dropdown-item" onClick={() => goTo('/librarians')}>
-                                사서 변경
-                            </button>
+                            {/* 사서 프로필 페이지에서 사서 선택(변경)과 이름 편집을 함께 처리 */}
                             <button className="gnb-dropdown-item" onClick={() => goTo('/librarians')}>
                                 사서 프로필
                             </button>
