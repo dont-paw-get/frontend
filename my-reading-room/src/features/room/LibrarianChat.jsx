@@ -59,7 +59,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     const isStork = targetLibrarianId === 'stork';
     const initialGreeting = isStork
       ? '🪿 두둥! 슈빌 사서가 전문 분야의 깊이 있는 명저를 선별하고 있습니다... 🪶'
-      : `${librarian.icon} 사서가 답변을 준비하고 있어요... 🐾`;
+      : '🐾 블루 사서가 딱 맞는 좋은 책을 찾고 있다냥...';
     onAnswer({ text: initialGreeting });
 
     // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)

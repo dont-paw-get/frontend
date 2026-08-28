@@ -27,21 +27,22 @@ export function extractBooksFromAnswer(text) {
     const cleanTitle = (title || '').trim().replace(/^['"『"“`《<]|['"』"”`》>]$/g, '').trim();
     let cleanAuthor = (author || '').trim().replace(/^[(\[\s]*|[)\]\s]*$/g, '').trim();
 
-    // 저자 텍스트 내 불필요 접두사/접미사 정리
-    cleanAuthor = cleanAuthor.replace(/(?:\s*저자?|\s*지음|\s*글|\s*작가|\s*옮김)$/g, '').trim();
-    cleanAuthor = cleanAuthor.replace(/^(?:저자?|지은이|글|작가)[:\s]*/g, '').trim();
-    // 괄호 안에 페이지 수나 출판사 정보가 섞여 있는 경우 분리
-    cleanAuthor = cleanAuthor.replace(/,\s*\d+\s*(?:쪽|페이지|p|pages).*$/i, '').trim();
-
-    // 페이지 수 추출 (snippet이나 author 부분에서 숫자+쪽/페이지/p 패턴 검색)
+    // 페이지 수 추출 (author 또는 contextSnippet에서 숫자+쪽/페이지/p 패턴 검색)
     let totalPage = 300; // 기본 단행본 권장 페이지 수
-    const pageMatch = (contextSnippet + ' ' + author).match(/(\d{2,4})\s*(?:쪽|페이지|p|pages)\b/i);
+    const pageMatch = (author + ' ' + contextSnippet).match(/(\d{2,4})\s*(?:쪽|페이지|p|pages)/i);
     if (pageMatch) {
       const parsedPage = parseInt(pageMatch[1], 10);
       if (parsedPage >= 30 && parsedPage <= 2000) {
         totalPage = parsedPage;
       }
     }
+
+    // 저자 텍스트 내 괄호 페이지 수 정리 (예: "피터 드러커 (308쪽)" -> "피터 드러커")
+    cleanAuthor = cleanAuthor.replace(/\s*[(（]\s*\d+\s*(?:쪽|페이지|p|pages)\s*[)）]/gi, '').trim();
+    cleanAuthor = cleanAuthor.replace(/,\s*\d+\s*(?:쪽|페이지|p|pages).*$/i, '').trim();
+    // 저자 텍스트 내 불필요 접두사/접미사 정리
+    cleanAuthor = cleanAuthor.replace(/(?:\s*저자?|\s*지음|\s*글|\s*작가|\s*옮김)$/g, '').trim();
+    cleanAuthor = cleanAuthor.replace(/^(?:저자?|지은이|글|작가)[:\s]*/g, '').trim();
 
     if (cleanTitle && cleanTitle.length >= 1 && cleanTitle.length <= 60 && !seenTitles.has(cleanTitle)) {
       const excludeWords = [
