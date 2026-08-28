@@ -23,7 +23,6 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
   const { names: librarianNames } = useLibrarian();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState('recommend'); // 'recommend' (AI 추천 에이전트) | 'search' (로컬 서재 검색)
   const [input, setInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -56,37 +55,31 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     setInput('');
     setLoading(true);
 
-    if (mode === 'recommend') {
-      // 🌟 [도서 추천 모드] 백엔드 AI 추천 에이전트 호출 (도서 검색 도구 활용 및 실시간 스트리밍)
-      onAnswer({ text: `${librarian.icon} 추천 도서를 찾고 있어요냥... 🐾` });
+    // 모든 질문을 백엔드로 전송 → 오케스트레이터가 질문에 맞는 에이전트(검색/추천 등)를 선택
+    onAnswer({ text: `${librarian.icon} 사서가 답변을 준비하고 있어요... 🐾` });
 
-      // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)
-      const location = await getUserLocation();
+    // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)
+    const location = await getUserLocation();
 
-      const result = await streamChatMessage({
-        message,
-        sessionId,
-        librarianId: librarian.id,
-        latitude: location?.latitude,
-        longitude: location?.longitude,
-        onChunk: (_chunk, fullText) => {
-          onAnswer({ text: fullText });
-        },
-      });
+    const result = await streamChatMessage({
+      message,
+      sessionId,
+      librarianId: librarian.id,
+      latitude: location?.latitude,
+      longitude: location?.longitude,
+      onChunk: (_chunk, fullText) => {
+        onAnswer({ text: fullText });
+      },
+    });
 
-      if (result) {
-        if (result.sessionId) {
-          setSessionId(result.sessionId);
-        }
-        onAnswer({ text: result.text, switchTo: result.switchTo, signals: result.signals });
-      } else {
-        // 백엔드 실패 시 로컬 fallback
-        const localResult = answerQuestion({ text: message, mode, books, librarian, librarianNames });
-        onAnswer(localResult);
+    if (result) {
+      if (result.sessionId) {
+        setSessionId(result.sessionId);
       }
+      onAnswer({ text: result.text, switchTo: result.switchTo, signals: result.signals });
     } else {
-      // 🔍 [일반 검색 모드] 내 서재 보유 도서 즉시 로컬 검색
-      const localResult = answerQuestion({ text: message, mode, books, librarian, librarianNames });
+      // 백엔드 연결 실패 시에만 로컬 서재 검색으로 폴백
+      const localResult = answerQuestion({ text: message, books, librarian, librarianNames });
       onAnswer(localResult);
     }
 
@@ -166,17 +159,8 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         </button>
       )}
 
-      {/* 모드 드롭다운 + 도움말 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-        <select
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          style={{ flex: 1, padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)' }}
-        >
-          <option value="recommend">✨ 도서 추천 (AI)</option>
-          <option value="search">🔍 일반 검색 (내 서재)</option>
-        </select>
-
+      {/* 질문 팁 안내 (모드 선택 없이 자유롭게 질문 → 백엔드 오케스트레이터가 알아서 처리) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginBottom: 8 }}>
         <div onMouseEnter={() => setShowHelp(true)} onMouseLeave={() => setShowHelp(false)} style={{ position: 'relative' }}>
           <span
             style={{
@@ -189,26 +173,17 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
           {showHelp && (
             <div
               style={{
-                position: 'absolute', bottom: '130%', right: 0, width: 220, background: 'var(--bg)',
+                position: 'absolute', bottom: '130%', right: 0, width: 230, background: 'var(--bg)',
                 border: '1px solid var(--border)', borderRadius: 8, padding: 10,
                 boxShadow: '0 6px 18px rgba(0,0,0,0.35)', lineHeight: 1.6, zIndex: 30,
               }}
             >
-              <strong>{mode === 'recommend' ? '✨ AI 도서 추천 질문 팁' : '🔍 일반 검색 팁'}</strong>
+              <strong>💬 이렇게 물어보세요</strong>
               <br />
-              {mode === 'recommend' ? (
-                <>
-                  · 따뜻하고 힐링되는 소설 추천해줘
-                  <br />· 반전이 멋진 추리/스릴러 있어?
-                  <br />· 요즘 읽기 좋은 에세이 알려줘
-                </>
-              ) : (
-                <>
-                  · 저자로 검색 (예: 김영하)
-                  <br />· 제목으로 검색 (예: 아몬드)
-                  <br />· 장르로 검색 (예: 소설)
-                </>
-              )}
+              · 따뜻하고 힐링되는 소설 추천해줘
+              <br />· 오늘 날씨에 어울리는 책 있어?
+              <br />· 내 서재에서 김영하 책 찾아줘
+              <br />· 아몬드라는 책 있어?
             </div>
           )}
         </div>
@@ -297,13 +272,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={
-            loading
-              ? '사서가 답변 중...'
-              : mode === 'recommend'
-                ? '예: 따뜻하고 힐링되는 소설 추천해줘'
-                : '저자·제목·장르로 내 서재 검색'
-          }
+          placeholder={loading ? '사서가 답변 중...' : '무엇이든 물어보세요 (추천·검색·날씨 등)'}
           disabled={loading}
           style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
         />

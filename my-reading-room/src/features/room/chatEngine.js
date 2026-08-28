@@ -41,7 +41,11 @@ function titleList(books, max = 4) {
 
 /**
  * 도서 DB 기반으로 질문 해석 → 답변 생성.
- * 백엔드 연동 전까지 프론트 로컬 fallback으로 사용.
+ * 백엔드 연결 실패 시 로컬 fallback으로만 사용된다.
+ * (평상시 라우팅은 백엔드 오케스트레이터가 담당하며, mode 인자 없이 호출된다.)
+ * @param {object} p
+ * @param {string} p.text
+ * @param {'recommend'|'search'} [p.mode] - 선택. 미지정 시 '추천' 키워드 포함 여부로 추천/검색 판단
  * @returns {{ text: string, switchTo?: object }}
  */
 export function answerQuestion({ text, mode, books, librarian, librarianNames = {} }) {
