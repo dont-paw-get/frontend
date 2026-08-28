@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../store/authStore';
 import { ApiError } from '../api/authApi';
 import './LoginPage.css';
@@ -76,7 +76,10 @@ function LoginButton({ btn, onClick, disabled, active }) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+  // 보호 라우트에서 리다이렉트된 경우 로그인 후 원래 위치로 복귀
+  const from = location.state?.from || '/library';
   const [eyeActive, setEyeActive] = useState(false);
   const [email, setEmail] = useState('');
   const [userPw, setUserPw] = useState('');
@@ -96,7 +99,7 @@ export default function LoginPage() {
     setError('');
     try {
       await login({ email: email.trim(), password: userPw });
-      navigate('/library');
+      navigate(from, { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 403 && err.code === 'EMAIL_NOT_VERIFIED') {
