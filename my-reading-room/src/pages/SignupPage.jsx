@@ -158,14 +158,14 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* 닉네임 */}
+          {/* 사용자 ID (백엔드 계약상 nickname 필드로 전송) */}
           <div className="signup-field">
-            <label htmlFor="signup-nickname">닉네임</label>
+            <label htmlFor="signup-userid">사용자 ID</label>
             <input
-              id="signup-nickname"
+              id="signup-userid"
               name="nickname"
               type="text"
-              placeholder="사용할 닉네임 입력"
+              placeholder="사용할 사용자 ID 입력"
               value={form.nickname}
               onChange={handleChange}
               autoComplete="username"
