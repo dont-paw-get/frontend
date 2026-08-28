@@ -46,9 +46,10 @@ export function extractBooksFromAnswer(text) {
     if (cleanTitle && cleanTitle.length >= 1 && cleanTitle.length <= 60 && !seenTitles.has(cleanTitle)) {
       const excludeWords = [
         '도서 추천', '추천 도서', '사서', '책', '소설', '에세이', '인문학', '자기계발',
-        '답변', '제목', '저자', '추천 이유', '줄거리', '요약', '카테고리', '목록', '리스트'
+        '답변', '제목', '저자', '추천 이유', '줄거리', '요약', '카테고리', '목록', '리스트',
+        '사서 분석 정보', '추천 포커스 장르', '사용자 무드', '현재 날씨'
       ];
-      if (!excludeWords.includes(cleanTitle)) {
+      if (!excludeWords.some((w) => cleanTitle.includes(w))) {
         seenTitles.add(cleanTitle);
         books.push({
           title: cleanTitle,

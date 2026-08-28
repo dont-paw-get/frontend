@@ -129,15 +129,31 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
     // 응답 헤더에서 세션 ID, switchTo, signals 확인
     const activeSessionId = response.headers.get('X-Session-Id') || sessionId;
     const switchToHeader = response.headers.get('X-Switch-To');
-    const switchTo = switchToHeader ? JSON.parse(switchToHeader) : null;
+    let switchTo = null;
+    if (switchToHeader) {
+      try {
+        switchTo = JSON.parse(decodeURIComponent(switchToHeader));
+      } catch {
+        try {
+          switchTo = JSON.parse(switchToHeader);
+        } catch {
+          switchTo = null;
+        }
+      }
+    }
+
     // signals(날씨·무드)는 스트리밍에서 X-Signals 헤더(JSON 문자열)로 전달됨 (없으면 null)
     let signals = null;
     const signalsHeader = response.headers.get('X-Signals');
     if (signalsHeader) {
       try {
-        signals = JSON.parse(signalsHeader);
+        signals = JSON.parse(decodeURIComponent(signalsHeader));
       } catch {
-        signals = null;
+        try {
+          signals = JSON.parse(signalsHeader);
+        } catch {
+          signals = null;
+        }
       }
     }
 

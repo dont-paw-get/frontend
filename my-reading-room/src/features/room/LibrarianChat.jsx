@@ -27,9 +27,13 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
   const [showHelp, setShowHelp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
+  const [lastUserMessage, setLastUserMessage] = useState(''); // 직전 질문 기억 (사서 전환 시 자동 질의용)
 
-  // 답변 텍스트에서 추천 도서 정보 자동 추출
-  const recommendedBooks = answer?.text && !loading ? extractBooksFromAnswer(answer.text) : [];
+  // 답변 텍스트에서 추천 도서 정보 자동 추출 (사서 전환 제안 멘트일 때는 도서 등록 버튼 비활성화)
+  const recommendedBooks =
+    answer?.text && !loading && !answer?.switchTo
+      ? extractBooksFromAnswer(answer.text)
+      : [];
 
   const handleRegisterBook = (book) => {
     navigate('/register', {
@@ -47,16 +51,16 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
-
-    const message = input.trim();
-    setInput('');
+  const sendQuery = async (message, targetLibrarianId = librarian.id) => {
     setLoading(true);
+    setLastUserMessage(message);
 
-    // 모든 질문을 백엔드로 전송 → 오케스트레이터가 질문에 맞는 에이전트(검색/추천 등)를 선택
-    onAnswer({ text: `${librarian.icon} 사서가 답변을 준비하고 있어요... 🐾` });
+    // 사서별 로딩 초기 멘트 분기
+    const isStork = targetLibrarianId === 'stork';
+    const initialGreeting = isStork
+      ? '🪿 두둥! 슈빌 사서가 전문 분야의 깊이 있는 명저를 선별하고 있습니다... 🪶'
+      : `${librarian.icon} 사서가 답변을 준비하고 있어요... 🐾`;
+    onAnswer({ text: initialGreeting });
 
     // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)
     const location = await getUserLocation();
@@ -64,7 +68,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     const result = await streamChatMessage({
       message,
       sessionId,
-      librarianId: librarian.id,
+      librarianId: targetLibrarianId,
       latitude: location?.latitude,
       longitude: location?.longitude,
       onChunk: (_chunk, fullText) => {
@@ -84,6 +88,23 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     }
 
     setLoading(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+
+    const message = input.trim();
+    setInput('');
+    await sendQuery(message, librarian.id);
+  };
+
+  const handleSwitchClick = async (targetId) => {
+    onSwitch(targetId);
+    if (lastUserMessage) {
+      // 사서 전환 시 직전 질문을 새 사서의 관점으로 즉시 자동 재질의!
+      await sendQuery(lastUserMessage, targetId);
+    }
   };
 
   const box = {
@@ -147,7 +168,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
       {/* 사서 변경 버튼 (전문 장르 벗어난 추천일 때) */}
       {answer?.switchTo && (
         <button
-          onClick={() => onSwitch(answer.switchTo.id)}
+          onClick={() => handleSwitchClick(answer.switchTo.id)}
           style={{
             display: 'flex', alignItems: 'center', gap: 6, width: '100%', justifyContent: 'center',
             marginBottom: 8, padding: '8px 10px', borderRadius: 999, border: '1px solid var(--accent-border)',
