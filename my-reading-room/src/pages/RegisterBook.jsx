@@ -140,9 +140,18 @@ export default function RegisterBook() {
         onSubmit={handleSubmit}
         style={{ display: 'grid', gridTemplateColumns: '220px 1fr 200px', gap: 24, alignItems: 'start' }}
       >
-        {/* 왼쪽: 표지 촬영/업로드 */}
+        {/*
+          왼쪽: ISBN 바코드 촬영/업로드
+          ⚠️ UI 문구만 ISBN 방식으로 전환 (CLIAR-154). 실제 인식 로직(recognizeCover)은
+          아직 표지 텍스트 OCR 그대로이며, ISBN 숫자 추출 + 외부 도서 API 연동은 후속 티켓에서 진행.
+        */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <span style={{ fontWeight: 600 }}>표지 스캔</span>
+          <span style={{ fontWeight: 600 }}>ISBN 촬영</span>
+          <span style={{ fontSize: 12, color: 'var(--text)' }}>
+            책 뒷면이나 표지 안쪽 바코드 아래에 있는 13자리 ISBN 숫자를 촬영해주세요.
+            <br />
+            예: ISBN 979-11-6479-434-8
+          </span>
 
           <input
             ref={captureInputRef}
@@ -190,7 +199,7 @@ export default function RegisterBook() {
             </div>
           )}
 
-          {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>표지 인식 중이에요냥... 🐾</span>}
+          {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중이에요냥... 🐾</span>}
         </div>
 
         {/* 중앙: 인식 결과 + 수정 */}
@@ -218,7 +227,7 @@ export default function RegisterBook() {
 
           {!ocrDone ? (
             <p style={{ color: 'var(--text)', fontSize: 14 }}>
-              왼쪽에서 표지를 촬영하거나 업로드하면 제목·저자·색상·두께를 자동으로 인식해요냥 📚
+              왼쪽에서 ISBN 바코드 번호를 촬영하거나 업로드하면 제목·저자를 자동으로 인식해요냥 📚
             </p>
           ) : (
             <>
