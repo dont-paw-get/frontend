@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Gnb from './components/Gnb';
+import { AuthProvider } from './store/AuthProvider';
 import { BooksProvider } from './store/BooksProvider';
 import { ThemeProvider } from './store/ThemeProvider';
 import { LibrarianProvider } from './store/LibrarianProvider';
@@ -27,19 +28,21 @@ function AppLayout() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <LibrarianProvider>
-        <BooksProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/*" element={<AppLayout />} />
-            </Routes>
-          </BrowserRouter>
-        </BooksProvider>
-      </LibrarianProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <LibrarianProvider>
+          <BooksProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/*" element={<AppLayout />} />
+              </Routes>
+            </BrowserRouter>
+          </BooksProvider>
+        </LibrarianProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
