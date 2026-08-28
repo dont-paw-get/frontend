@@ -26,6 +26,7 @@ const FINGERTIP = {
 function getShortBubbleText(rawText, librarian) {
   if (!rawText) return '';
   const text = rawText.trim();
+  const isStork = librarian?.id === 'stork';
 
   // 1. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 마크다운 기호 정제 후 표시
   if (text.length <= 80 && text.split('\n').length <= 2) {
@@ -39,13 +40,19 @@ function getShortBubbleText(rawText, librarian) {
   // 2. 도서 추천 결과 등 장문인 경우 요약 리액션 문구 생성
   const books = extractBooksFromAnswer(text);
   if (books.length >= 2) {
-    return `✨ 추천 도서 ${books.length}권을 찾았어요냥! 📚\n아래 채팅창에서 확인해보세요 🐾`;
+    return isStork
+      ? `✨ 두둥! 추천 도서 ${books.length}권을 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 추천 도서 ${books.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
   if (books.length === 1) {
-    return `✨ 『${books[0].title}』 책을 찾았어요냥! 📚\n아래 채팅창에서 확인해보세요 🐾`;
+    return isStork
+      ? `✨ 두둥! 『${books[0].title}』 도서를 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 『${books[0].title}』 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
 
-  return `✨ 사서 답변이 도착했어요냥! 📚\n아래 채팅창에서 확인해보세요 🐾`;
+  return isStork
+    ? `✨ 두둥! 사서의 추천 답변이 도착했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+    : `✨ 사서 답변이 도착했다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
 }
 
 export default function LibrarianCursor({ librarian, answer, hovering }) {
