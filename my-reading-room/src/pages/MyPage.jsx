@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { changePassword, deleteMe, logout, ApiError } from '../api/authApi';
 import './MyPage.css';
 
 // 임시 mock 데이터 (추후 Member 서비스 API 연동 시 교체)
@@ -16,6 +18,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export default function MyPage() {
+  const navigate = useNavigate();
   const { profileImage, userId, birthDate, gender } = mockUser;
 
   // ── 이메일 ──
@@ -31,6 +34,7 @@ export default function MyPage() {
   const [confirmPw, setConfirmPw] = useState('');
   const [pwError, setPwError] = useState('');
   const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
 
   // ── 알림 설정 ──
   const [notifyRecommend, setNotifyRecommend] = useState(true);
@@ -38,6 +42,7 @@ export default function MyPage() {
 
   // ── 계정 탈퇴 ──
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   // 이메일 저장
   const handleEmailSave = () => {
@@ -57,8 +62,8 @@ export default function MyPage() {
     setEditingEmail(false);
   };
 
-  // 비밀번호 변경
-  const handlePwSubmit = (e) => {
+  // 비밀번호 변경 (로그인 상태)
+  const handlePwSubmit = async (e) => {
     e.preventDefault();
     setPwSuccess(false);
     if (!curPw || !newPw || !confirmPw) {
@@ -77,18 +82,48 @@ export default function MyPage() {
       setPwError('현재 비밀번호와 다른 비밀번호를 사용해 주세요.');
       return;
     }
-    // TODO: 실제 API 호출로 비밀번호 변경 (현재 비밀번호 검증 포함)
+    setPwLoading(true);
     setPwError('');
-    setPwSuccess(true);
-    setCurPw('');
-    setNewPw('');
-    setConfirmPw('');
-    setPwOpen(false);
+    try {
+      await changePassword({ currentPassword: curPw, newPassword: newPw });
+      setPwSuccess(true);
+      setCurPw('');
+      setNewPw('');
+      setConfirmPw('');
+      setPwOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setPwError('현재 비밀번호가 올바르지 않습니다.');
+        } else if (err.status === 400) {
+          setPwError(err.message || '비밀번호 정책에 맞지 않습니다.');
+        } else {
+          setPwError('비밀번호 변경 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.');
+        }
+      } else {
+        setPwError('서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.');
+      }
+    } finally {
+      setPwLoading(false);
+    }
   };
 
-  const handleWithdraw = () => {
-    // TODO: 실제 API 호출로 계정 탈퇴 후 로그아웃/리다이렉트
-    setWithdrawOpen(false);
+  // 계정 탈퇴: DELETE /users/me 후 쿠키 정리를 위해 logout 호출 → 로그인 화면
+  const handleWithdraw = async () => {
+    if (withdrawLoading) return;
+    setWithdrawLoading(true);
+    try {
+      await deleteMe();
+      await logout(); // refresh_token/refresh_sub 쿠키 정리 + 메모리 토큰 제거
+      navigate('/login');
+    } catch {
+      // 탈퇴 실패 시에도 안전하게 로그아웃 처리 후 로그인 화면으로
+      try { await logout(); } catch { /* 무시 */ }
+      navigate('/login');
+    } finally {
+      setWithdrawLoading(false);
+      setWithdrawOpen(false);
+    }
   };
 
   return (
@@ -205,7 +240,9 @@ export default function MyPage() {
               </p>
               {pwError && <p className="mypage-error">{pwError}</p>}
               <div className="mypage-btn-row">
-                <button type="submit" className="mypage-btn mypage-btn--primary">변경하기</button>
+                <button type="submit" className="mypage-btn mypage-btn--primary" disabled={pwLoading}>
+                  {pwLoading ? '변경 중...' : '변경하기'}
+                </button>
               </div>
             </form>
           )}
@@ -251,8 +288,10 @@ export default function MyPage() {
               탈퇴 시 모든 서재·문장 기록이 삭제되며 복구할 수 없습니다.
             </p>
             <div className="mypage-btn-row mypage-btn-row--center">
-              <button className="mypage-btn mypage-btn--danger" onClick={handleWithdraw}>탈퇴</button>
-              <button className="mypage-btn mypage-btn--ghost" onClick={() => setWithdrawOpen(false)}>취소</button>
+              <button className="mypage-btn mypage-btn--danger" onClick={handleWithdraw} disabled={withdrawLoading}>
+                {withdrawLoading ? '처리 중...' : '탈퇴'}
+              </button>
+              <button className="mypage-btn mypage-btn--ghost" onClick={() => setWithdrawOpen(false)} disabled={withdrawLoading}>취소</button>
             </div>
           </div>
         </div>
