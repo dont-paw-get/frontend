@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../store/authStore';
+import { ApiError } from '../api/authApi';
 import './LoginPage.css';
 
 /**
@@ -74,28 +76,61 @@ function LoginButton({ btn, onClick, disabled, active }) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [eyeActive, setEyeActive] = useState(false);
-  const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
   const [userPw, setUserPw] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const isLoginEnabled = userId.trim().length > 0 && userPw.trim().length > 0;
+  const isLoginEnabled = email.trim().length > 0 && userPw.trim().length > 0 && !loading;
 
   const handleEyeClick = useCallback(() => {
     setEyeActive(true);
     setTimeout(() => setEyeActive(false), 3000);
   }, []);
 
+  const handleLogin = async () => {
+    if (!isLoginEnabled) return;
+    setLoading(true);
+    setError('');
+    try {
+      await login({ email: email.trim(), password: userPw });
+      navigate('/library');
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 403 && err.code === 'EMAIL_NOT_VERIFIED') {
+          // 이메일 인증 미완료 → 인증 화면으로 유도 (email 전달)
+          navigate('/signup', { state: { verifyEmail: email.trim() } });
+          return;
+        }
+        if (err.status === 403) {
+          setError('탈퇴한 계정이에요. 다른 계정으로 로그인해 주세요.');
+        } else if (err.status === 401) {
+          setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        } else if (err.status === 429) {
+          setError('요청이 많아요. 잠시 후 다시 시도해 주세요.');
+        } else {
+          setError('로그인 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.');
+        }
+      } else {
+        setError('서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleClick = (id) => {
     switch (id) {
       case 'login':
-        if (!isLoginEnabled) return;
-        navigate('/library');
+        handleLogin();
         break;
       case 'signup':
         navigate('/signup');
         break;
       case 'password':
-        // TODO: 비밀번호 찾기 페이지
+        navigate('/password/forgot');
         break;
       case 'eye':
         handleEyeClick();
@@ -154,11 +189,11 @@ export default function LoginPage() {
           width: `${INPUT_FIELDS.id.width}%`,
           height: `${INPUT_FIELDS.id.height}%`,
         }}
-        type="text"
-        placeholder="아이디"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
-        autoComplete="username"
+        type="email"
+        placeholder="이메일"
+        value={email}
+        onChange={(e) => { setEmail(e.target.value); if (error) setError(''); }}
+        autoComplete="email"
       />
       <input
         className="login-input-field"
@@ -171,7 +206,8 @@ export default function LoginPage() {
         type={eyeActive ? 'text' : 'password'}
         placeholder="비밀번호"
         value={userPw}
-        onChange={(e) => setUserPw(e.target.value)}
+        onChange={(e) => { setUserPw(e.target.value); if (error) setError(''); }}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
         autoComplete="current-password"
       />
 
@@ -192,6 +228,9 @@ export default function LoginPage() {
           비밀번호 표시 중...
         </div>
       )}
+
+      {/* 로그인 에러 메시지 */}
+      {error && <div className="login-error">{error}</div>}
     </div>
   );
 }

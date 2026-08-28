@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { signup, ApiError } from '../api/authApi';
 import EmailVerification from './EmailVerification';
 import './SignupPage.css';
@@ -11,6 +11,7 @@ const GENDER_MAP = { 남성: 'MALE', 여성: 'FEMALE' };
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -25,8 +26,8 @@ export default function SignupPage() {
   const [pwTouched, setPwTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  // 회원가입 성공(201) 후 이메일 인증 단계로 전환
-  const [verifyEmail, setVerifyEmail] = useState(null);
+  // 회원가입 성공(201) 후, 또는 로그인에서 EMAIL_NOT_VERIFIED로 넘어온 경우 이메일 인증 단계로 전환
+  const [verifyEmail, setVerifyEmail] = useState(location.state?.verifyEmail ?? null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '../store/themeStore';
 import { useLibrarian } from '../store/librarianStore';
+import { useAuth } from '../store/authStore';
 import './Gnb.css';
 
 function SunIcon() {
@@ -24,12 +25,22 @@ function MoonIcon() {
 export default function Gnb() {
     const { theme, setTheme } = useTheme();
     const { librarian } = useLibrarian();
+    const { logout } = useAuth();
     const [showDropdown, setShowDropdown] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        // TODO: 실제 로그아웃 로직 (토큰 삭제 등) 추가
-        navigate('/login');
+    const handleLogout = async () => {
+        if (loggingOut) return;
+        setLoggingOut(true);
+        try {
+            // backend-auth 로그아웃 (Refresh Token revoke + 쿠키 삭제) 후 메모리 토큰 제거
+            await logout();
+        } catch {
+            // 로그아웃 실패해도 클라이언트 상태는 초기화하고 로그인 화면으로 이동
+        } finally {
+            navigate('/login');
+        }
     };
 
     const goTo = (path) => {
@@ -52,8 +63,8 @@ export default function Gnb() {
 
             <div className="gnb-right">
                 {/* 순서: 로그아웃 - 테마 스위치 - 사서이름+프로필사진(하나의 버튼) */}
-                <button className="gnb-logout-btn" onClick={handleLogout}>
-                    로그아웃
+                <button className="gnb-logout-btn" onClick={handleLogout} disabled={loggingOut}>
+                    {loggingOut ? '로그아웃 중...' : '로그아웃'}
                 </button>
 
                 <div className="gnb-theme">
