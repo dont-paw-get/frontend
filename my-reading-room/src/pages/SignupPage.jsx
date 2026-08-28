@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { signup, ApiError } from '../api/authApi';
+import EmailVerification from './EmailVerification';
 import './SignupPage.css';
+
+// 비밀번호 정책: 8자 이상, 영문 대/소문자·숫자·특수문자 포함
+const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+// 폼 표시용 성별(한글) → 백엔드 계약(MALE/FEMALE) 매핑
+const GENDER_MAP = { 남성: 'MALE', 여성: 'FEMALE' };
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -16,19 +23,76 @@ export default function SignupPage() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeAI, setAgreeAI] = useState(false);
   const [pwTouched, setPwTouched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  // 회원가입 성공(201) 후 이메일 인증 단계로 전환
+  const [verifyEmail, setVerifyEmail] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === 'password' && !pwTouched) setPwTouched(true);
+    if (submitError) setSubmitError('');
   };
 
-  const handleSubmit = (e) => {
+  const pwValid = PW_RE.test(form.password);
+  const pwMatch = form.password === form.passwordConfirm;
+  const allRequired =
+    agreeTerms &&
+    agreePrivacy &&
+    form.email.trim() &&
+    pwValid &&
+    pwMatch &&
+    form.nickname.trim() &&
+    form.birthDate &&
+    form.gender;
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: 실제 회원가입 API 호출
+    if (!allRequired || loading) return;
+
+    setLoading(true);
+    setSubmitError('');
+    try {
+      await signup({
+        email: form.email.trim(),
+        password: form.password,
+        nickname: form.nickname.trim(),
+        birth_date: form.birthDate, // YYYY-MM-DD (date input)
+        gender: GENDER_MAP[form.gender],
+        agree_terms: agreeTerms,
+        agree_privacy: agreePrivacy,
+        agree_ai_analysis: agreeAI,
+      });
+      // 201 → 이메일 인증 코드 입력 단계로 전환
+      setVerifyEmail(form.email.trim());
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          setSubmitError('이미 가입된 이메일이에요. 로그인해 주세요.');
+        } else if (err.status === 429) {
+          setSubmitError('요청이 많아요. 잠시 후 다시 시도해 주세요.');
+        } else if (err.status === 400 || err.status === 422) {
+          setSubmitError(err.message || '입력값을 다시 확인해 주세요.');
+        } else {
+          setSubmitError('회원가입 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.');
+        }
+      } else {
+        setSubmitError('서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const allRequired = agreeTerms && agreePrivacy;
+  // 이메일 인증 단계
+  if (verifyEmail) {
+    return (
+      <div className="signup-page">
+        <EmailVerification email={verifyEmail} onVerified={() => navigate('/login')} />
+      </div>
+    );
+  }
 
   return (
     <div className="signup-page">
@@ -178,8 +242,12 @@ export default function SignupPage() {
             </label>
           </div>
 
-          <button className="signup-btn" type="submit" disabled={!allRequired}>
-            가입하기
+          {submitError && (
+            <span className="signup-error" style={{ textAlign: 'center' }}>{submitError}</span>
+          )}
+
+          <button className="signup-btn" type="submit" disabled={!allRequired || loading}>
+            {loading ? '가입 처리 중...' : '가입하기'}
           </button>
         </form>
 
