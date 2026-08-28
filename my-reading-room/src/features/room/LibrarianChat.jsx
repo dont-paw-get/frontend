@@ -7,6 +7,7 @@ import { getUserLocation } from '../../api/geolocation';
 import { extractBooksFromAnswer } from './bookExtractor';
 import MarkdownRenderer from './MarkdownRenderer';
 import WeatherMoodBadge from './WeatherMoodBadge';
+import { useLibrarian } from '../../store/librarianStore';
 
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
@@ -19,6 +20,7 @@ import WeatherMoodBadge from './WeatherMoodBadge';
  */
 export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch }) {
   const { books } = useBooks();
+  const { names: librarianNames } = useLibrarian();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState('recommend'); // 'recommend' (AI 추천 에이전트) | 'search' (로컬 서재 검색)
@@ -79,12 +81,12 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         onAnswer({ text: result.text, switchTo: result.switchTo, signals: result.signals });
       } else {
         // 백엔드 실패 시 로컬 fallback
-        const localResult = answerQuestion({ text: message, mode, books, librarian });
+        const localResult = answerQuestion({ text: message, mode, books, librarian, librarianNames });
         onAnswer(localResult);
       }
     } else {
       // 🔍 [일반 검색 모드] 내 서재 보유 도서 즉시 로컬 검색
-      const localResult = answerQuestion({ text: message, mode, books, librarian });
+      const localResult = answerQuestion({ text: message, mode, books, librarian, librarianNames });
       onAnswer(localResult);
     }
 
@@ -143,7 +145,9 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontWeight: 700 }}>{librarian.icon} {librarian.name}</span>
+        <span style={{ fontWeight: 700 }}>
+          {librarian.icon} {librarian.displayName || librarian.name}
+        </span>
         <button onClick={() => setOpen(false)} style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer' }}>✕</button>
       </div>
 
@@ -158,7 +162,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
           }}
         >
           <span style={{ fontSize: 16 }}>{answer.switchTo.icon}</span>
-          {answer.switchTo.name}로 바꾸기
+          {librarianNames[answer.switchTo.id] || answer.switchTo.name}로 바꾸기
         </button>
       )}
 

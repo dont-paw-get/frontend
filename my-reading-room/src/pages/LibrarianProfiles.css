@@ -1,0 +1,207 @@
+.lp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px;
+  gap: 10px;
+}
+
+.lp-heading {
+  font-size: 22px;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.lp-desc {
+  font-size: 13px;
+  color: var(--text);
+  text-align: center;
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+/* 사서가 추가되면 자동으로 열이 늘어나는 그리드 */
+.lp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.lp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--code-bg);
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.lp-card:hover {
+  transform: translateY(-2px);
+}
+
+.lp-card--active {
+  border-color: var(--accent);
+}
+
+/* 뱃지 */
+.lp-badge {
+  position: absolute;
+  top: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lp-badge--active {
+  left: 10px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.lp-badge--rep {
+  right: 10px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--text-h);
+}
+
+/* 아바타 */
+.lp-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.lp-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lp-avatar-fallback {
+  font-size: 42px;
+  line-height: 1;
+}
+
+/* 이름 */
+.lp-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.lp-name {
+  font-size: 16px;
+  color: var(--text-h);
+}
+
+.lp-name-input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 13px;
+  outline: none;
+}
+
+.lp-name-input:focus {
+  border-color: var(--accent);
+}
+
+.lp-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lp-btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.lp-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.lp-btn--ghost:hover {
+  color: var(--text-h);
+  border-color: var(--accent);
+}
+
+/* 메타 정보 */
+.lp-meta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.lp-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.lp-meta dt {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lp-meta dd {
+  color: var(--text-h);
+  margin: 0;
+  text-align: right;
+  line-height: 1.5;
+}
+
+/* 선택 버튼 */
+.lp-select-btn {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.lp-select-btn:disabled {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+  cursor: default;
+}
