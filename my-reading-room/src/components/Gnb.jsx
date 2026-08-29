@@ -51,7 +51,7 @@ export default function Gnb() {
     return (
         <nav className="gnb">
             <NavLink to="/library" className="gnb-left">
-                <img className="gnb-logo" src="/logo.webp" alt="Don't Paw-get Your Book" width={36} height={36} decoding="async" />
+                <img className="gnb-logo" src="/logo_nv.webp" alt="Don't Paw-get Your Book" width={36} height={36} decoding="async" />
                 <img className="gnb-service-name" src="/service name.webp" alt="Don't Paw-get Your Book" width={174} height={25} decoding="async" />
             </NavLink>
 
