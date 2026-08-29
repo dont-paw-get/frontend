@@ -17,6 +17,20 @@ const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 // 폼 표시용 성별(한글) → 백엔드 계약(MALE/FEMALE) 매핑
 const GENDER_MAP = { 남성: 'MALE', 여성: 'FEMALE' };
 
+/**
+ * 생년월일로 선택 가능한 최댓값 (어제, 로컬 타임존 기준 YYYY-MM-DD).
+ * 당일/미래 날짜는 생년월일로 유효하지 않으므로 date input의 max 속성 및
+ * 자체 검증에 사용해 선택을 막는다.
+ */
+function maxBirthDateString() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yyyy = yesterday.getFullYear();
+  const mm = String(yesterday.getMonth() + 1).padStart(2, '0');
+  const dd = String(yesterday.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 // 비밀번호 3초간 표시 토글 아이콘 (로그인 페이지 button_eye와 같은 역할)
 function EyeIcon({ open }) {
   return open ? (
@@ -102,8 +116,11 @@ export default function SignupPage() {
     setTimeout(() => setRevealed(false), 3000);
   };
 
+  const maxBirthDate = maxBirthDateString();
   const pwValid = PW_RE.test(form.password);
   const pwMatch = form.password === form.passwordConfirm;
+  // 당일/미래 날짜는 생년월일로 유효하지 않음 (문자열 비교로 충분: YYYY-MM-DD 형식)
+  const birthDateValid = form.birthDate && form.birthDate <= maxBirthDate;
   const allRequired =
     agreeTerms &&
     agreePrivacy &&
@@ -111,7 +128,7 @@ export default function SignupPage() {
     pwValid &&
     pwMatch &&
     form.nickname.trim() &&
-    form.birthDate &&
+    birthDateValid &&
     form.gender;
 
   const handleSubmit = async (e) => {
@@ -274,8 +291,12 @@ export default function SignupPage() {
                 type="date"
                 value={form.birthDate}
                 onChange={handleChange}
+                max={maxBirthDate}
                 required
               />
+              {form.birthDate && !birthDateValid && (
+                <span className="signup-error">생년월일은 오늘 이전 날짜만 선택할 수 있습니다.</span>
+              )}
             </div>
             <div className="signup-field signup-field--half">
               <label>성별</label>
