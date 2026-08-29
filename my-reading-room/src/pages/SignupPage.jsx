@@ -158,14 +158,22 @@ export default function SignupPage() {
           // 백엔드 응답에 두 케이스를 구분할 필드가 없어 프론트에서 분기하지 않음.
           setSubmitError('이미 사용 중인 이메일이에요.');
         } else if (err.status === 429) {
-          setSubmitError('요청이 많아요. 잠시 후 다시 시도해 주세요.');
+          setSubmitError('가입 요청이 너무 많아요. 잠시 후 다시 시도해 주세요.');
         } else if (err.status === 400 || err.status === 422) {
+          // 필수 약관 미동의, 닉네임/날짜 형식 오류 등 — 백엔드 메시지를 그대로 노출
           setSubmitError(err.message || '입력값을 다시 확인해 주세요.');
+        } else if (err.status === 503) {
+          setSubmitError('서비스 설정 문제로 가입을 진행할 수 없어요. 잠시 후 다시 시도해 주세요.');
+        } else if (err.status === 502) {
+          setSubmitError('인증 서버 연결에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        } else if (err.status === 500) {
+          setSubmitError('서버 내부 오류로 가입에 실패했어요. 잠시 후 다시 시도해 주세요.');
         } else {
-          setSubmitError('회원가입 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.');
+          // 예상치 못한 상태 코드 — 디버깅을 위해 코드를 함께 노출
+          setSubmitError(`회원가입 중 오류가 발생했어요. (${err.status}) 잠시 후 다시 시도해 주세요.`);
         }
       } else {
-        setSubmitError('서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.');
+        setSubmitError('서버에 연결할 수 없어요. 네트워크 상태를 확인하고 다시 시도해 주세요.');
       }
     } finally {
       setLoading(false);
