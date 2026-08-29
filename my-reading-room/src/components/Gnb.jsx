@@ -54,7 +54,9 @@ export default function Gnb() {
     return (
         <nav className={`gnb${isLibraryPage ? ' gnb--overlay' : ''}`}>
             <NavLink to="/library" className="gnb-left">
-                <img className="gnb-logo" src="/logo_nv.webp" alt="Don't Paw-get Your Book" width={36} height={36} decoding="async" />
+                <span className="gnb-logo-wrap">
+                    <img className="gnb-logo" src="/logo_nv.webp" alt="Don't Paw-get Your Book" width={30} height={30} decoding="async" />
+                </span>
                 <img className="gnb-service-name" src="/service name.webp" alt="Don't Paw-get Your Book" width={174} height={25} decoding="async" />
             </NavLink>
 
