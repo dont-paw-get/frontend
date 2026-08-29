@@ -1,10 +1,10 @@
 :root {
-  /* 기본(다크) 톤 */
-  --text: #d8c3a8;
-  --text-h: #f7efe2;
-  --bg: #2a1809;
-  --border: #43301c;
-  --code-bg: #33200f;
+  /* 기본(다크) 톤 — CLIAR-181: 더 어둡게 조정 */
+  --text: #c9b294;
+  --text-h: #f0e6d6;
+  --bg: #150c04;
+  --border: #2e2010;
+  --code-bg: #1f140a;
   --accent: #ff9a3c;
   --accent-bg: rgba(255, 154, 60, 0.12);
   --accent-border: rgba(255, 154, 60, 0.5);
@@ -48,28 +48,28 @@
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 }
 
-/* 황새 사서 다크 모드 */
+/* 황새(슈빌) 사서 다크 모드 — CLIAR-181: 보라색에 더 가깝게 조정 */
 :root[data-librarian='stork'] {
-  --text: #b8c4e0;
-  --text-h: #e8edf8;
-  --bg: #1e2240;
-  --border: #3a3f60;
-  --code-bg: #262a4a;
-  --accent: #7b9cf0;
-  --accent-bg: rgba(123, 156, 240, 0.12);
-  --accent-border: rgba(123, 156, 240, 0.5);
+  --text: #c0b4e0;
+  --text-h: #ece6f8;
+  --bg: #221e40;
+  --border: #423a60;
+  --code-bg: #2c264a;
+  --accent: #9b7bf0;
+  --accent-bg: rgba(155, 123, 240, 0.12);
+  --accent-border: rgba(155, 123, 240, 0.5);
 }
 
-/* 황새 사서 라이트 모드 */
+/* 황새(슈빌) 사서 라이트 모드 — CLIAR-181: 보라색에 더 가깝게 조정 */
 :root[data-theme='light'][data-librarian='stork'] {
-  --text: #3a3e6a;
-  --text-h: #1e2050;
-  --bg: #c0c8ed;
-  --border: #9aa4d4;
-  --code-bg: #d4daf0;
-  --accent: #5068c0;
-  --accent-bg: rgba(80, 104, 192, 0.12);
-  --accent-border: rgba(80, 104, 192, 0.5);
+  --text: #4e3a6a;
+  --text-h: #2a1e50;
+  --bg: #cec0ed;
+  --border: #ae9ad4;
+  --code-bg: #ddd4f0;
+  --accent: #7d50c0;
+  --accent-bg: rgba(125, 80, 192, 0.12);
+  --accent-border: rgba(125, 80, 192, 0.5);
 }
 
 body {
