@@ -6,11 +6,6 @@
   gap: 24px;
 }
 
-.mypage-heading {
-  font-size: 22px;
-  color: var(--text-h);
-}
-
 /* 왼쪽 메뉴바 + 오른쪽 콘텐츠 2단 레이아웃 */
 .mypage-layout {
   display: flex;
