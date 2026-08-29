@@ -13,9 +13,8 @@ const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 const MENU_ITEMS = [
   { id: 'info', label: '내 정보' },
-  { id: 'account', label: '계정 설정' },
-  { id: 'notify', label: '알림 설정' },
   { id: 'manage', label: '계정 관리' },
+  { id: 'notify', label: '알림 설정' },
 ];
 
 export default function MyPage() {
@@ -163,10 +162,34 @@ export default function MyPage() {
             </div>
           )}
 
-          {/* 계정 설정 */}
-          {activeTab === 'account' && (
+          {/* 알림 설정 */}
+          {activeTab === 'notify' && (
             <div className="mypage-card mypage-card--section">
-              <h3 className="mypage-section-title">계정 설정</h3>
+              <h3 className="mypage-section-title">알림 설정</h3>
+
+              <label className="mypage-toggle-row">
+                <span>추천 알림</span>
+                <input
+                  type="checkbox"
+                  checked={notifyRecommend}
+                  onChange={(e) => setNotifyRecommend(e.target.checked)}
+                />
+              </label>
+              <label className="mypage-toggle-row">
+                <span>이벤트·공지 알림</span>
+                <input
+                  type="checkbox"
+                  checked={notifyEvent}
+                  onChange={(e) => setNotifyEvent(e.target.checked)}
+                />
+              </label>
+            </div>
+          )}
+
+          {/* 계정 관리: 이메일/비밀번호 설정 + 탈퇴(마지막 줄) */}
+          {activeTab === 'manage' && (
+            <div className="mypage-card mypage-card--section">
+              <h3 className="mypage-section-title">계정 관리</h3>
 
               {/* 이메일 (변경 불가 — 읽기 전용) */}
               <div className="mypage-field">
@@ -228,40 +251,13 @@ export default function MyPage() {
                   </form>
                 )}
               </div>
-            </div>
-          )}
 
-          {/* 알림 설정 */}
-          {activeTab === 'notify' && (
-            <div className="mypage-card mypage-card--section">
-              <h3 className="mypage-section-title">알림 설정</h3>
-
-              <label className="mypage-toggle-row">
-                <span>추천 알림</span>
-                <input
-                  type="checkbox"
-                  checked={notifyRecommend}
-                  onChange={(e) => setNotifyRecommend(e.target.checked)}
-                />
-              </label>
-              <label className="mypage-toggle-row">
-                <span>이벤트·공지 알림</span>
-                <input
-                  type="checkbox"
-                  checked={notifyEvent}
-                  onChange={(e) => setNotifyEvent(e.target.checked)}
-                />
-              </label>
-            </div>
-          )}
-
-          {/* 계정 관리 */}
-          {activeTab === 'manage' && (
-            <div className="mypage-card mypage-card--section">
-              <h3 className="mypage-section-title">계정 관리</h3>
-              <button className="mypage-withdraw-btn" onClick={() => setWithdrawOpen(true)}>
-                계정 탈퇴
-              </button>
+              {/* 계정 탈퇴 (마지막 줄) */}
+              <div className="mypage-field">
+                <button className="mypage-withdraw-btn" onClick={() => setWithdrawOpen(true)}>
+                  계정 탈퇴
+                </button>
+              </div>
             </div>
           )}
         </div>
