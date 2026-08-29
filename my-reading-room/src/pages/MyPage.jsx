@@ -191,12 +191,10 @@ export default function MyPage() {
             <div className="mypage-card mypage-card--section">
               <h3 className="mypage-section-title">계정 관리</h3>
 
-              {/* 이메일 (변경 불가 — 읽기 전용) */}
-              <div className="mypage-field">
+              {/* 이메일 (변경 불가 — 읽기 전용), 라벨과 값을 한 줄에 표시 */}
+              <div className="mypage-field mypage-field--row">
                 <span className="mypage-field-label">이메일</span>
-                <div className="mypage-field-display">
-                  <span className="mypage-field-value">{email}</span>
-                </div>
+                <span className="mypage-field-value">{email}</span>
               </div>
 
               {/* 비밀번호 변경 */}
@@ -252,10 +250,11 @@ export default function MyPage() {
                 )}
               </div>
 
-              {/* 계정 탈퇴 (마지막 줄) */}
-              <div className="mypage-field">
+              {/* 계정 탈퇴 (마지막 줄, 버튼은 오른쪽) */}
+              <div className="mypage-field mypage-field--row">
+                <span className="mypage-field-label">계정 탈퇴</span>
                 <button className="mypage-withdraw-btn" onClick={() => setWithdrawOpen(true)}>
-                  계정 탈퇴
+                  탈퇴하기
                 </button>
               </div>
             </div>
