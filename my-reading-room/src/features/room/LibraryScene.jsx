@@ -303,7 +303,7 @@ export default function LibraryScene() {
       {/* 손전등 효과: 다크 모드에서만. 바깥은 어둡게 + 커서 주변은 따뜻한 빛으로 더 밝게 (캘리브레이션 중엔 끔) */}
       {isDark && !calibrating && (
         <>
-          {/* 어둡게 하는 비네트 (CLIAR-181: 범위 50% 축소, 어두운 정도 강화) */}
+          {/* 어둡게 하는 비네트 (CLIAR-181: 손전등이 비추는 부분만 보이도록 훨씬 더 어둡게) */}
           <div
             style={{
               position: 'absolute',
@@ -311,7 +311,7 @@ export default function LibraryScene() {
               pointerEvents: 'none',
               zIndex: 5,
               background:
-                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(20,11,4,0) 0px, rgba(20,11,4,0) 75px, rgba(20,11,4,0.86) 165px)',
+                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(5,3,1,0) 0px, rgba(5,3,1,0.55) 75px, rgba(5,3,1,0.97) 140px)',
             }}
           />
           {/* 커서 주변 밝은 글로우 (빛을 더함, CLIAR-181: 범위 50% 축소) */}
