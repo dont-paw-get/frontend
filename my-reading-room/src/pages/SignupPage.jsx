@@ -113,7 +113,10 @@ export default function SignupPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 409) {
-          setSubmitError('이미 가입된 이메일이에요. 로그인해 주세요.');
+          // 탈퇴 완료 후 재가입 가능 정책 도입(백엔드)으로, 409가 '이미 가입됨' 외에도
+          // '탈퇴 처리 중'인 애매한 상태에서도 뜰 수 있어 중립적인 문구로 변경.
+          // 백엔드 응답에 두 케이스를 구분할 필드가 없어 프론트에서 분기하지 않음.
+          setSubmitError('이미 사용 중인 이메일이에요.');
         } else if (err.status === 429) {
           setSubmitError('요청이 많아요. 잠시 후 다시 시도해 주세요.');
         } else if (err.status === 400 || err.status === 422) {
