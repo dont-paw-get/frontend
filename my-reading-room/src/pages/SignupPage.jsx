@@ -17,6 +17,21 @@ const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 // 폼 표시용 성별(한글) → 백엔드 계약(MALE/FEMALE) 매핑
 const GENDER_MAP = { 남성: 'MALE', 여성: 'FEMALE' };
 
+// 비밀번호 3초간 표시 토글 아이콘 (로그인 페이지 button_eye와 같은 역할)
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ) : (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.5 18.5 0 0 1 4.22-5.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+      <path d="M1 1l22 22" />
+    </svg>
+  );
+}
+
 export default function SignupPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,6 +47,9 @@ export default function SignupPage() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeAI, setAgreeAI] = useState(false);
   const [pwTouched, setPwTouched] = useState(false);
+  // 로그인 페이지와 동일하게: 클릭 시 3초간 비밀번호를 평문으로 표시
+  const [pwRevealed, setPwRevealed] = useState(false);
+  const [pwConfirmRevealed, setPwConfirmRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
   // 회원가입 성공(201) 후, 또는 로그인에서 EMAIL_NOT_VERIFIED로 넘어온 경우 이메일 인증 단계로 전환
@@ -77,6 +95,11 @@ export default function SignupPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
     if (name === 'password' && !pwTouched) setPwTouched(true);
     if (submitError) setSubmitError('');
+  };
+
+  const revealPassword = (setRevealed) => {
+    setRevealed(true);
+    setTimeout(() => setRevealed(false), 3000);
   };
 
   const pwValid = PW_RE.test(form.password);
@@ -169,16 +192,27 @@ export default function SignupPage() {
           {/* 비밀번호 */}
           <div className="signup-field">
             <label htmlFor="signup-pw">비밀번호</label>
-            <input
-              id="signup-pw"
-              name="password"
-              type="password"
-              placeholder="8자 이상 영문+숫자+특수문자"
-              value={form.password}
-              onChange={handleChange}
-              autoComplete="new-password"
-              required
-            />
+            <div className="signup-pw-input-wrap">
+              <input
+                id="signup-pw"
+                name="password"
+                type={pwRevealed ? 'text' : 'password'}
+                placeholder="8자 이상 영문+숫자+특수문자"
+                value={form.password}
+                onChange={handleChange}
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                className="signup-pw-eye-btn"
+                onClick={() => revealPassword(setPwRevealed)}
+                aria-label="비밀번호 3초간 표시"
+                aria-pressed={pwRevealed}
+              >
+                <EyeIcon open={pwRevealed} />
+              </button>
+            </div>
             {pwTouched && (
               <span className="signup-hint">
                 비밀번호는 8자 이상이며 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.
@@ -189,16 +223,27 @@ export default function SignupPage() {
           {/* 비밀번호 재확인 */}
           <div className="signup-field">
             <label htmlFor="signup-pw-confirm">비밀번호 재확인</label>
-            <input
-              id="signup-pw-confirm"
-              name="passwordConfirm"
-              type="password"
-              placeholder="비밀번호를 다시 입력하세요"
-              value={form.passwordConfirm}
-              onChange={handleChange}
-              autoComplete="new-password"
-              required
-            />
+            <div className="signup-pw-input-wrap">
+              <input
+                id="signup-pw-confirm"
+                name="passwordConfirm"
+                type={pwConfirmRevealed ? 'text' : 'password'}
+                placeholder="비밀번호를 다시 입력하세요"
+                value={form.passwordConfirm}
+                onChange={handleChange}
+                autoComplete="new-password"
+                required
+              />
+              <button
+                type="button"
+                className="signup-pw-eye-btn"
+                onClick={() => revealPassword(setPwConfirmRevealed)}
+                aria-label="비밀번호 3초간 표시"
+                aria-pressed={pwConfirmRevealed}
+              >
+                <EyeIcon open={pwConfirmRevealed} />
+              </button>
+            </div>
             {form.passwordConfirm && form.password !== form.passwordConfirm && (
               <span className="signup-error">비밀번호가 일치하지 않습니다</span>
             )}
