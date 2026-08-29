@@ -327,15 +327,15 @@
   cursor: pointer;
 }
 
-/* 계정 탈퇴 */
+/* 계정 탈퇴 (비밀번호 '변경' 버튼과 동일한 크기) */
 .mypage-withdraw-btn {
   flex-shrink: 0;
-  padding: 8px 16px;
+  padding: 3px 10px;
   border: 1px solid #e74c3c;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: #e74c3c;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
