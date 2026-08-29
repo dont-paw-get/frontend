@@ -125,7 +125,7 @@ export default function RegisterBook() {
             color: 'var(--text-h)',
           }}
         >
-          <span>✨ <strong>AI 사서 추천 도서</strong> 정보가 자동으로 입력되었습니다냥! 🐾 (필요 시 수정 가능)</span>
+          <span>✨ <strong>AI 사서 추천 도서</strong> 정보가 자동으로 입력되었습니다. (필요 시 수정 가능)</span>
           <button
             type="button"
             onClick={() => setFromRecommendation(false)}
@@ -199,7 +199,7 @@ export default function RegisterBook() {
             </div>
           )}
 
-          {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중이에요냥... 🐾</span>}
+          {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중입니다...</span>}
         </div>
 
         {/* 중앙: 인식 결과 + 수정 */}
@@ -227,7 +227,7 @@ export default function RegisterBook() {
 
           {!ocrDone ? (
             <p style={{ color: 'var(--text)', fontSize: 14 }}>
-              왼쪽에서 ISBN 바코드 번호를 촬영하거나 업로드하면 제목·저자를 자동으로 인식해요냥 📚
+              왼쪽에서 ISBN 바코드 번호를 촬영하거나 업로드하면 제목·저자를 자동으로 인식합니다.
             </p>
           ) : (
             <>
