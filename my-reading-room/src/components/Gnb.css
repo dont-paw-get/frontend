@@ -18,7 +18,6 @@
 }
 
 /* 배경 이미지 위에서도 글자가 잘 읽히도록 텍스트에 그림자 부여 */
-.gnb--overlay .gnb-menu a,
 .gnb--overlay .gnb-logout-btn,
 .gnb--overlay .gnb-profile-name {
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
@@ -27,7 +26,8 @@
 /* 오버레이일 때 드롭다운/테마 스위치 등 컨트롤 배경은 살짝 불투명하게 유지해 가독성 확보 */
 .gnb--overlay .gnb-theme,
 .gnb--overlay .gnb-logout-btn,
-.gnb--overlay .gnb-profile-btn {
+.gnb--overlay .gnb-profile-btn,
+.gnb--overlay .gnb-menu {
     background: rgba(0, 0, 0, 0.25);
     backdrop-filter: blur(4px);
 }
@@ -40,10 +40,22 @@
     color: inherit;
 }
 
-.gnb-logo {
-    width: 36px;
-    height: 36px;
+/* 로고를 감싸는 원형 배경 — 실제 로고 아트보다 원을 크게 잡아 모서리가 잘리지 않게 하고 그림자를 부여 */
+.gnb-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    background: var(--bg);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    flex-shrink: 0;
+}
+
+.gnb-logo {
+    width: 30px;
+    height: 30px;
     object-fit: contain;
 }
 
@@ -53,24 +65,34 @@
     object-fit: contain;
 }
 
+/* 메뉴 3개를 하나의 아웃라인으로 묶음 */
 .gnb-menu {
     display: flex;
-    gap: 20px;
+    gap: 4px;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
 }
 
 .gnb-menu a {
+    padding: 6px 16px;
+    border-radius: 999px;
     text-decoration: none;
     font-size: 13px;
-    color: var(--text);
-    transition: color 0.2s;
+    color: #c1470c;
+    transition: background 0.2s, color 0.2s;
 }
 
-.gnb-menu a:hover,
+.gnb-menu a:hover {
+    background: var(--accent-bg);
+}
+
 .gnb-menu a.on {
-    color: var(--text-h);
+    background: #c1470c;
+    color: #fff;
     font-weight: 600;
 }
 
