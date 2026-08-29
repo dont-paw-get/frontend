@@ -113,8 +113,6 @@ export default function MyPage() {
 
   return (
     <section className="mypage">
-      <h2 className="mypage-heading">마이페이지</h2>
-
       <div className="mypage-layout">
         {/* 왼쪽 메뉴바 */}
         <nav className="mypage-sidebar" aria-label="마이페이지 메뉴">
