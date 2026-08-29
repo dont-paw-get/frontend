@@ -267,3 +267,37 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* 비밀번호 입력 + 3초간 표시 눈 아이콘 */
+.signup-pw-input-wrap {
+  position: relative;
+  display: flex;
+}
+
+.signup-pw-input-wrap input {
+  flex: 1;
+  padding-right: 40px;
+}
+
+.signup-pw-eye-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.signup-pw-eye-btn:hover {
+  color: var(--accent);
+}
+
+.signup-pw-eye-btn[aria-pressed='true'] {
+  color: var(--accent);
+}
