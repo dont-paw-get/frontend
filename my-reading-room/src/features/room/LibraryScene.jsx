@@ -303,7 +303,7 @@ export default function LibraryScene() {
       {/* 손전등 효과: 다크 모드에서만. 바깥은 어둡게 + 커서 주변은 따뜻한 빛으로 더 밝게 (캘리브레이션 중엔 끔) */}
       {isDark && !calibrating && (
         <>
-          {/* 어둡게 하는 비네트 */}
+          {/* 어둡게 하는 비네트 (CLIAR-181: 범위 50% 축소, 어두운 정도 강화) */}
           <div
             style={{
               position: 'absolute',
@@ -311,10 +311,10 @@ export default function LibraryScene() {
               pointerEvents: 'none',
               zIndex: 5,
               background:
-                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(42,24,9,0) 0px, rgba(42,24,9,0) 150px, rgba(42,24,9,0.72) 330px)',
+                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(20,11,4,0) 0px, rgba(20,11,4,0) 75px, rgba(20,11,4,0.86) 165px)',
             }}
           />
-          {/* 커서 주변 밝은 글로우 (빛을 더함) */}
+          {/* 커서 주변 밝은 글로우 (빛을 더함, CLIAR-181: 범위 50% 축소) */}
           <div
             style={{
               position: 'absolute',
@@ -323,7 +323,7 @@ export default function LibraryScene() {
               zIndex: 6,
               mixBlendMode: 'screen',
               background:
-                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,214,150,0.4) 0px, rgba(255,200,130,0.2) 120px, rgba(255,190,120,0) 230px)',
+                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,214,150,0.4) 0px, rgba(255,200,130,0.2) 60px, rgba(255,190,120,0) 115px)',
             }}
           />
         </>
