@@ -159,6 +159,18 @@ export async function authFetch(path, { method = 'GET', body, auth = true, _retr
 // 요청 필드명은 backend-auth Swagger 계약 기준.
 // ============================================================
 
+// ── 약관 ──
+/**
+ * 서비스 이용약관/개인정보처리방침/AI 분석 활용 동의 전문 조회 (로그인 불필요).
+ * TERMS_OF_SERVICE → PRIVACY → AI_ANALYSIS 순서로 고정 반환.
+ * AI_ANALYSIS는 선택 약관이라 DB에 없으면 배열에서 빠질 수 있다(에러 아님).
+ * 필수 약관(TERMS_OF_SERVICE/PRIVACY) 미설정 시 503.
+ * @returns {Promise<Array<{code: string, name: string, content: string, is_required: boolean}>>}
+ */
+export function getTerms() {
+  return authFetch('/terms', { auth: false });
+}
+
 // ── 회원가입 / 이메일 인증 ──
 export function signup(payload) {
   // payload: { email, password, nickname, birth_date, gender, 약관 동의 등 }

@@ -237,3 +237,33 @@
 .signup-login-link:hover {
   opacity: 0.8;
 }
+
+/* 약관 체크박스 + 전문 보기 버튼 한 행 배치 */
+.signup-checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.signup-terms-view-btn {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.signup-terms-view-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.signup-terms-view-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

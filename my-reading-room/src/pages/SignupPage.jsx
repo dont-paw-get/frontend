@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { signup, ApiError } from '../api/authApi';
+import { signup, getTerms, ApiError } from '../api/authApi';
 import EmailVerification from './EmailVerification';
+import TermsModal from './TermsModal';
 import './SignupPage.css';
+
+// 체크박스 code ↔ 표시용 fallback 이름 (API 응답이 늦거나 실패해도 라벨은 항상 보이도록)
+const TERMS_FALLBACK_NAME = {
+  TERMS_OF_SERVICE: '이용약관',
+  PRIVACY: '개인정보 처리방침',
+  AI_ANALYSIS: 'AI 분석 활용 동의',
+};
 
 // 비밀번호 정책: 8자 이상, 영문 대/소문자·숫자·특수문자 포함
 const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -28,6 +36,41 @@ export default function SignupPage() {
   const [submitError, setSubmitError] = useState('');
   // 회원가입 성공(201) 후, 또는 로그인에서 EMAIL_NOT_VERIFIED로 넘어온 경우 이메일 인증 단계로 전환
   const [verifyEmail, setVerifyEmail] = useState(location.state?.verifyEmail ?? null);
+
+  // ── 약관 전문 ──
+  const [termsByCode, setTermsByCode] = useState({}); // { [code]: { name, content } }
+  const [termsLoading, setTermsLoading] = useState(true);
+  const [termsError, setTermsError] = useState('');
+  const [openTermsCode, setOpenTermsCode] = useState(null); // 현재 모달로 열린 약관 code
+
+  // 페이지 마운트 시 약관 전문 미리 조회 (클릭 시 지연 없이 바로 표시)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await getTerms();
+        if (cancelled) return;
+        const byCode = {};
+        (list || []).forEach((t) => {
+          byCode[t.code] = { name: t.name, content: t.content };
+        });
+        setTermsByCode(byCode);
+        setTermsError('');
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 503) {
+          setTermsError('약관을 불러올 수 없어요. 잠시 후 다시 시도해 주세요.');
+        } else {
+          setTermsError('약관을 불러오는 중 오류가 발생했어요.');
+        }
+      } finally {
+        if (!cancelled) setTermsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -215,32 +258,62 @@ export default function SignupPage() {
 
           {/* 약관 동의 (3개) */}
           <div className="signup-field signup-terms">
-            <label className="signup-checkbox">
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                required
-              />
-              <span>[필수] 이용약관 동의</span>
-            </label>
-            <label className="signup-checkbox">
-              <input
-                type="checkbox"
-                checked={agreePrivacy}
-                onChange={(e) => setAgreePrivacy(e.target.checked)}
-                required
-              />
-              <span>[필수] 개인정보 처리방침 동의</span>
-            </label>
-            <label className="signup-checkbox">
-              <input
-                type="checkbox"
-                checked={agreeAI}
-                onChange={(e) => setAgreeAI(e.target.checked)}
-              />
-              <span>[선택] AI 분석 활용 동의</span>
-            </label>
+            <div className="signup-checkbox-row">
+              <label className="signup-checkbox">
+                <input
+                  type="checkbox"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  required
+                />
+                <span>[필수] 이용약관 동의</span>
+              </label>
+              <button
+                type="button"
+                className="signup-terms-view-btn"
+                onClick={() => setOpenTermsCode('TERMS_OF_SERVICE')}
+                disabled={termsLoading}
+              >
+                보기
+              </button>
+            </div>
+            <div className="signup-checkbox-row">
+              <label className="signup-checkbox">
+                <input
+                  type="checkbox"
+                  checked={agreePrivacy}
+                  onChange={(e) => setAgreePrivacy(e.target.checked)}
+                  required
+                />
+                <span>[필수] 개인정보 처리방침 동의</span>
+              </label>
+              <button
+                type="button"
+                className="signup-terms-view-btn"
+                onClick={() => setOpenTermsCode('PRIVACY')}
+                disabled={termsLoading}
+              >
+                보기
+              </button>
+            </div>
+            <div className="signup-checkbox-row">
+              <label className="signup-checkbox">
+                <input
+                  type="checkbox"
+                  checked={agreeAI}
+                  onChange={(e) => setAgreeAI(e.target.checked)}
+                />
+                <span>[선택] AI 분석 활용 동의</span>
+              </label>
+              <button
+                type="button"
+                className="signup-terms-view-btn"
+                onClick={() => setOpenTermsCode('AI_ANALYSIS')}
+                disabled={termsLoading}
+              >
+                보기
+              </button>
+            </div>
           </div>
 
           {submitError && (
@@ -259,6 +332,19 @@ export default function SignupPage() {
           </button>
         </div>
       </div>
+
+      {openTermsCode && (
+        <TermsModal
+          name={termsByCode[openTermsCode]?.name || TERMS_FALLBACK_NAME[openTermsCode]}
+          content={
+            termsByCode[openTermsCode]?.content ??
+            (!termsLoading && !termsError ? '등록된 약관 내용이 없어요.' : null)
+          }
+          loading={termsLoading}
+          error={termsError}
+          onClose={() => setOpenTermsCode(null)}
+        />
+      )}
     </div>
   );
 }
