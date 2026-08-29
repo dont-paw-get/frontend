@@ -11,17 +11,65 @@
   color: var(--text-h);
 }
 
+/* 왼쪽 메뉴바 + 오른쪽 콘텐츠 2단 레이아웃 */
+.mypage-layout {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  max-width: 640px;
+  align-items: flex-start;
+}
+
+.mypage-sidebar {
+  flex-shrink: 0;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--code-bg);
+}
+
+.mypage-sidebar-item {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mypage-sidebar-item:hover {
+  color: var(--text-h);
+}
+
+.mypage-sidebar-item--active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.mypage-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .mypage-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 28px;
   width: 100%;
-  max-width: 400px;
   padding: 32px 24px;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--code-bg);
+  box-sizing: border-box;
 }
 
 /* 프로필 이미지 */

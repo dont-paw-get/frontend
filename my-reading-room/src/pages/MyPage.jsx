@@ -16,9 +16,19 @@ const mockUser = {
 // 8자 이상, 영문 대/소문자·숫자·특수문자 포함
 const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
+const MENU_ITEMS = [
+  { id: 'info', label: '내 정보' },
+  { id: 'account', label: '계정 설정' },
+  { id: 'notify', label: '알림 설정' },
+  { id: 'manage', label: '계정 관리' },
+];
+
 export default function MyPage() {
   const navigate = useNavigate();
   const { profileImage, userId, email, birthDate, gender } = mockUser;
+
+  // 마이페이지 진입 시 기본으로 '내 정보'만 보이도록, 왼쪽 메뉴로 섹션 전환
+  const [activeTab, setActiveTab] = useState('info');
 
   // ── 비밀번호 ──
   const [pwOpen, setPwOpen] = useState(false);
@@ -105,129 +115,156 @@ export default function MyPage() {
     <section className="mypage">
       <h2 className="mypage-heading">마이페이지</h2>
 
-      {/* 프로필 카드 */}
-      <div className="mypage-card">
-        <div className="mypage-avatar-wrap">
-          <img
-            className="mypage-avatar"
-            src={profileImage}
-            alt={`${userId} 프로필 사진`}
-            width={97}
-            height={102}
-            decoding="async"
-          />
-        </div>
-
-        <dl className="mypage-info">
-          <div className="mypage-info-row">
-            <dt>사용자 ID</dt>
-            <dd>{userId}</dd>
-          </div>
-          <div className="mypage-info-row">
-            <dt>생년월일</dt>
-            <dd>{birthDate}</dd>
-          </div>
-          <div className="mypage-info-row">
-            <dt>성별</dt>
-            <dd>{gender}</dd>
-          </div>
-        </dl>
-      </div>
-
-      {/* 계정 설정 카드 */}
-      <div className="mypage-card mypage-card--section">
-        <h3 className="mypage-section-title">계정 설정</h3>
-
-        {/* 이메일 (변경 불가 — 읽기 전용) */}
-        <div className="mypage-field">
-          <span className="mypage-field-label">이메일</span>
-          <div className="mypage-field-display">
-            <span className="mypage-field-value">{email}</span>
-          </div>
-        </div>
-
-        {/* 비밀번호 변경 */}
-        <div className="mypage-field">
-          <div className="mypage-field-display">
-            <span className="mypage-field-label">비밀번호</span>
+      <div className="mypage-layout">
+        {/* 왼쪽 메뉴바 */}
+        <nav className="mypage-sidebar" aria-label="마이페이지 메뉴">
+          {MENU_ITEMS.map((item) => (
             <button
-              className="mypage-nickname-edit-btn"
-              onClick={() => { setPwOpen((v) => !v); setPwError(''); setPwSuccess(false); }}
+              key={item.id}
+              className={`mypage-sidebar-item${activeTab === item.id ? ' mypage-sidebar-item--active' : ''}`}
+              onClick={() => setActiveTab(item.id)}
+              aria-current={activeTab === item.id}
             >
-              {pwOpen ? '닫기' : '변경'}
+              {item.label}
             </button>
-          </div>
+          ))}
+        </nav>
 
-          {pwSuccess && <p className="mypage-success">비밀번호가 변경되었습니다.</p>}
-
-          {pwOpen && (
-            <form className="mypage-field-edit" onSubmit={handlePwSubmit}>
-              <input
-                className="mypage-text-input"
-                type="password"
-                value={curPw}
-                onChange={(e) => setCurPw(e.target.value)}
-                placeholder="현재 비밀번호"
-                autoComplete="current-password"
-              />
-              <input
-                className="mypage-text-input"
-                type="password"
-                value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                placeholder="새 비밀번호"
-                autoComplete="new-password"
-              />
-              <input
-                className="mypage-text-input"
-                type="password"
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                placeholder="새 비밀번호 확인"
-                autoComplete="new-password"
-              />
-              <p className="mypage-hint">
-                비밀번호는 8자 이상이며 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.
-              </p>
-              {pwError && <p className="mypage-error">{pwError}</p>}
-              <div className="mypage-btn-row">
-                <button type="submit" className="mypage-btn mypage-btn--primary" disabled={pwLoading}>
-                  {pwLoading ? '변경 중...' : '변경하기'}
-                </button>
+        {/* 오른쪽 콘텐츠 */}
+        <div className="mypage-content">
+          {/* 내 정보 */}
+          {activeTab === 'info' && (
+            <div className="mypage-card">
+              <div className="mypage-avatar-wrap">
+                <img
+                  className="mypage-avatar"
+                  src={profileImage}
+                  alt={`${userId} 프로필 사진`}
+                  width={97}
+                  height={102}
+                  decoding="async"
+                />
               </div>
-            </form>
+
+              <dl className="mypage-info">
+                <div className="mypage-info-row">
+                  <dt>사용자 ID</dt>
+                  <dd>{userId}</dd>
+                </div>
+                <div className="mypage-info-row">
+                  <dt>생년월일</dt>
+                  <dd>{birthDate}</dd>
+                </div>
+                <div className="mypage-info-row">
+                  <dt>성별</dt>
+                  <dd>{gender}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
+
+          {/* 계정 설정 */}
+          {activeTab === 'account' && (
+            <div className="mypage-card mypage-card--section">
+              <h3 className="mypage-section-title">계정 설정</h3>
+
+              {/* 이메일 (변경 불가 — 읽기 전용) */}
+              <div className="mypage-field">
+                <span className="mypage-field-label">이메일</span>
+                <div className="mypage-field-display">
+                  <span className="mypage-field-value">{email}</span>
+                </div>
+              </div>
+
+              {/* 비밀번호 변경 */}
+              <div className="mypage-field">
+                <div className="mypage-field-display">
+                  <span className="mypage-field-label">비밀번호</span>
+                  <button
+                    className="mypage-nickname-edit-btn"
+                    onClick={() => { setPwOpen((v) => !v); setPwError(''); setPwSuccess(false); }}
+                  >
+                    {pwOpen ? '닫기' : '변경'}
+                  </button>
+                </div>
+
+                {pwSuccess && <p className="mypage-success">비밀번호가 변경되었습니다.</p>}
+
+                {pwOpen && (
+                  <form className="mypage-field-edit" onSubmit={handlePwSubmit}>
+                    <input
+                      className="mypage-text-input"
+                      type="password"
+                      value={curPw}
+                      onChange={(e) => setCurPw(e.target.value)}
+                      placeholder="현재 비밀번호"
+                      autoComplete="current-password"
+                    />
+                    <input
+                      className="mypage-text-input"
+                      type="password"
+                      value={newPw}
+                      onChange={(e) => setNewPw(e.target.value)}
+                      placeholder="새 비밀번호"
+                      autoComplete="new-password"
+                    />
+                    <input
+                      className="mypage-text-input"
+                      type="password"
+                      value={confirmPw}
+                      onChange={(e) => setConfirmPw(e.target.value)}
+                      placeholder="새 비밀번호 확인"
+                      autoComplete="new-password"
+                    />
+                    <p className="mypage-hint">
+                      비밀번호는 8자 이상이며 영문 대/소문자, 숫자, 특수문자를 포함해야 합니다.
+                    </p>
+                    {pwError && <p className="mypage-error">{pwError}</p>}
+                    <div className="mypage-btn-row">
+                      <button type="submit" className="mypage-btn mypage-btn--primary" disabled={pwLoading}>
+                        {pwLoading ? '변경 중...' : '변경하기'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 알림 설정 */}
+          {activeTab === 'notify' && (
+            <div className="mypage-card mypage-card--section">
+              <h3 className="mypage-section-title">알림 설정</h3>
+
+              <label className="mypage-toggle-row">
+                <span>추천 알림</span>
+                <input
+                  type="checkbox"
+                  checked={notifyRecommend}
+                  onChange={(e) => setNotifyRecommend(e.target.checked)}
+                />
+              </label>
+              <label className="mypage-toggle-row">
+                <span>이벤트·공지 알림</span>
+                <input
+                  type="checkbox"
+                  checked={notifyEvent}
+                  onChange={(e) => setNotifyEvent(e.target.checked)}
+                />
+              </label>
+            </div>
+          )}
+
+          {/* 계정 관리 */}
+          {activeTab === 'manage' && (
+            <div className="mypage-card mypage-card--section">
+              <h3 className="mypage-section-title">계정 관리</h3>
+              <button className="mypage-withdraw-btn" onClick={() => setWithdrawOpen(true)}>
+                계정 탈퇴
+              </button>
+            </div>
           )}
         </div>
-      </div>
-
-      {/* 알림 설정 카드 */}
-      <div className="mypage-card mypage-card--section">
-        <h3 className="mypage-section-title">알림 설정</h3>
-
-        <label className="mypage-toggle-row">
-          <span>추천 알림</span>
-          <input
-            type="checkbox"
-            checked={notifyRecommend}
-            onChange={(e) => setNotifyRecommend(e.target.checked)}
-          />
-        </label>
-        <label className="mypage-toggle-row">
-          <span>이벤트·공지 알림</span>
-          <input
-            type="checkbox"
-            checked={notifyEvent}
-            onChange={(e) => setNotifyEvent(e.target.checked)}
-          />
-        </label>
-      </div>
-
-      {/* 계정 관리 카드 */}
-      <div className="mypage-card mypage-card--section">
-        <h3 className="mypage-section-title">계정 관리</h3>
-        <button className="mypage-withdraw-btn" onClick={() => setWithdrawOpen(true)}>
-          계정 탈퇴
-        </button>
       </div>
 
       {/* 탈퇴 확인 모달 */}
