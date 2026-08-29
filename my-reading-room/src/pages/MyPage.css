@@ -216,6 +216,13 @@
   color: var(--text);
 }
 
+/* 라벨과 값/버튼을 한 줄에 배치 (예: 이메일, 계정 탈퇴) */
+.mypage-field--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .mypage-field-display {
   display: flex;
   align-items: center;
@@ -322,7 +329,7 @@
 
 /* 계정 탈퇴 */
 .mypage-withdraw-btn {
-  align-self: flex-start;
+  flex-shrink: 0;
   padding: 8px 16px;
   border: 1px solid #e74c3c;
   border-radius: 8px;
