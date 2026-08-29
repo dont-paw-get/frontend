@@ -1,17 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { changePassword, deleteMe, logout, ApiError } from '../api/authApi';
+import { useAuth } from '../store/authStore';
 import './MyPage.css';
 
-// 임시 mock 데이터 (추후 Member 서비스 API 연동 시 교체)
-// 사서 이름(닉네임)은 사서 프로필(/librarians)에서 관리하며, 이 페이지는 사용자 계정 정보만 다룸
-const mockUser = {
-  profileImage: '/profile.webp',
-  userId: 'pawget_reader', // 로그인용 사용자 ID
-  email: 'reader@dontpawget.com',
-  birthDate: '1995-03-12',
-  gender: '남성',
-};
+const DEFAULT_PROFILE_IMAGE = '/profile.webp';
+// 백엔드 gender(MALE/FEMALE) → 화면 표시용 한글
+const GENDER_LABEL = { MALE: '남성', FEMALE: '여성' };
 
 // 8자 이상, 영문 대/소문자·숫자·특수문자 포함
 const PW_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -25,7 +20,14 @@ const MENU_ITEMS = [
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const { profileImage, userId, email, birthDate, gender } = mockUser;
+  const { member } = useAuth();
+
+  // member는 로그인 시점에 GET /users/me 응답으로 채워짐 (AuthProvider)
+  const profileImage = member?.profile_image_url || DEFAULT_PROFILE_IMAGE;
+  const userId = member?.nickname ?? '';
+  const email = member?.email ?? '';
+  const birthDate = member?.birth_date ?? '';
+  const gender = GENDER_LABEL[member?.gender] ?? '';
 
   // 마이페이지 진입 시 기본으로 '내 정보'만 보이도록, 왼쪽 메뉴로 섹션 전환
   const [activeTab, setActiveTab] = useState('info');
