@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../store/themeStore';
 import { useLibrarian } from '../store/librarianStore';
 import { useAuth } from '../store/authStore';
@@ -29,6 +29,9 @@ export default function Gnb() {
     const [showDropdown, setShowDropdown] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+    // 내 서재 페이지에서는 GNB를 배경 이미지 위에 투명 오버레이로 띄운다 (다른 페이지는 기존처럼 상단 고정 바)
+    const isLibraryPage = location.pathname === '/library';
 
     const handleLogout = async () => {
         if (loggingOut) return;
@@ -49,7 +52,7 @@ export default function Gnb() {
     };
 
     return (
-        <nav className="gnb">
+        <nav className={`gnb${isLibraryPage ? ' gnb--overlay' : ''}`}>
             <NavLink to="/library" className="gnb-left">
                 <img className="gnb-logo" src="/logo_nv.webp" alt="Don't Paw-get Your Book" width={36} height={36} decoding="async" />
                 <img className="gnb-service-name" src="/service name.webp" alt="Don't Paw-get Your Book" width={174} height={25} decoding="async" />
