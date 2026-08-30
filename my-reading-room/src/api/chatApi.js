@@ -7,7 +7,24 @@
  * 백엔드 서버가 꺼져 있거나 에러 발생 시 null을 반환하여 프론트 로컬 fallback을 사용합니다.
  */
 
+import { getAccessToken } from './authApi';
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
+/**
+ * 로그인 상태면 Authorization 헤더를 포함한 헤더 객체를 반환합니다.
+ * 비로그인 상태(토큰 없음)면 Authorization 헤더 없이 반환하여 오케스트레이터가
+ * 비로그인 사용자로 처리하도록 합니다 (서재 조회 등 인증 필요 기능만 제한됨).
+ * @returns {Record<string, string>}
+ */
+function buildHeaders() {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getAccessToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 /**
  * 위도/경도 값이 유효한 범위인지 검증합니다 (위도 -90~90, 경도 -180~180).
@@ -60,7 +77,7 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
 
     const response = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildHeaders(),
       body: JSON.stringify(payload),
     });
 
@@ -116,7 +133,7 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
 
     const response = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: buildHeaders(),
       body: JSON.stringify(payload),
     });
 

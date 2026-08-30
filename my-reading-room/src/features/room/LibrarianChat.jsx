@@ -9,6 +9,9 @@ import MarkdownRenderer from './MarkdownRenderer';
 import WeatherMoodBadge from './WeatherMoodBadge';
 import { useLibrarian } from '../../store/librarianStore';
 
+// 백엔드(discovery) ChatRequest.message max_length와 동일하게 맞춘다 (CLIAR-184/185)
+const MAX_MESSAGE_LENGTH = 2000;
+
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
  * 백엔드(/api/v1/chat)로 스트리밍 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
@@ -289,21 +292,36 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
       )}
 
       {/* 입력 */}
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 6 }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={loading ? '사서가 답변 중...' : '무엇이든 물어보세요 (추천·검색·날씨 등)'}
-          disabled={loading}
-          style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
-        >
-          ↵
-        </button>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+            maxLength={MAX_MESSAGE_LENGTH}
+            placeholder={loading ? '사서가 답변 중...' : '무엇이든 물어보세요 (추천·검색·날씨 등)'}
+            disabled={loading}
+            style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ padding: '0 14px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
+          >
+            ↵
+          </button>
+        </div>
+        {/* 백엔드 max_length(2000자)에 근접했을 때만 카운터를 노출해 평소엔 UI가 조용하게 유지 */}
+        {input.length > MAX_MESSAGE_LENGTH * 0.8 && (
+          <span
+            style={{
+              alignSelf: 'flex-end',
+              fontSize: 11,
+              color: input.length >= MAX_MESSAGE_LENGTH ? '#e05a4e' : 'var(--text)',
+            }}
+          >
+            {input.length}/{MAX_MESSAGE_LENGTH}
+          </span>
+        )}
       </form>
     </div>
   );
