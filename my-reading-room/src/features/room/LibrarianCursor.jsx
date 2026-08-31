@@ -14,11 +14,11 @@ import { extractBooksFromAnswer } from './bookExtractor';
 // 표시 크기(px)
 const IMG_SIZE = 200;
 
-// 이미지별 손끝(뻗은 앞발) 위치 비율 — 실제 이미지 알파 채널 측정값.
-const FINGERTIP = {
-  default: { x: 0.26, y: 0.287 }, // cat_03
-  hover: { x: 0.143, y: 0.357 }, // cat_04
-};
+/**
+ * 포인터 지점 기본값 — 사서 데이터(librarians.js)에 tip이 없을 때만 사용.
+ * 사서별 실측 좌표는 librarians.js의 tip/tipHover가 단일 소스다.
+ */
+const FALLBACK_TIP = { x: 0.26, y: 0.287 };
 
 /**
  * 말풍선에 노출할 짧은 1~2줄 리액션 텍스트 생성
@@ -59,8 +59,8 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
   const useHover = hovering && librarian.imageHover;
   const imgSrc = useHover ? librarian.imageHover : librarian.image;
 
-  // 손끝이 실제 커서 지점(--mx, --my)에 오도록 이미지를 이동
-  const tip = useHover ? FINGERTIP.hover : FINGERTIP.default;
+  // 포인터 지점(손끝·부리 끝)이 실제 커서 위치(--mx, --my)에 오도록 이미지를 이동
+  const tip = (useHover ? librarian.tipHover : librarian.tip) || librarian.tip || FALLBACK_TIP;
   const offsetX = -(tip.x * IMG_SIZE);
   const offsetY = -(tip.y * IMG_SIZE);
 
