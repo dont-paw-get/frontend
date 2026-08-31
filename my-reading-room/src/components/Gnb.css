@@ -32,6 +32,19 @@
     backdrop-filter: blur(4px);
 }
 
+/* 라이트 모드 + 내 서재 오버레이 (CLIAR-192):
+   밝은 배경 이미지 위 어두운 pill에서 어두운 주황 텍스트가 잘 안 보여,
+   선택되지 않은 메뉴 텍스트를 흰색 + 그림자로 바꿔 가독성을 높인다.
+   (다크 모드는 그대로 유지, 선택된 탭 .on은 주황 배경 + 흰 글자 유지) */
+[data-theme='light'] .gnb--overlay .gnb-menu {
+    background: rgba(0, 0, 0, 0.42);
+}
+
+[data-theme='light'] .gnb--overlay .gnb-menu a {
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
 .gnb-left {
     display: flex;
     align-items: center;
