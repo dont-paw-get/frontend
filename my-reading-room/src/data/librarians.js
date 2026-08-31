@@ -49,10 +49,12 @@ export const LIBRARIANS = [
     specialtyCode: 'BUSINESS_ECONOMICS',
     // 황새 서재로 전환했을 때 기본으로 유지되는 커서 이미지 (CLIAR-198)
     image: '/cursors/stork/stork_1.webp',
-    imageHover: null,
-    // 포인터 지점은 부리 끝 — 이미지 알파 채널 실측값 (99, 67)/300
-    tip: { x: 0.33, y: 0.223 },
-    tipHover: null,
+    // 책 위에 올렸을 때: 날개를 펄럭이는 2프레임 애니메이션 WebP 1장
+    // (원본 stork_2·stork_3을 합쳐 에셋 장수는 고양이와 동일하게 2장 유지)
+    imageHover: '/cursors/stork/stork_hover.webp',
+    // 포인터 지점은 부리 끝 — 알파 채널 실측값 (168,84)/300, hover는 (178,65)/300
+    tip: { x: 0.56, y: 0.28 },
+    tipHover: { x: 0.593, y: 0.217 },
   },
 ].map((l) => ({
   ...l,
