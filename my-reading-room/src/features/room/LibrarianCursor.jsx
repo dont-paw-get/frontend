@@ -1,4 +1,5 @@
 import { extractBooksFromAnswer } from './bookExtractor';
+import './LibrarianCursor.css';
 
 /**
  * LibrarianCursor — 마우스를 따라다니는 사서 이미지 + 우상단 말풍선.
@@ -91,9 +92,10 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
            */
           <img
             key={imgSrc}
+            className={`librarian-cursor-img${useHover ? ' librarian-cursor-img--hover' : ''}`}
             src={imgSrc}
             alt={librarian.name}
-            style={{ width: imgSize, height: imgSize, objectFit: 'contain', display: 'block', userSelect: 'none' }}
+            style={{ width: imgSize, height: imgSize }}
             draggable={false}
           />
         ) : (
