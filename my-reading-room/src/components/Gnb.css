@@ -45,6 +45,12 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
+/* 로그아웃 / 프로필(사서 이름) 텍스트도 동일하게 흰색으로 */
+[data-theme='light'] .gnb--overlay .gnb-logout-btn,
+[data-theme='light'] .gnb--overlay .gnb-profile-name {
+    color: #fff;
+}
+
 .gnb-left {
     display: flex;
     align-items: center;
