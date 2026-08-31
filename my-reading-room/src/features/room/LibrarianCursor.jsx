@@ -80,7 +80,14 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
       <div style={{ position: 'relative' }}>
         {/* 사서 이미지 (없으면 이모지) */}
         {imgSrc ? (
+          /*
+           * key에 src를 넣어 호버 상태가 바뀔 때마다 img 요소를 새로 마운트한다.
+           * 황새 호버 이미지는 1회 재생 후 마지막 프레임에 멈추는 애니메이션 WebP라,
+           * 같은 요소의 src만 교체하면 브라우저가 완료된 애니메이션을 다시 재생하지
+           * 않을 수 있다. 요소를 새로 만들면 책 위에 올릴 때마다 처음부터 재생된다.
+           */
           <img
+            key={imgSrc}
             src={imgSrc}
             alt={librarian.name}
             style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: 'contain', display: 'block', userSelect: 'none' }}
