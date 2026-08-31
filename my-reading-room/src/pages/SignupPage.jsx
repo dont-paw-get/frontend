@@ -53,7 +53,6 @@ export default function SignupPage() {
     email: '',
     password: '',
     passwordConfirm: '',
-    nickname: '',
     birthDate: '',
     gender: '',
   });
@@ -127,7 +126,6 @@ export default function SignupPage() {
     form.email.trim() &&
     pwValid &&
     pwMatch &&
-    form.nickname.trim() &&
     birthDateValid &&
     form.gender;
 
@@ -138,10 +136,14 @@ export default function SignupPage() {
     setLoading(true);
     setSubmitError('');
     try {
+      const email = form.email.trim();
       await signup({
-        email: form.email.trim(),
+        email,
         password: form.password,
-        nickname: form.nickname.trim(),
+        // 사용자 ID(닉네임) 입력 UI는 제거됨(CLIAR-191). 이메일로 로그인하므로 별도 ID가 불필요하지만,
+        // backend-auth는 아직 nickname을 필수(non-null)로 요구하므로 이메일 로컬파트를 파생값으로 전송한다.
+        // (백엔드가 nickname을 optional로 바꾸면 이 파생 로직 제거)
+        nickname: email.split('@')[0] || email,
         birth_date: form.birthDate, // YYYY-MM-DD (date input)
         gender: GENDER_MAP[form.gender],
         agree_terms: agreeTerms,
@@ -272,21 +274,6 @@ export default function SignupPage() {
             {form.passwordConfirm && form.password !== form.passwordConfirm && (
               <span className="signup-error">비밀번호가 일치하지 않습니다</span>
             )}
-          </div>
-
-          {/* 사용자 ID (백엔드 계약상 nickname 필드로 전송) */}
-          <div className="signup-field">
-            <label htmlFor="signup-userid">사용자 ID</label>
-            <input
-              id="signup-userid"
-              name="nickname"
-              type="text"
-              placeholder="사용할 사용자 ID 입력"
-              value={form.nickname}
-              onChange={handleChange}
-              autoComplete="username"
-              required
-            />
           </div>
 
           {/* 생년월일 + 성별 (같은 행) */}

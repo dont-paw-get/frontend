@@ -23,7 +23,6 @@ export default function MyPage() {
 
   // member는 로그인 시점에 GET /users/me 응답으로 채워짐 (AuthProvider)
   const profileImage = member?.profile_image_url || DEFAULT_PROFILE_IMAGE;
-  const userId = member?.nickname ?? '';
   const email = member?.email ?? '';
   const birthDate = member?.birth_date ?? '';
   const gender = GENDER_LABEL[member?.gender] ?? '';
@@ -138,7 +137,7 @@ export default function MyPage() {
                 <img
                   className="mypage-avatar"
                   src={profileImage}
-                  alt={`${userId} 프로필 사진`}
+                  alt="프로필 사진"
                   width={97}
                   height={102}
                   decoding="async"
@@ -146,10 +145,6 @@ export default function MyPage() {
               </div>
 
               <dl className="mypage-info">
-                <div className="mypage-info-row">
-                  <dt>사용자 ID</dt>
-                  <dd>{userId}</dd>
-                </div>
                 <div className="mypage-info-row">
                   <dt>생년월일</dt>
                   <dd>{birthDate}</dd>
