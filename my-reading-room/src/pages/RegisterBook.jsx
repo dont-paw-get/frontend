@@ -19,7 +19,7 @@ function deriveStatus(currentPage, totalPage) {
 }
 
 export default function RegisterBook() {
-  const { addBook } = useBooks();
+  const { addBook, saveReadingProgress } = useBooks();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,6 +39,9 @@ export default function RegisterBook() {
 
   const [totalPage, setTotalPage] = useState('');
   const [currentPage, setCurrentPage] = useState('');
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   // AI 도서 추천 등 외부 state로 넘어온 도서 정보 자동 채움
   useEffect(() => {
@@ -86,21 +89,42 @@ export default function RegisterBook() {
     String(totalPage).trim() !== '' &&
     String(currentPage).trim() !== '';
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!allFilled) return;
+    if (!allFilled || submitting) return;
     const color = colorPresets[colorIdx];
-    addBook({
-      title,
-      author,
-      spineColor: color.spine,
-      coverColor: color.cover,
-      thickness,
-      totalPage: Number(totalPage),
-      currentPage: Number(currentPage),
-      status: deriveStatus(currentPage, totalPage),
-    });
-    navigate('/library');
+    const initialPage = Number(currentPage) || 0;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      // 서버에 도서 생성 (색/두께는 provider가 로컬 bookVisuals에 저장)
+      const created = await addBook({
+        title,
+        author,
+        spineColor: color.spine,
+        coverColor: color.cover,
+        thickness,
+        totalPage: Number(totalPage),
+        status: deriveStatus(currentPage, totalPage),
+      });
+      // 현재 읽은 페이지가 있으면 진행도까지 반영 (생성 API엔 currentPage가 없음)
+      if (created?.bookId && initialPage > 0) {
+        try {
+          await saveReadingProgress(created.bookId, initialPage, Number(totalPage) || null);
+        } catch {
+          // 진행도 저장 실패는 등록 자체를 막지 않는다 (서재에서 다시 수정 가능)
+        }
+      }
+      navigate('/library');
+    } catch (err) {
+      setSubmitError(
+        err?.status === 409
+          ? '이미 서재에 등록된 책이에요.'
+          : '책 등록 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const fieldStyle = { padding: 8, fontSize: 15, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)' };
@@ -337,22 +361,25 @@ export default function RegisterBook() {
         </div>
 
         {/* 완료 버튼 */}
-        <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          {submitError && (
+            <span style={{ color: '#e05a4e', fontSize: 13 }}>{submitError}</span>
+          )}
           <button
             type="submit"
-            disabled={!allFilled}
+            disabled={!allFilled || submitting}
             style={{
               padding: '10px 32px',
               fontSize: 16,
               fontWeight: 700,
               borderRadius: 8,
               border: 'none',
-              background: allFilled ? 'var(--accent)' : 'var(--border)',
-              color: allFilled ? '#fff' : 'var(--text)',
-              cursor: allFilled ? 'pointer' : 'not-allowed',
+              background: allFilled && !submitting ? 'var(--accent)' : 'var(--border)',
+              color: allFilled && !submitting ? '#fff' : 'var(--text)',
+              cursor: allFilled && !submitting ? 'pointer' : 'not-allowed',
             }}
           >
-            등록하고 서재에 꽂기
+            {submitting ? '등록 중...' : '등록하고 서재에 꽂기'}
           </button>
         </div>
       </form>
