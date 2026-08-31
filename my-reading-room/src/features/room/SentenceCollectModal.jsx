@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBooks } from '../../store/booksStore';
 import { recognizeText } from '../register/ocrUtils';
@@ -13,7 +13,7 @@ import { recognizeText } from '../register/ocrUtils';
  * @param {()=>void} onClose - 닫기 콜백
  */
 export default function SentenceCollectModal({ book, onClose }) {
-  const { updateQuote, removeQuote, addQuote } = useBooks();
+  const { fetchScraps, addScrap, editScrap, removeScrap } = useBooks();
   const captureInputRef = useRef(null);
   const uploadInputRef = useRef(null);
 
@@ -24,7 +24,26 @@ export default function SentenceCollectModal({ book, onClose }) {
   const [page, setPage] = useState('');
   const [editingQuoteId, setEditingQuoteId] = useState(null);
 
-  const quotes = book.quotes || [];
+  const [quotes, setQuotes] = useState([]);
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // 문장 목록 로드 (서버)
+  const reloadQuotes = useCallback(async () => {
+    setQuotesLoading(true);
+    try {
+      const list = await fetchScraps(book.bookId);
+      setQuotes(list);
+    } catch {
+      setQuotes([]);
+    } finally {
+      setQuotesLoading(false);
+    }
+  }, [fetchScraps, book.bookId]);
+
+  useEffect(() => {
+    reloadQuotes();
+  }, [reloadQuotes]);
 
   async function handleFile(file) {
     if (!file) return;
@@ -48,14 +67,22 @@ export default function SentenceCollectModal({ book, onClose }) {
     setEditingQuoteId(null);
   }
 
-  function handleSave() {
-    if (!text.trim()) return;
-    if (editingQuoteId) {
-      updateQuote(book.id, editingQuoteId, { text, memo, page: Number(page) || null });
-    } else {
-      addQuote(book.id, { text, memo, page });
+  async function handleSave() {
+    if (!text.trim() || saving) return;
+    setSaving(true);
+    try {
+      if (editingQuoteId) {
+        await editScrap(editingQuoteId, { text, memo, page });
+      } else {
+        await addScrap(book.bookId, { text, memo, page });
+      }
+      resetForm();
+      await reloadQuotes();
+    } catch {
+      // 저장 실패 시 폼 유지 (사용자가 재시도 가능)
+    } finally {
+      setSaving(false);
     }
-    resetForm();
   }
 
   function handleEditQuote(quote) {
@@ -65,9 +92,14 @@ export default function SentenceCollectModal({ book, onClose }) {
     setPage(quote.page ? String(quote.page) : '');
   }
 
-  function handleDeleteQuote(quoteId) {
-    removeQuote(book.id, quoteId);
-    if (editingQuoteId === quoteId) resetForm();
+  async function handleDeleteQuote(quoteId) {
+    try {
+      await removeScrap(quoteId);
+      if (editingQuoteId === quoteId) resetForm();
+      await reloadQuotes();
+    } catch {
+      // 삭제 실패는 조용히 무시 (목록 유지)
+    }
   }
 
   const fieldStyle = {
@@ -187,15 +219,15 @@ export default function SentenceCollectModal({ book, onClose }) {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!text.trim()}
+                disabled={!text.trim() || saving}
                 style={{
                   flex: 1, padding: '9px 0', borderRadius: 8, border: 'none',
-                  background: text.trim() ? 'var(--accent)' : 'var(--border)',
-                  color: text.trim() ? '#fff' : 'var(--text)',
-                  fontWeight: 700, cursor: text.trim() ? 'pointer' : 'not-allowed', fontSize: 13,
+                  background: text.trim() && !saving ? 'var(--accent)' : 'var(--border)',
+                  color: text.trim() && !saving ? '#fff' : 'var(--text)',
+                  fontWeight: 700, cursor: text.trim() && !saving ? 'pointer' : 'not-allowed', fontSize: 13,
                 }}
               >
-                {editingQuoteId ? '수정 저장' : '문장 저장'}
+                {saving ? '저장 중...' : editingQuoteId ? '수정 저장' : '문장 저장'}
               </button>
               {editingQuoteId && (
                 <button
@@ -213,7 +245,10 @@ export default function SentenceCollectModal({ book, onClose }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span style={{ fontWeight: 600, fontSize: 13 }}>저장된 문장 ({quotes.length})</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 480, overflowY: 'auto' }}>
-              {quotes.length === 0 && (
+              {quotesLoading && (
+                <p style={{ fontSize: 12, color: 'var(--text)' }}>문장을 불러오는 중이에요...</p>
+              )}
+              {!quotesLoading && quotes.length === 0 && (
                 <p style={{ fontSize: 12, color: 'var(--text)' }}>아직 저장된 문장이 없어요 📖</p>
               )}
               {quotes.map((q) => (

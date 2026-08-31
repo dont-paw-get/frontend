@@ -1,106 +1,170 @@
-import { useEffect, useState } from 'react';
-import { BooksContext, STORAGE_KEY } from './booksStore';
+import { useCallback, useEffect, useState } from 'react';
+import { BooksContext } from './booksStore';
+import { useAuth } from './authStore';
+import * as bookApi from '../api/bookApi';
+import { getVisual, setVisual } from './bookVisuals';
 
-const COLOR_PRESETS = [
-  { spine: '#c96b32', cover: '#e8944a' }, // 앰버
-  { spine: '#8b4513', cover: '#b5651d' }, // 새들브라운
-  { spine: '#a0522d', cover: '#cd853f' }, // 시에나
-  { spine: '#d4763e', cover: '#f2a365' }, // 피치
-  { spine: '#6b3a2a', cover: '#8c5a3c' }, // 다크 코코아
-  { spine: '#bf7830', cover: '#e0a050' }, // 골든
-];
+/**
+ * 서재 도서 전역 상태 (CLIAR-186).
+ *
+ * 기존에는 localStorage 단일 키에 저장해 계정 간 데이터가 섞이는 버그가 있었다.
+ * 이제 backend-book API(사용자별 JWT 스코프)로 저장/조회하고, 색상/두께 등 백엔드가
+ * 저장하지 않는 시각 정보만 bookVisuals(localStorage)로 보관한다.
+ *
+ * - 로그인(authenticated) 시 서버에서 목록을 로드
+ * - 로그아웃(unauthenticated) 시 목록을 비움
+ */
 
-function loadInitial() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+// 백엔드 LibraryBookSummary → 프론트 도서 모델(3D 렌더링/화면용)로 변환
+function toFrontBook(summary) {
+  const visual = getVisual(summary.bookId);
+  return {
+    id: String(summary.bookId), // 기존 코드가 문자열 id로 선택/키를 다뤄 호환 유지
+    bookId: summary.bookId,
+    title: summary.title,
+    author: summary.author,
+    genre: summary.genre,
+    status: bookApi.toKoreanStatus(summary.readingStatus),
+    coverUrl: summary.coverUrl ?? null,
+    progress: summary.progress ?? 0,
+    spineColor: visual.spineColor,
+    coverColor: visual.coverColor,
+    thickness: visual.thickness,
+    heightFactor: visual.heightFactor,
+  };
 }
 
 export function BooksProvider({ children }) {
-  const [books, setBooks] = useState(loadInitial);
+  const { status } = useAuth();
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // 변경 시 localStorage 동기화
-  useEffect(() => {
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
-    } catch {
-      // 저장 실패는 무시(용량 초과 등)
+      const list = await bookApi.listLibraryBooks();
+      setBooks(list.map(toFrontBook));
+    } catch (err) {
+      setError(err);
+      setBooks([]);
+    } finally {
+      setLoading(false);
     }
-  }, [books]);
+  }, []);
 
-  function addBook(book) {
-    const color = COLOR_PRESETS[Math.floor(Math.random() * COLOR_PRESETS.length)];
-    const newBook = {
-      id: crypto.randomUUID(),
-      title: book.title?.trim() || '제목 없음',
-      author: book.author?.trim() || '',
-      genre: book.genre || '',
-      status: book.status || '시작전',
-      currentPage: Number(book.currentPage) || 0,
-      totalPage: Number(book.totalPage) || 0,
-      spineColor: book.spineColor || color.spine,
-      coverColor: book.coverColor || color.cover,
-      thickness: Number(book.thickness) || 0.22,
-      heightFactor: Math.random(),
-      createdAt: Date.now(),
-    };
-    setBooks((prev) => [...prev, newBook]);
-    return newBook;
-  }
+  // 인증 상태에 따라 로드/클리어
+  useEffect(() => {
+    if (status === 'authenticated') {
+      reload();
+    } else if (status === 'unauthenticated') {
+      setBooks([]);
+      setError(null);
+    }
+  }, [status, reload]);
 
-  function updateBook(id, patch) {
-    setBooks((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-  }
+  /**
+   * 도서 등록. 색/두께는 서버에 없으므로 로컬(bookVisuals)에 저장한다.
+   * @returns {Promise<object>} 생성된 프론트 도서 모델
+   */
+  const addBook = useCallback(async (input) => {
+    const created = await bookApi.createLibraryBook({
+      title: input.title,
+      author: input.author,
+      totalPages: Number(input.totalPage) || null,
+      readingStatus: bookApi.toReadingStatus(input.status),
+    });
+    setVisual(created.bookId, {
+      spineColor: input.spineColor,
+      coverColor: input.coverColor,
+      thickness: Number(input.thickness) || undefined,
+    });
+    await reload();
+    return created;
+  }, [reload]);
 
-  function removeBook(id) {
-    setBooks((prev) => prev.filter((b) => b.id !== id));
-  }
+  const removeBook = useCallback(async (bookId) => {
+    await bookApi.deleteLibraryBook(bookId);
+    setBooks((prev) => prev.filter((b) => b.bookId !== bookId));
+  }, []);
 
-  function clearBooks() {
-    setBooks([]);
-  }
+  /**
+   * 독서 진행도(현재 페이지) 저장. 목록 모델엔 페이지가 없어 로컬 상태 변경은 없다.
+   */
+  const saveReadingProgress = useCallback((bookId, currentPage, totalPages) => {
+    return bookApi.updateReadingProgress(bookId, currentPage, totalPages);
+  }, []);
 
-  // ── 문장 수집(스크랩) ──
-  function addQuote(bookId, quote) {
-    const newQuote = {
-      id: crypto.randomUUID(),
-      text: quote.text?.trim() || '',
-      memo: quote.memo?.trim() || '',
-      page: Number(quote.page) || null,
-      createdAt: Date.now(),
-    };
-    setBooks((prev) =>
-      prev.map((b) => (b.id === bookId ? { ...b, quotes: [...(b.quotes || []), newQuote] } : b))
-    );
-    return newQuote;
-  }
-
-  function updateQuote(bookId, quoteId, patch) {
+  /**
+   * 도서 메타데이터 저장(제목/저자/상태 등). 백엔드 PATCH는 전체 페이로드를 요구하므로
+   * 호출부(BookDetail)가 상세값을 합쳐 meta로 전달한다. 성공 시 목록 상태를 부분 갱신.
+   */
+  const saveBookMeta = useCallback(async (bookId, meta) => {
+    await bookApi.updateLibraryBookMeta(bookId, meta);
     setBooks((prev) =>
       prev.map((b) =>
-        b.id === bookId
-          ? { ...b, quotes: (b.quotes || []).map((q) => (q.id === quoteId ? { ...q, ...patch } : q)) }
+        b.bookId === bookId
+          ? {
+            ...b,
+            title: meta.title ?? b.title,
+            author: meta.author ?? b.author,
+            genre: meta.genre ?? b.genre,
+            status: meta.readingStatus ? bookApi.toKoreanStatus(meta.readingStatus) : b.status,
+          }
           : b
       )
     );
-  }
+  }, []);
 
-  function removeQuote(bookId, quoteId) {
-    setBooks((prev) =>
-      prev.map((b) =>
-        b.id === bookId ? { ...b, quotes: (b.quotes || []).filter((q) => q.id !== quoteId) } : b
-      )
-    );
-  }
+  // ── 문장수집(scrap) ── 도서에 종속. 목록/추가/수정/삭제 모두 API 경유.
+  const fetchScraps = useCallback(async (bookId) => {
+    const scraps = await bookApi.listScraps(bookId);
+    // 프론트 quote 모델로 변환
+    return scraps.map((s) => ({
+      id: s.scrapId,
+      text: s.sentence,
+      memo: s.memo || '',
+      page: s.pageNumber ?? null,
+    }));
+  }, []);
+
+  const addScrap = useCallback((bookId, { text, memo, page }) => {
+    return bookApi.createScrap(bookId, {
+      sentence: text,
+      memo: memo || null,
+      pageNumber: Number(page) || null,
+    });
+  }, []);
+
+  const editScrap = useCallback((scrapId, { text, memo, page }) => {
+    return bookApi.updateScrap(scrapId, {
+      sentence: text,
+      memo: memo || null,
+      pageNumber: Number(page) || null,
+    });
+  }, []);
+
+  const removeScrap = useCallback((scrapId) => {
+    return bookApi.deleteScrap(scrapId);
+  }, []);
 
   return (
     <BooksContext.Provider
-      value={{ books, addBook, updateBook, removeBook, clearBooks, addQuote, updateQuote, removeQuote }}
+      value={{
+        books,
+        loading,
+        error,
+        reload,
+        addBook,
+        removeBook,
+        saveReadingProgress,
+        saveBookMeta,
+        fetchScraps,
+        addScrap,
+        editScrap,
+        removeScrap,
+      }}
     >
       {children}
     </BooksContext.Provider>

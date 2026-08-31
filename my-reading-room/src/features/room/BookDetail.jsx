@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useBooks } from '../../store/booksStore';
+import { getLibraryBook, toReadingStatus } from '../../api/bookApi';
 import SentenceCollectModal from './SentenceCollectModal';
 
 const STATUS_OPTIONS = ['시작전', '읽는 중', '잠시 멈춤', '완독'];
@@ -7,28 +8,82 @@ const STATUS_OPTIONS = ['시작전', '읽는 중', '잠시 멈춤', '완독'];
 /**
  * BookDetail — 선택된 책의 상세 정보 팝업.
  *
- * @param {object} book - 선택된 책 데이터
+ * @param {object} book - 선택된 책 데이터 (목록 요약: bookId/title/author/status 등)
  * @param {()=>void} onClose - 닫기 콜백
  */
 export default function BookDetail({ book, onClose }) {
-  const { updateBook, removeBook } = useBooks();
-  const [currentPage, setCurrentPage] = useState(book.currentPage || 0);
-  const [totalPage, setTotalPage] = useState(book.totalPage || 0);
+  const { removeBook, saveReadingProgress, saveBookMeta } = useBooks();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPage, setTotalPage] = useState(0);
   const [status, setStatus] = useState(book.status || '시작전');
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showSentenceModal, setShowSentenceModal] = useState(false);
+  const [detail, setDetail] = useState(null); // 서버 상세(전체 메타 — 저장 시 full payload에 필요)
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
-  const handleSave = () => {
+  // 목록 요약엔 페이지/장르 등이 없어, 상세를 조회해 현재/총 페이지·상태를 초기화한다.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const d = await getLibraryBook(book.bookId);
+        if (cancelled) return;
+        setDetail(d);
+        setCurrentPage(d.currentPage || 0);
+        setTotalPage(d.totalPages || 0);
+        if (d.readingStatus) {
+          // 서버 상태를 우선 반영(한글 매핑은 provider와 동일 규칙)
+          const kr = { PLANNED: '시작전', READING: '읽는 중', COMPLETED: '완독' }[d.readingStatus];
+          if (kr) setStatus(kr);
+        }
+      } catch {
+        // 상세 조회 실패 시 요약 기반 값 유지
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [book.bookId]);
+
+  const handleSave = async () => {
+    if (saving) return;
     const cur = Number(currentPage) || 0;
     const total = Number(totalPage) || 0;
-    updateBook(book.id, { currentPage: cur, totalPage: total, status });
-    setEditing(false);
+    setSaving(true);
+    setActionError(null);
+    try {
+      // 메타(상태 포함) 저장 — 백엔드 PATCH는 전체 페이로드를 요구하므로 상세값과 합친다.
+      await saveBookMeta(book.bookId, {
+        title: detail?.title ?? book.title,
+        author: detail?.author ?? book.author,
+        isbn: detail?.isbn ?? null,
+        genre: detail?.genre ?? 'NONE',
+        publisher: detail?.publisher ?? null,
+        publishedDate: detail?.publishedDate ?? null,
+        coverUrl: detail?.coverUrl ?? null,
+        readingStatus: toReadingStatus(status),
+        totalPages: total || null,
+      });
+      // 진행도(현재 페이지) 저장
+      await saveReadingProgress(book.bookId, cur, total || null);
+      setEditing(false);
+    } catch {
+      setActionError('저장 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = () => {
-    removeBook(book.id);
-    onClose();
+  const handleDelete = async () => {
+    try {
+      await removeBook(book.bookId);
+      onClose();
+    } catch {
+      setActionError('삭제 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
+      setConfirmDelete(false);
+    }
   };
 
   const panelStyle = {
@@ -195,13 +250,21 @@ export default function BookDetail({ book, onClose }) {
       {/* 저장/취소 (편집 모드일 때만) */}
       {editing && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <button onClick={handleSave} style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff' }}>
-            저장
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff', opacity: saving ? 0.6 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+          >
+            {saving ? '저장 중...' : '저장'}
           </button>
-          <button onClick={() => setEditing(false)} style={{ ...btnStyle, flex: 1, background: 'var(--border)', color: 'var(--text-h)' }}>
+          <button onClick={() => setEditing(false)} disabled={saving} style={{ ...btnStyle, flex: 1, background: 'var(--border)', color: 'var(--text-h)' }}>
             취소
           </button>
         </div>
+      )}
+
+      {actionError && (
+        <p style={{ margin: '0 0 12px', fontSize: 12, color: '#e05a4e', textAlign: 'center' }}>{actionError}</p>
       )}
 
       {/* 문장 수집 */}
