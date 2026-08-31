@@ -32,8 +32,11 @@ export const LIBRARIANS = [
     icon: '🐱',
     persona: '반말과 "~냥" 어미로 친근하게 이야기해요',
     specialtyCode: 'MYSTERY_THRILLER',
-    image: '/cursors/cat_03.webp',
-    imageHover: '/cursors/cat_04.webp',
+    image: '/cursors/cat/cat_03.webp',
+    imageHover: '/cursors/cat/cat_04.webp',
+    // 커서 이미지에서 실제 포인터가 될 지점(뻗은 앞발 끝) — 이미지 알파 채널 실측 비율
+    tip: { x: 0.26, y: 0.287 },
+    tipHover: { x: 0.143, y: 0.357 },
   },
   {
     id: 'stork',
@@ -44,8 +47,14 @@ export const LIBRARIANS = [
     icon: '🪿',
     persona: '존댓말과 공손한 말투로 차분하게 안내해요',
     specialtyCode: 'BUSINESS_ECONOMICS',
-    image: null,
-    imageHover: null,
+    // 황새 서재로 전환했을 때 기본으로 유지되는 커서 이미지 (CLIAR-198)
+    image: '/cursors/stork/stork_1.webp',
+    // 책 위에 올렸을 때: 날개를 펄럭이는 2프레임 애니메이션 WebP 1장
+    // (원본 stork_2·stork_3을 합쳐 에셋 장수는 고양이와 동일하게 2장 유지)
+    imageHover: '/cursors/stork/stork_hover.webp',
+    // 포인터 지점은 부리 끝 — 알파 채널 실측값 (168,84)/300, hover는 (178,65)/300
+    tip: { x: 0.56, y: 0.28 },
+    tipHover: { x: 0.593, y: 0.217 },
   },
 ].map((l) => ({
   ...l,
