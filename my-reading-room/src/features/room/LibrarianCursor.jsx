@@ -11,7 +11,7 @@ import { extractBooksFromAnswer } from './bookExtractor';
  * @param {object} librarian - { name, icon, image }
  * @param {{text:string}|null} answer - 표시할 답변(없으면 말풍선 숨김)
  */
-// 표시 크기(px)
+// 기본 표시 크기(px). 사서별 배율은 librarians.js의 imgScale로 조정한다.
 const IMG_SIZE = 200;
 
 /**
@@ -59,10 +59,13 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
   const useHover = hovering && librarian.imageHover;
   const imgSrc = useHover ? librarian.imageHover : librarian.image;
 
+  // 사서별 표시 크기 (imgScale 미지정 시 기본 배율)
+  const imgSize = Math.round(IMG_SIZE * (librarian.imgScale ?? 1));
+
   // 포인터 지점(손끝·부리 끝)이 실제 커서 위치(--mx, --my)에 오도록 이미지를 이동
   const tip = (useHover ? librarian.tipHover : librarian.tip) || librarian.tip || FALLBACK_TIP;
-  const offsetX = -(tip.x * IMG_SIZE);
-  const offsetY = -(tip.y * IMG_SIZE);
+  const offsetX = -(tip.x * imgSize);
+  const offsetY = -(tip.y * imgSize);
 
   const bubbleText = answer?.text ? getShortBubbleText(answer.text, librarian) : '';
 
@@ -90,7 +93,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
             key={imgSrc}
             src={imgSrc}
             alt={librarian.name}
-            style={{ width: IMG_SIZE, height: IMG_SIZE, objectFit: 'contain', display: 'block', userSelect: 'none' }}
+            style={{ width: imgSize, height: imgSize, objectFit: 'contain', display: 'block', userSelect: 'none' }}
             draggable={false}
           />
         ) : (
