@@ -22,6 +22,47 @@ function normalizeTitle(str) {
 }
 
 /**
+ * 질문 의도에 따른 사서별 맥락 맞춤형 로딩 안내 멘트 생성
+ */
+function getContextualLoadingMessage(message, librarianId) {
+  const q = (message || '').trim().toLowerCase();
+  const isStork = librarianId === 'stork';
+
+  // 1. 단순 인사 및 소개
+  if (/^(안녕|반가|하이|hi|hello|누구|소개|안뇽)/i.test(q)) {
+    return isStork
+      ? '🪿 정중하게 인사를 준비하고 있습니다... 🪶'
+      : '🐾 반갑게 인사를 건네려고 준비 중이다냥...';
+  }
+
+  // 2. 내 서재 조회 (서재, 읽던 책, 진행률, 내 책, 목록, 읽은 책)
+  if (/(서재|읽던|내\s*책|내책|진행|완독|기록|보유|내가\s*읽|목록)/i.test(q)) {
+    return isStork
+      ? '🪿 서재의 독서 기록을 차분히 살피고 있습니다... 🪶'
+      : '🐾 서재에서 집사님의 책 기록을 찾아보고 있다냥...';
+  }
+
+  // 3. 도서 추천 (추천, 골라, 책 찾아, 소설, 장르 등)
+  if (/(추천|골라|책\s*찾|도서\s*찾|소설|인문|경제|경영|스릴러|미스터리)/i.test(q)) {
+    return isStork
+      ? '🪿 슈빌 사서가 전문 분야의 맞춤 명저를 선별하고 있습니다... 🪶'
+      : '🐾 블루 사서가 딱 맞는 좋은 책을 찾고 있다냥...';
+  }
+
+  // 4. 날씨 / 분위기 / 기분
+  if (/(날씨|비|눈|더위|추위|기분|우울|신나|위로)/i.test(q)) {
+    return isStork
+      ? '🪿 오늘의 날씨와 기분에 어울리는 이야기를 생각하고 있습니다... 🪶'
+      : '🐾 오늘 분위기에 맞는 이야기를 떠올리고 있다냥...';
+  }
+
+  // 5. 일반 질문 / 일상 대화
+  return isStork
+    ? '🪿 슈빌 사서가 답변을 정리하고 있습니다... 🪶'
+    : '🐾 블루 사서가 열심히 생각하고 있다냥...';
+}
+
+/**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
  * 백엔드(/api/v1/chat)로 스트리밍 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
  *
@@ -42,18 +83,44 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
   const [lastUserMessage, setLastUserMessage] = useState(''); // 직전 질문 기억 (사서 전환 시 자동 질의용)
 
-  // 1. 내 서재 도서 조회 결과 (ADR 0006: 백엔드 response.library_books 또는 ### 📚 마크다운 블록)
+  // 1. 내 서재 도서 조회 결과 (ADR 0006: 백엔드 response.library_books 또는 ### 📚 마크다운 블록 또는 내 서재 본문 매칭)
   const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
-  const parsedLibraryBooks = useMemo(
-    () => (answer?.text && !loading ? extractLibraryBooksFromAnswer(answer.text) : []),
-    [answer?.text, loading]
-  );
-  const libraryBooks = backendLibraryBooks.length > 0 ? backendLibraryBooks : parsedLibraryBooks;
 
-  // 2. 외부 도서 추천 (ADR 0006: ### 📖 마크다운 블록)
+  const libraryBooks = useMemo(() => {
+    if (backendLibraryBooks.length > 0) return backendLibraryBooks;
+    if (!answer?.text || loading) return [];
+
+    // 1) ADR 0006 표준: ### 📚 마크다운 블록 우선 파싱
+    const fromMarkdown = extractLibraryBooksFromAnswer(answer.text);
+    if (fromMarkdown.length > 0) return fromMarkdown;
+
+    // 2) 백엔드가 자연어로 서재 도서를 설명한 경우:
+    //    내 서재(books)에서 본문에 언급된 도서를 자동 탐색하여 [책 열기]로 연결!
+    //    (단, 신규 도서 추천(### 📖)인 경우는 절대 서재 도서로 오인하지 않음)
+    if (!answer.text.includes('### 📖')) {
+      const bracketedTitles = Array.from(
+        answer.text.matchAll(/[『《]\s*([^』》]+?)\s*[』》]/g)
+      ).map((m) => m[1].trim());
+      const normalizedAnswer = normalizeTitle(answer.text);
+
+      return books.filter((b) => {
+        if (!b.title || b.title.trim().length < 1) return false;
+        const normBTitle = normalizeTitle(b.title);
+        if (!normBTitle) return false;
+        return (
+          bracketedTitles.some((t) => normalizeTitle(t) === normBTitle) ||
+          (normBTitle.length >= 2 && normalizedAnswer.includes(normBTitle))
+        );
+      });
+    }
+
+    return [];
+  }, [backendLibraryBooks, answer?.text, loading, books]);
+
+  // 2. 외부 도서 추천: 오직 '### 📖' 마크다운 추천 포맷이 명시적으로 존재할 때만 추출 (내 서재 질문에는 절대 노출 안 됨)
   const recommendedBooks = useMemo(
     () =>
-      answer?.text && !loading && !answer?.switchTo
+      answer?.text && !loading && !answer?.switchTo && answer.text.includes('### 📖')
         ? extractBooksFromAnswer(answer.text)
         : [],
     [answer?.text, loading, answer?.switchTo]
@@ -98,12 +165,9 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
     setLoading(true);
     setLastUserMessage(message);
 
-    // 사서별 로딩 초기 멘트 분기
-    const isStork = targetLibrarianId === 'stork';
-    const initialGreeting = isStork
-      ? '🪿 두둥! 슈빌 사서가 전문 분야의 깊이 있는 명저를 선별하고 있습니다... 🪶'
-      : '🐾 블루 사서가 딱 맞는 좋은 책을 찾고 있다냥...';
-    onAnswer({ text: initialGreeting, library_books: [], libraryBooks: [] });
+    // 질문 의도(인사/서재/추천/날씨 등)에 따른 사서별 맥락 맞춤형 로딩 안내 멘트
+    const initialLoadingMsg = getContextualLoadingMessage(message, targetLibrarianId);
+    onAnswer({ text: initialLoadingMsg, library_books: [], libraryBooks: [] });
 
     // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)
     const location = await getUserLocation();
