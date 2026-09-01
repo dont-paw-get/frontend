@@ -9,6 +9,15 @@
  * drop-shadow는 알파 채널을 따라가므로 캐릭터 실루엣에 맞는 그림자가 생긴다.
  */
 .librarian-cursor-img {
+  /*
+   * 림 라이트 색은 사서 팔레트에 맞춰 바꾼다(아래 data-librarian 오버라이드).
+   * 기본값은 고양이 기준의 따뜻한 앰버 톤.
+   */
+  --cursor-glow: rgba(255, 185, 115, 0.4);
+  --cursor-glow-hover: rgba(255, 190, 120, 0.5);
+  --cursor-glow-blur: 4px;
+  --cursor-glow-blur-hover: 5px;
+
   display: block;
   object-fit: contain;
   user-select: none;
@@ -21,9 +30,18 @@
     saturate(1.15) contrast(1.04)
     /* 입체 그림자: 캐릭터가 배경에서 떠 있는 느낌 */
     drop-shadow(0 9px 14px rgba(0, 0, 0, 0.42))
-    /* 따뜻한 림 라이트: 어두운 배경에서도 윤곽이 살아남 */
-    drop-shadow(0 1px 4px rgba(255, 185, 115, 0.4));
+    /* 림 라이트: 어두운 배경에서도 윤곽이 살아남 (색은 사서별로 --cursor-glow) */
+    drop-shadow(0 1px var(--cursor-glow-blur) var(--cursor-glow));
   transition: filter 0.2s ease;
+}
+
+/*
+ * 황새(stork)는 회청색·갈색 톤 캐릭터라 고양이 기준의 앰버 글로우가 겉돈다.
+ * 쿨톤에 가까운 화이트 글로우로 바꿔 배경과 더 또렷하게 분리한다.
+ */
+[data-librarian='stork'] .librarian-cursor-img {
+  --cursor-glow: rgba(240, 244, 255, 0.55);
+  --cursor-glow-hover: rgba(245, 248, 255, 0.65);
 }
 
 /*
@@ -33,7 +51,7 @@
  */
 .librarian-cursor-img--hover {
   filter:
-    saturate(1.2) contrast(1.06) drop-shadow(0 13px 20px rgba(0, 0, 0, 0.48)) drop-shadow(0 1px 5px rgba(255, 190, 120, 0.5));
+    saturate(1.2) contrast(1.06) drop-shadow(0 13px 20px rgba(0, 0, 0, 0.48)) drop-shadow(0 1px var(--cursor-glow-blur-hover) var(--cursor-glow-hover));
   animation: librarian-cursor-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
