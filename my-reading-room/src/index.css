@@ -74,7 +74,27 @@
 
 body {
   margin: 0;
+}
+
+/*
+ * 테마 커서(CLIAR-214): 커스텀 커서는 "고양이 서재"에서만 쓴다.
+ * 예전엔 body에 고양이 커서를 전역으로 걸어, 황새 서재의 GNB·챗봇·버튼 위나
+ * 로그인 페이지에서도 고양이 커서가 튀어나오는 버그가 있었다.
+ * data-librarian(=html 속성)으로 활성 사서일 때만 적용하고, 커서는 상속되므로
+ * 하위 요소로 자연스럽게 내려간다. 황새는 아직 전용 커서 에셋이 없어 기본 커서.
+ */
+[data-librarian='cat'] {
   cursor: url('/cursors/cat/cat_03_cursor.png') 6 6, auto;
+}
+
+/*
+ * 인증 화면(로그인/회원가입/비밀번호 재설정)은 사서 컨텍스트가 아니므로,
+ * 저장된 활성 사서(data-librarian)와 무관하게 항상 기본 커서를 쓴다.
+ * 직접 지정한 cursor는 html에서 상속된 값보다 우선한다.
+ */
+.login-page,
+.signup-page {
+  cursor: auto;
 }
 
 #root {
