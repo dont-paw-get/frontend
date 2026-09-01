@@ -13,6 +13,14 @@ import { toKoreanStatus } from '../../api/bookApi';
 // 백엔드(discovery) ChatRequest.message max_length와 동일하게 맞춘다 (CLIAR-184/185)
 const MAX_MESSAGE_LENGTH = 2000;
 
+// 도서명 공백 및 특수기호 무시 정규화 (예: "성공하는 인생의 비밀" vs "성공하는인생의비밀" vs "『 성공하는 인생의 비밀 』")
+function normalizeTitle(str) {
+  return (str || '')
+    .trim()
+    .replace(/[\s\-_:.,·'"`『』《》()（）]/g, '')
+    .toLowerCase();
+}
+
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
  * 백엔드(/api/v1/chat)로 스트리밍 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
@@ -36,7 +44,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
 
   // 1. 내 서재 도서 조회 결과
   // - 백엔드가 response.library_books로 전달한 경우 우선 사용
-  // - 스트리밍 응답처럼 백엔드 배열이 비어있더라도, 내 서재(books)에 등록된 도서명이 답변 본문에 언급된 경우 자동 매칭
+  // - 스트리밍 응답처럼 백엔드 배열이 비어있더라도, 내 서재(books)에 등록된 도서명이 답변 본문에 언급된 경우 공백/특수문자 무관 자동 매칭
   const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
   const isRecommendationText =
     Boolean(answer?.text && (answer.text.includes('### 📖') || answer.text.includes('###')) && backendLibraryBooks.length === 0);
@@ -45,14 +53,31 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
     if (backendLibraryBooks.length > 0) return backendLibraryBooks;
     if (!answer?.text || isRecommendationText || loading) return [];
 
+    // 본문에서 낫표(『...』) 또는 화살괄호(《...》)로 묶인 텍스트 추출 (앞뒤 공백 trim)
+    const bracketedTitles = Array.from(
+      answer.text.matchAll(/[『《]([^』》]+)[』》]/g)
+    ).map((m) => m[1].trim());
+
+    const normalizedAnswer = normalizeTitle(answer.text);
+
     return books.filter((b) => {
       if (!b.title || b.title.trim().length < 1) return false;
-      const cleanTitle = b.title.trim();
-      return (
-        answer.text.includes(`『${cleanTitle}』`) ||
-        answer.text.includes(`《${cleanTitle}》`) ||
-        (cleanTitle.length >= 2 && answer.text.includes(cleanTitle))
+      const bTitle = b.title.trim();
+      const normBTitle = normalizeTitle(bTitle);
+      if (!normBTitle) return false;
+
+      // 1) 낫표/화살괄호 안에 감싸진 제목과 공백 무관 일치
+      const matchedInBracket = bracketedTitles.some(
+        (t) => normalizeTitle(t) === normBTitle
       );
+      if (matchedInBracket) return true;
+
+      // 2) 본문 텍스트 내 완전 일치 또는 공백 무관 일치 (도서명이 2글자 이상인 경우)
+      if (normBTitle.length >= 2 && normalizedAnswer.includes(normBTitle)) {
+        return true;
+      }
+
+      return false;
     });
   }, [backendLibraryBooks, answer?.text, isRecommendationText, loading, books]);
 

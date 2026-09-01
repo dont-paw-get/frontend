@@ -22,6 +22,14 @@ const IMG_SIZE = 200;
  */
 const FALLBACK_TIP = { x: 0.26, y: 0.287 };
 
+// 도서명 공백 및 특수기호 무시 정규화 (예: "성공하는 인생의 비밀" vs "성공하는인생의비밀" vs "『 성공하는 인생의 비밀 』")
+function normalizeTitle(str) {
+  return (str || '')
+    .trim()
+    .replace(/[\s\-_:.,·'"`『』《》()（）]/g, '')
+    .toLowerCase();
+}
+
 /**
  * 말풍선에 노출할 짧은 1~2줄 리액션 텍스트 생성
  */
@@ -30,19 +38,23 @@ function getShortBubbleText(rawText, librarian, answer, books = []) {
   const text = rawText.trim();
   const isStork = librarian?.id === 'stork';
 
-  // 1. 내 서재 도서 결과가 있거나 내 서재 도서명이 본문에 언급된 경우
+  // 1. 내 서재 도서 결과가 있거나 내 서재 도서명이 본문에 언급된 경우 (공백/특수문자 무관 매칭)
   const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
+  const bracketedTitles = Array.from(text.matchAll(/[『《]([^』》]+)[』》]/g)).map((m) => m[1].trim());
+  const normalizedAnswer = normalizeTitle(text);
+
   const hasMatchedBook =
     backendLibraryBooks.length > 0 ||
     (!text.includes('### 📖') &&
-      books.some(
-        (b) =>
-          b.title &&
-          b.title.trim().length >= 1 &&
-          (text.includes(`『${b.title.trim()}』`) ||
-            text.includes(`《${b.title.trim()}》`) ||
-            (b.title.trim().length >= 2 && text.includes(b.title.trim())))
-      ));
+      books.some((b) => {
+        if (!b.title || b.title.trim().length < 1) return false;
+        const normBTitle = normalizeTitle(b.title);
+        if (!normBTitle) return false;
+        return (
+          bracketedTitles.some((t) => normalizeTitle(t) === normBTitle) ||
+          (normBTitle.length >= 2 && normalizedAnswer.includes(normBTitle))
+        );
+      }));
 
   if (hasMatchedBook) {
     const count = backendLibraryBooks.length || 1;
