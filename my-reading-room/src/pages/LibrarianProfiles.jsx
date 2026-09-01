@@ -57,8 +57,8 @@ export default function LibrarianProfiles() {
               )}
 
               <div className="lp-avatar">
-                {lib.image ? (
-                  <img src={lib.image} alt={`${lib.displayName} 프로필`} width={96} height={96} decoding="async" />
+                {lib.profileImage ? (
+                  <img src={lib.profileImage} alt={`${lib.displayName} 프로필`} width={96} height={96} decoding="async" />
                 ) : (
                   <span className="lp-avatar-fallback" aria-hidden="true">{lib.icon}</span>
                 )}

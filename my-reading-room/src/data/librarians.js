@@ -34,6 +34,8 @@ export const LIBRARIANS = [
     specialtyCode: 'MYSTERY_THRILLER',
     image: '/cursors/cat/cat_03.webp',
     imageHover: '/cursors/cat/cat_04.webp',
+    // GNB·마이페이지 등에서 쓰는 프로필 사진 (사서 캐릭터와 별개 에셋)
+    profileImage: '/profile.webp',
     // 커서 이미지에서 실제 포인터가 될 지점(뻗은 앞발 끝) — 이미지 알파 채널 실측 비율
     tip: { x: 0.26, y: 0.287 },
     tipHover: { x: 0.143, y: 0.357 },
@@ -63,6 +65,8 @@ export const LIBRARIANS = [
      * 동일 비율로 커지고 프레임 정렬도 그대로 유지된다.
      */
     imgScale: 1.56,
+    // GNB·마이페이지 등에서 쓰는 프로필 사진 (사서 캐릭터와 별개 에셋)
+    profileImage: '/profile_stork.webp',
   },
 ].map((l) => ({
   ...l,
