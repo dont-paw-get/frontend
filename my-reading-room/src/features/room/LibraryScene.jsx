@@ -10,6 +10,7 @@ import LibrarianCursor from './LibrarianCursor';
 import BookDetail from './BookDetail';
 import { getLibrarian } from '../../data/librarians';
 import { useLibrarian } from '../../store/librarianStore';
+import { toKoreanStatus } from '../../api/bookApi';
 import {
   BG_SRC_CAT,
   BG_SRC_STORK,
@@ -436,12 +437,58 @@ export default function LibraryScene() {
           answer={chatAnswer}
           onAnswer={setChatAnswer}
           onSwitch={switchLibrarian}
+          onOpenDetail={(bookOrId) => {
+            if (typeof bookOrId === 'object' && bookOrId !== null) {
+              const bookId = bookOrId.book_id ?? bookOrId.bookId ?? bookOrId.id;
+              const found = books.find(
+                (b) =>
+                  b.bookId === bookId ||
+                  b.id === String(bookId) ||
+                  b.id === bookId ||
+                  b.title === bookOrId.title
+              );
+              if (found) {
+                setSelectedId(found.id);
+              } else {
+                setSelectedId({
+                  id: String(bookId || 'custom'),
+                  bookId: bookId,
+                  title: bookOrId.title,
+                  author: bookOrId.author,
+                  status: toKoreanStatus(bookOrId.reading_status || bookOrId.readingStatus || bookOrId.status),
+                  progress: bookOrId.progress,
+                });
+              }
+            } else {
+              const found = books.find(
+                (b) =>
+                  b.bookId === bookOrId ||
+                  b.id === String(bookOrId) ||
+                  b.id === bookOrId ||
+                  b.title === bookOrId
+              );
+              if (found) {
+                setSelectedId(found.id);
+              } else {
+                setSelectedId(bookOrId);
+              }
+            }
+          }}
         />
       )}
 
       {/* 선택된 책 상세 팝업 (확대된 책 오른쪽) */}
       {selectedId && (() => {
-        const book = books.find((b) => b.id === selectedId);
+        const book =
+          typeof selectedId === 'object'
+            ? selectedId
+            : books.find(
+                (b) =>
+                  b.id === selectedId ||
+                  b.bookId === selectedId ||
+                  String(b.bookId) === String(selectedId) ||
+                  b.title === selectedId
+              );
         return book ? <BookDetail book={book} onClose={() => setSelectedId(null)} /> : null;
       })()}
     </div>

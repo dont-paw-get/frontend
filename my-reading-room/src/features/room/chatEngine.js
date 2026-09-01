@@ -81,6 +81,16 @@ export function answerQuestion({ text, mode, books, librarian, librarianNames = 
       text: matches.length
         ? `${label} 책은 ${titleList(matches)} 이 있어요 📚`
         : `서재에 ${label} 책이 아직 없네요 🐾`,
+      library_books: matches.map((b) => ({
+        book_id: b.bookId || b.id,
+        bookId: b.bookId || b.id,
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        reading_status: b.status,
+        readingStatus: b.status,
+        progress: b.progress,
+      })),
     };
   }
   const key = q.toLowerCase();
@@ -88,9 +98,22 @@ export function answerQuestion({ text, mode, books, librarian, librarianNames = 
     (b) => b.title.toLowerCase().includes(key) || (b.author || '').toLowerCase().includes(key)
   );
   if (matches.length) {
-    return { text: `찾았어요! 📚 ${titleList(matches)}` };
+    return {
+      text: `찾았어요! 📚 ${titleList(matches)}`,
+      library_books: matches.map((b) => ({
+        book_id: b.bookId || b.id,
+        bookId: b.bookId || b.id,
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        reading_status: b.status,
+        readingStatus: b.status,
+        progress: b.progress,
+      })),
+    };
   }
   return {
     text: `'${q}'에 딱 맞는 책을 서재에서 찾지 못했어요 🐾 저자·제목·장르로 다시 알려주시면 찾아볼게요 📚`,
+    library_books: [],
   };
 }
