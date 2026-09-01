@@ -86,7 +86,9 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
         left: 'var(--mx, 50%)',
         top: 'var(--my, 50%)',
         transform: `translate(${offsetX}px, ${offsetY}px)`,
-        zIndex: 99,
+        // GNB 오버레이(30)와 그 드롭다운(100)보다 위에 올려, 상단 바 위에서도
+        // 사서 커서가 가려지지 않게 한다 (CLIAR-214). pointer-events:none이라 클릭을 막지 않는다.
+        zIndex: 200,
         pointerEvents: 'none',
       }}
     >
