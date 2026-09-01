@@ -118,22 +118,24 @@ export async function refreshAccessToken() {
  * @param {string} path - '/auth/login' 등 API_BASE 기준 경로
  * @param {object} [options]
  * @param {string} [options.method='GET']
- * @param {object} [options.body] - JSON 직렬화할 본문
+ * @param {object} [options.body] - JSON 직렬화할 본문 (FormData면 그대로 전송, Content-Type 미지정)
  * @param {boolean} [options.auth=true] - Authorization 헤더 첨부 여부
  * @param {boolean} [options._retry] - 내부 재시도 플래그
  * @returns {Promise<any>} 파싱된 응답 본문
  * @throws {ApiError}
  */
 export async function authFetch(path, { method = 'GET', body, auth = true, _retry = false } = {}) {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const headers = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // FormData는 Content-Type을 지정하지 않아야 브라우저가 boundary를 포함해 자동 설정한다.
+  if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
   if (auth && accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers,
     credentials: 'include',
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    ...(body !== undefined ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   });
 
   // 401 → refresh 1회 시도 후 재시도 (refresh/login 자체는 제외)
