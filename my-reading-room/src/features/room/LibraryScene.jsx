@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Leva, useControls, folder } from 'leva';
 import * as THREE from 'three';
@@ -127,6 +127,7 @@ export default function LibraryScene() {
   const { activeId: librarianId, setActiveId, librarian, names } = useLibrarian();
   const [chatAnswer, setChatAnswer] = useState(null);
   const [hoveringBook, setHoveringBook] = useState(false);
+  const sceneRef = useRef(null);
 
   const switchLibrarian = (id) => {
     setActiveId(id);
@@ -147,6 +148,27 @@ export default function LibraryScene() {
     const saved = loadCalibration(librarianId);
     setWorkingConfig(saved || { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) });
   }, [librarianId]);
+
+  /*
+   * 커서 위치 추적 (CLIAR-214).
+   * 사서 커서와 손전등 효과는 컨테이너의 --mx/--my를 따른다. 예전에는 씬 컨테이너의
+   * onMouseMove로만 갱신했는데, GNB는 fixed 오버레이이면서 씬 컨테이너의 DOM 자식이
+   * 아니라 상단 바 위에서는 이벤트가 오지 않아 사서 커서가 멈춰 있었다. 그 상태에서
+   * OS 커서까지 숨기면 아무 커서도 안 보이므로, window에서 좌표를 받아 상단 바 위에서도
+   * 사서 커서가 따라오게 한다(리렌더 없이 CSS 변수만 갱신).
+   */
+  useEffect(() => {
+    if (calibrating) return;
+    const handleMove = (e) => {
+      const el = sceneRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      el.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+      el.style.setProperty('--my', `${e.clientY - rect.top}px`);
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, [calibrating]);
 
   // 서재 페이지에서는 OS 커서를 숨긴다 (CLIAR-214).
   // 씬 컨테이너는 cursor:none이지만 #root 고정폭(1126px) 바깥 레터박스나 씬 박스
@@ -258,16 +280,9 @@ export default function LibraryScene() {
   const { camera } = activeConfig;
   const activeShelf = workingConfig.shelves[activeIdx] || workingConfig.shelves[0];
 
-  // 손전등 효과: 커서 위치를 컨테이너 CSS 변수로 갱신(리렌더 없음, 자식들이 상속)
-  const handleFlashlightMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty('--mx', `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty('--my', `${e.clientY - rect.top}px`);
-  };
-
   return (
     <div
-      onMouseMove={calibrating ? undefined : handleFlashlightMove}
+      ref={sceneRef}
       style={{
         position: 'relative',
         width: '100%',
