@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
@@ -34,14 +34,31 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
   const [lastUserMessage, setLastUserMessage] = useState(''); // 직전 질문 기억 (사서 전환 시 자동 질의용)
 
-  // 1. 내 서재 도서 조회 결과 (백엔드 response.library_books 또는 로컬 fallback)
-  const libraryBooks = answer?.library_books || answer?.libraryBooks || [];
+  // 1. 내 서재 도서 조회 결과
+  // - 백엔드가 response.library_books로 전달한 경우 우선 사용
+  // - 스트리밍 응답처럼 백엔드 배열이 비어있더라도, 내 서재(books)에 등록된 도서명이 답변 본문에 언급된 경우 자동 매칭
+  const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
+  const isRecommendationText =
+    Boolean(answer?.text && (answer.text.includes('### 📖') || answer.text.includes('###')) && backendLibraryBooks.length === 0);
+
+  const libraryBooks = useMemo(() => {
+    if (backendLibraryBooks.length > 0) return backendLibraryBooks;
+    if (!answer?.text || isRecommendationText || loading) return [];
+
+    return books.filter((b) => {
+      if (!b.title || b.title.trim().length < 1) return false;
+      const cleanTitle = b.title.trim();
+      return (
+        answer.text.includes(`『${cleanTitle}』`) ||
+        answer.text.includes(`《${cleanTitle}》`) ||
+        (cleanTitle.length >= 2 && answer.text.includes(cleanTitle))
+      );
+    });
+  }, [backendLibraryBooks, answer?.text, isRecommendationText, loading, books]);
 
   // 2. 도서 추천인 경우: 오직 '### 📖' 또는 '###' 마크다운 추천 포맷이 있고 내 서재 도서 결과가 아닐 때만 추출
-  const isRecommendationText =
-    answer?.text && (answer.text.includes('### 📖') || answer.text.includes('###')) && libraryBooks.length === 0;
   const recommendedBooks =
-    isRecommendationText && !loading && !answer?.switchTo
+    isRecommendationText && !loading && !answer?.switchTo && libraryBooks.length === 0
       ? extractBooksFromAnswer(answer.text)
       : [];
 
@@ -302,7 +319,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
                     style={{
                       fontSize: 11,
                       fontWeight: 600,
-                      padding: '3px 8px',
+                      padding: '4px 10px',
                       borderRadius: 6,
                       border: '1px solid var(--accent-border, var(--accent))',
                       background: 'var(--accent-bg, rgba(0, 229, 255, 0.1))',
@@ -311,7 +328,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    상세 보기 ➔
+                    책 열기 ➔
                   </button>
                 </div>
               );

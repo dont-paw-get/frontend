@@ -1,4 +1,5 @@
 import { extractBooksFromAnswer } from './bookExtractor';
+import { useBooks } from '../../store/booksStore';
 import './LibrarianCursor.css';
 
 /**
@@ -24,17 +25,30 @@ const FALLBACK_TIP = { x: 0.26, y: 0.287 };
 /**
  * 말풍선에 노출할 짧은 1~2줄 리액션 텍스트 생성
  */
-function getShortBubbleText(rawText, librarian, answer) {
+function getShortBubbleText(rawText, librarian, answer, books = []) {
   if (!rawText) return '';
   const text = rawText.trim();
   const isStork = librarian?.id === 'stork';
 
-  // 1. 내 서재 도서 결과가 있는 경우
-  const libraryBooks = answer?.library_books || answer?.libraryBooks || [];
-  if (libraryBooks.length > 0) {
+  // 1. 내 서재 도서 결과가 있거나 내 서재 도서명이 본문에 언급된 경우
+  const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
+  const hasMatchedBook =
+    backendLibraryBooks.length > 0 ||
+    (!text.includes('### 📖') &&
+      books.some(
+        (b) =>
+          b.title &&
+          b.title.trim().length >= 1 &&
+          (text.includes(`『${b.title.trim()}』`) ||
+            text.includes(`《${b.title.trim()}》`) ||
+            (b.title.trim().length >= 2 && text.includes(b.title.trim())))
+      ));
+
+  if (hasMatchedBook) {
+    const count = backendLibraryBooks.length || 1;
     return isStork
-      ? `✨ 두둥! 서재에서 도서 ${libraryBooks.length}권을 확인했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 서재에서 책 ${libraryBooks.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 서재에서 도서 ${count}권을 확인했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 서재에서 책 ${count}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
 
   // 2. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 마크다운 기호 정제 후 표시
@@ -48,16 +62,16 @@ function getShortBubbleText(rawText, librarian, answer) {
 
   // 3. 도서 추천 결과 등 장문인 경우 요약 리액션 문구 생성
   const isRecommend = text.includes('### 📖') || text.includes('###');
-  const books = isRecommend ? extractBooksFromAnswer(text) : [];
-  if (books.length >= 2) {
+  const recommendedBooks = isRecommend ? extractBooksFromAnswer(text) : [];
+  if (recommendedBooks.length >= 2) {
     return isStork
-      ? `✨ 두둥! 추천 도서 ${books.length}권을 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 추천 도서 ${books.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 추천 도서 ${recommendedBooks.length}권을 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 추천 도서 ${recommendedBooks.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
-  if (books.length === 1) {
+  if (recommendedBooks.length === 1) {
     return isStork
-      ? `✨ 두둥! 『${books[0].title}』 도서를 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 『${books[0].title}』 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 『${recommendedBooks[0].title}』 도서를 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 『${recommendedBooks[0].title}』 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
 
   return isStork
@@ -66,6 +80,7 @@ function getShortBubbleText(rawText, librarian, answer) {
 }
 
 export default function LibrarianCursor({ librarian, answer, hovering }) {
+  const { books } = useBooks();
   const useHover = hovering && librarian.imageHover;
   const imgSrc = useHover ? librarian.imageHover : librarian.image;
 
@@ -77,7 +92,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
   const offsetX = -(tip.x * imgSize);
   const offsetY = -(tip.y * imgSize);
 
-  const bubbleText = answer?.text ? getShortBubbleText(answer.text, librarian, answer) : '';
+  const bubbleText = answer?.text ? getShortBubbleText(answer.text, librarian, answer, books) : '';
 
   return (
     <div
