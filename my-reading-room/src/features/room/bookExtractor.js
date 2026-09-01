@@ -24,7 +24,11 @@ export function extractBooksFromAnswer(text) {
   }
 
   function addBook(title, author = '', contextSnippet = '') {
-    const cleanTitle = (title || '').trim().replace(/^['"『"“`《<]|['"』"”`》>]$/g, '').trim();
+    const cleanTitle = (title || '')
+      .trim()
+      .replace(/^[『《"“'‘`<>\s]+|[』》"”'’`<>\s]+$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     let cleanAuthor = (author || '').trim().replace(/^[([\s]*|[)\]\s]*$/g, '').trim();
 
     // 페이지 수 추출 (author 또는 contextSnippet에서 숫자+쪽/페이지/p 패턴 검색)

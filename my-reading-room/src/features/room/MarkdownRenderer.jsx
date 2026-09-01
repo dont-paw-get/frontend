@@ -8,8 +8,15 @@
 function renderInline(text) {
   if (!text) return null;
 
+  // 낫표/화살괄호 내부의 불필요한 공백 정제 (예: 『 도서명 』 -> 『도서명』)
+  const cleanedText = text
+    .replace(/『\s+/g, '『')
+    .replace(/\s+』/g, '』')
+    .replace(/《\s+/g, '《')
+    .replace(/\s+》/g, '》');
+
   // **볼드** 패턴 분리
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = cleanedText.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (

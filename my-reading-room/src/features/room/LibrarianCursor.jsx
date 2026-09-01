@@ -40,7 +40,7 @@ function getShortBubbleText(rawText, librarian, answer, books = []) {
 
   // 1. 내 서재 도서 결과가 있거나 내 서재 도서명이 본문에 언급된 경우 (공백/특수문자 무관 매칭)
   const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
-  const bracketedTitles = Array.from(text.matchAll(/[『《]([^』》]+)[』》]/g)).map((m) => m[1].trim());
+  const bracketedTitles = Array.from(text.matchAll(/[『《]\s*([^』》]+?)\s*[』》]/g)).map((m) => m[1].trim());
   const normalizedAnswer = normalizeTitle(text);
 
   const hasMatchedBook =

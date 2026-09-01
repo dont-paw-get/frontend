@@ -55,7 +55,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
 
     // 본문에서 낫표(『...』) 또는 화살괄호(《...》)로 묶인 텍스트 추출 (앞뒤 공백 trim)
     const bracketedTitles = Array.from(
-      answer.text.matchAll(/[『《]([^』》]+)[』》]/g)
+      answer.text.matchAll(/[『《]\s*([^』》]+?)\s*[』》]/g)
     ).map((m) => m[1].trim());
 
     const normalizedAnswer = normalizeTitle(answer.text);
