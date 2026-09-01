@@ -291,7 +291,6 @@ export default function LibraryScene() {
         backgroundSize: 'contain',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
-        backgroundColor: 'var(--bg)',
         cursor: calibrating ? 'auto' : 'none',
         '--mx': '50%',
         '--my': '50%',
