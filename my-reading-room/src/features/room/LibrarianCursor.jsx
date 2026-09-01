@@ -1,5 +1,4 @@
 import { extractBooksFromAnswer } from './bookExtractor';
-import { useBooks } from '../../store/booksStore';
 import './LibrarianCursor.css';
 
 /**
@@ -22,45 +21,20 @@ const IMG_SIZE = 200;
  */
 const FALLBACK_TIP = { x: 0.26, y: 0.287 };
 
-// 도서명 공백 및 특수기호 무시 정규화 (예: "성공하는 인생의 비밀" vs "성공하는인생의비밀" vs "『 성공하는 인생의 비밀 』")
-function normalizeTitle(str) {
-  return (str || '')
-    .trim()
-    .replace(/[\s\-_:.,·'"`『』《》()（）]/g, '')
-    .toLowerCase();
-}
-
 /**
  * 말풍선에 노출할 짧은 1~2줄 리액션 텍스트 생성
  */
-function getShortBubbleText(rawText, librarian, answer, books = []) {
+function getShortBubbleText(rawText, librarian, answer) {
   if (!rawText) return '';
   const text = rawText.trim();
   const isStork = librarian?.id === 'stork';
 
-  // 1. 내 서재 도서 결과가 있거나 내 서재 도서명이 본문에 언급된 경우 (공백/특수문자 무관 매칭)
-  const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
-  const bracketedTitles = Array.from(text.matchAll(/[『《]\s*([^』》]+?)\s*[』》]/g)).map((m) => m[1].trim());
-  const normalizedAnswer = normalizeTitle(text);
-
-  const hasMatchedBook =
-    backendLibraryBooks.length > 0 ||
-    (!text.includes('### 📖') &&
-      books.some((b) => {
-        if (!b.title || b.title.trim().length < 1) return false;
-        const normBTitle = normalizeTitle(b.title);
-        if (!normBTitle) return false;
-        return (
-          bracketedTitles.some((t) => normalizeTitle(t) === normBTitle) ||
-          (normBTitle.length >= 2 && normalizedAnswer.includes(normBTitle))
-        );
-      }));
-
-  if (hasMatchedBook) {
-    const count = backendLibraryBooks.length || 1;
+  // 1. 내 서재 도서 결과 (ADR 0006: ### 📚 또는 library_books)
+  const isLibrary = text.includes('### 📚') || (answer?.library_books && answer.library_books.length > 0);
+  if (isLibrary) {
     return isStork
-      ? `✨ 두둥! 서재에서 도서 ${count}권을 확인했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 서재에서 책 ${count}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 서재에서 도서를 확인했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 서재에서 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
 
   // 2. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 마크다운 기호 정제 후 표시
@@ -72,8 +46,8 @@ function getShortBubbleText(rawText, librarian, answer, books = []) {
       .trim();
   }
 
-  // 3. 도서 추천 결과 등 장문인 경우 요약 리액션 문구 생성
-  const isRecommend = text.includes('### 📖') || text.includes('###');
+  // 3. 도서 추천 결과 (ADR 0006: ### 📖)
+  const isRecommend = text.includes('### 📖');
   const recommendedBooks = isRecommend ? extractBooksFromAnswer(text) : [];
   if (recommendedBooks.length >= 2) {
     return isStork
@@ -92,7 +66,6 @@ function getShortBubbleText(rawText, librarian, answer, books = []) {
 }
 
 export default function LibrarianCursor({ librarian, answer, hovering }) {
-  const { books } = useBooks();
   const useHover = hovering && librarian.imageHover;
   const imgSrc = useHover ? librarian.imageHover : librarian.image;
 
@@ -104,7 +77,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
   const offsetX = -(tip.x * imgSize);
   const offsetY = -(tip.y * imgSize);
 
-  const bubbleText = answer?.text ? getShortBubbleText(answer.text, librarian, answer, books) : '';
+  const bubbleText = answer?.text ? getShortBubbleText(answer.text, librarian, answer) : '';
 
   return (
     <div

@@ -68,12 +68,11 @@ export function extractBooksFromAnswer(text) {
     }
   }
 
-  // 0. 마크다운 헤딩 + 키-값 목록 패턴 (백엔드 실제 응답 포맷)
+  // 0. 마크다운 추천 도서 헤딩(### 📖) + 키-값 목록 패턴
   //    ### 📖 제목
   //    - **저자**: 이름
   //    - **추천 이유**: 설명...
-  // 다음 헤딩(### ...) 또는 텍스트 끝까지를 한 도서 블록으로 취급.
-  const headingBlockRegex = /^###\s*(?:[^\w가-힣\s]*\s*)?([^\n]+?)\s*\n([\s\S]*?)(?=^###\s|$(?![\r\n]))/gm;
+  const headingBlockRegex = /^###\s*📖\s*([^\n]+?)\s*\n([\s\S]*?)(?=^###\s|$(?![\r\n]))/gm;
   let match;
   while ((match = headingBlockRegex.exec(text)) !== null) {
     const title = match[1];
@@ -82,6 +81,44 @@ export function extractBooksFromAnswer(text) {
     const author = authorMatch ? authorMatch[1] : '';
     if (title.trim()) {
       addBook(title, author, body);
+    }
+  }
+
+  return books;
+}
+
+/**
+ * 텍스트에서 내 서재 도서 목록(### 📚)을 추출합니다. (ADR 0006 / CLIAR-211)
+ * @param {string} text - AI 사서의 답변 텍스트
+ * @returns {Array<{title: string, author: string, status: string}>} 추출된 내 서재 도서 목록
+ */
+export function extractLibraryBooksFromAnswer(text) {
+  if (!text || typeof text !== 'string') return [];
+  const books = [];
+  const seenTitles = new Set();
+
+  const headingBlockRegex = /^###\s*📚\s*([^\n]+?)\s*\n([\s\S]*?)(?=^###\s|$(?![\r\n]))/gm;
+  let match;
+  while ((match = headingBlockRegex.exec(text)) !== null) {
+    const rawTitle = match[1];
+    const body = match[2] || '';
+    const cleanTitle = (rawTitle || '')
+      .trim()
+      .replace(/^[『《"“'‘`<>\s]+|[』》"”'’`<>\s]+$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (cleanTitle && !seenTitles.has(cleanTitle)) {
+      seenTitles.add(cleanTitle);
+      const authorMatch = body.match(/\*\*저자\*\*\s*[:：]\s*([^\n]+)/);
+      const statusMatch = body.match(/\*\*독서\s*상태\*\*\s*[:：]\s*([^\n]+)/);
+      const author = authorMatch ? authorMatch[1].trim() : '';
+      const status = statusMatch ? statusMatch[1].trim() : '';
+      books.push({
+        title: cleanTitle,
+        author: author || '미상',
+        status: status || '보유 중',
+      });
     }
   }
 

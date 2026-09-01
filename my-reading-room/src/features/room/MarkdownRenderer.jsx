@@ -30,9 +30,13 @@ function renderInline(text) {
 }
 
 /**
- * 추천 도서 1권을 감싸는 프리미엄 북 카드 컴포넌트
+ * 도서 카드를 감싸는 프리미엄 북 카드 컴포넌트
+ * - type='recommend' (### 📖): [서재에 등록 ➔] 버튼
+ * - type='library'   (### 📚): [책 열기 ➔] 버튼
  */
-function BookCardView({ title, author, reason, keyPrefix }) {
+function BookCardView({ type = 'recommend', title, author, reason, status, onRegister, onOpenDetail, keyPrefix }) {
+  const isLibrary = type === 'library';
+
   return (
     <div
       key={`book-card-${keyPrefix}`}
@@ -40,7 +44,7 @@ function BookCardView({ title, author, reason, keyPrefix }) {
         margin: '10px 0',
         padding: '12px 14px',
         backgroundColor: 'var(--accent-bg, rgba(140, 90, 50, 0.05))',
-        borderLeft: '3.5px solid var(--accent, #6366f1)',
+        borderLeft: isLibrary ? '3.5px solid #10b981' : '3.5px solid var(--accent, #6366f1)',
         borderRadius: 8,
         display: 'flex',
         flexDirection: 'column',
@@ -48,42 +52,108 @@ function BookCardView({ title, author, reason, keyPrefix }) {
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
       }}
     >
-      {/* 도서 제목 */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontWeight: 700,
-          fontSize: 13.5,
-          color: 'var(--accent, #6366f1)',
-        }}
-      >
-        <span style={{ fontSize: 15 }}>📖</span>
-        <span>{title}</span>
-      </div>
-
-      {/* 저자 및 쪽수 칩 */}
-      {author && (
+      {/* 도서 제목 + 액션 버튼 (헤더) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
         <div
           style={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
-            gap: 4,
-            fontSize: 11.5,
-            color: 'var(--text-muted, #666)',
-            backgroundColor: 'rgba(0, 0, 0, 0.03)',
-            padding: '2px 8px',
-            borderRadius: 4,
-            width: 'fit-content',
-            fontWeight: 500,
+            gap: 6,
+            fontWeight: 700,
+            fontSize: 13.5,
+            color: isLibrary ? '#10b981' : 'var(--accent, #6366f1)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            flex: 1,
           }}
         >
-          <span>👤 {author}</span>
+          <span style={{ fontSize: 15 }}>{isLibrary ? '📚' : '📖'}</span>
+          <span>{title}</span>
         </div>
-      )}
 
-      {/* 추천 이유 */}
+        {/* 액션 버튼 */}
+        {isLibrary && onOpenDetail && (
+          <button
+            type="button"
+            onClick={() => onOpenDetail({ title, author, status })}
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              padding: '4px 10px',
+              borderRadius: 6,
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              background: '#10b981',
+              color: '#fff',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            책 열기 ➔
+          </button>
+        )}
+        {!isLibrary && onRegister && (
+          <button
+            type="button"
+            onClick={() => onRegister({ title, author })}
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              padding: '4px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--accent-border, var(--accent))',
+              background: 'var(--accent)',
+              color: '#fff',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            등록 ➔
+          </button>
+        )}
+      </div>
+
+      {/* 저자 및 독서 상태 칩 */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        {author && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11.5,
+              color: 'var(--text-muted, #666)',
+              backgroundColor: 'rgba(0, 0, 0, 0.03)',
+              padding: '2px 8px',
+              borderRadius: 4,
+              width: 'fit-content',
+              fontWeight: 500,
+            }}
+          >
+            <span>👤 {author}</span>
+          </div>
+        )}
+        {status && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11.5,
+              color: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+              padding: '2px 8px',
+              borderRadius: 4,
+              width: 'fit-content',
+              fontWeight: 600,
+            }}
+          >
+            <span>🔖 {status}</span>
+          </div>
+        )}
+      </div>
+
+      {/* 추천 이유 (외부 추천 도서인 경우) */}
       {reason && (
         <div
           style={{
@@ -106,9 +176,13 @@ function BookCardView({ title, author, reason, keyPrefix }) {
 }
 
 /**
- * 마크다운 텍스트를 줄 단위로 분석하여 도서 카드, 헤딩, 목록, 일반 단락으로 렌더링
+ * 마크다운 텍스트를 줄 단위로 분석하여 도서 카드(추천/내서재), 헤딩, 목록, 일반 단락으로 렌더링
+ * @param {object} props
+ * @param {string} props.text - 마크다운 텍스트
+ * @param {(book: object) => void} [props.onRegister] - 추천 도서 등록 콜백
+ * @param {(book: object) => void} [props.onOpenDetail] - 내 서재 도서 상세 열기 콜백
  */
-export default function MarkdownRenderer({ text }) {
+export default function MarkdownRenderer({ text, onRegister, onOpenDetail }) {
   if (!text) return null;
 
   const lines = text.split('\n');
@@ -121,10 +195,15 @@ export default function MarkdownRenderer({ text }) {
     if (currentBook) {
       elements.push(
         <BookCardView
+          key={`book-card-${keyPrefix}-${currentBook.title}`}
           keyPrefix={`${keyPrefix}-${currentBook.title}`}
+          type={currentBook.type}
           title={currentBook.title}
           author={currentBook.author}
           reason={currentBook.reason}
+          status={currentBook.status}
+          onRegister={onRegister}
+          onOpenDetail={onOpenDetail}
         />
       );
       currentBook = null;
@@ -165,23 +244,38 @@ export default function MarkdownRenderer({ text }) {
       return;
     }
 
-    // 2. 도서 카드 시작: ### 📖 {도서 제목}
-    if (/^#{1,4}\s+📖\s*/.test(trimmed)) {
+    // 2-A. 추천 도서 카드 시작: ### 📖 {도서 제목}
+    if (/^#{1,4}\s*📖\s*/.test(trimmed)) {
       flushList(idx);
       flushBook(idx);
-      const title = trimmed.replace(/^#{1,4}\s+📖\s*/, '').trim();
-      currentBook = { title, author: '', reason: '' };
+      const rawTitle = trimmed.replace(/^#{1,4}\s*📖\s*/, '').trim();
+      const title = rawTitle.replace(/^[『《"'\s]+|[』》"'\s]+$/g, '').trim();
+      currentBook = { type: 'recommend', title, author: '', reason: '' };
       return;
     }
 
-    // 2-1. 도서 카드 내부 항목 파싱 (- **저자**:, - **추천 이유**:)
+    // 2-B. 내 서재 도서 카드 시작: ### 📚 {도서 제목}
+    if (/^#{1,4}\s*📚\s*/.test(trimmed)) {
+      flushList(idx);
+      flushBook(idx);
+      const rawTitle = trimmed.replace(/^#{1,4}\s*📚\s*/, '').trim();
+      const title = rawTitle.replace(/^[『《"'\s]+|[』》"'\s]+$/g, '').trim();
+      currentBook = { type: 'library', title, author: '', status: '' };
+      return;
+    }
+
+    // 2-1. 도서 카드 내부 항목 파싱 (- **저자**:, - **추천 이유**:, - **독서 상태**:)
     if (currentBook) {
-      if (/^[-*•]\s*\*\*저자\*\*\s*:\s*/.test(trimmed)) {
-        currentBook.author = trimmed.replace(/^[-*•]\s*\*\*저자\*\*\s*:\s*/, '').trim();
+      if (/^[-*•]\s*\*\*저자\*\*\s*[:：]\s*/.test(trimmed)) {
+        currentBook.author = trimmed.replace(/^[-*•]\s*\*\*저자\*\*\s*[:：]\s*/, '').trim();
         return;
       }
-      if (/^[-*•]\s*\*\*추천\s*이유\*\*\s*:\s*/.test(trimmed)) {
-        currentBook.reason = trimmed.replace(/^[-*•]\s*\*\*추천\s*이유\*\*\s*:\s*/, '').trim();
+      if (/^[-*•]\s*\*\*추천\s*이유\*\*\s*[:：]\s*/.test(trimmed)) {
+        currentBook.reason = trimmed.replace(/^[-*•]\s*\*\*추천\s*이유\*\*\s*[:：]\s*/, '').trim();
+        return;
+      }
+      if (/^[-*•]\s*\*\*독서\s*상태\*\*\s*[:：]\s*/.test(trimmed)) {
+        currentBook.status = trimmed.replace(/^[-*•]\s*\*\*독서\s*상태\*\*\s*[:：]\s*/, '').trim();
         return;
       }
       // 도서 카드가 끝난 후 일반 마크다운이 시작될 때 flush

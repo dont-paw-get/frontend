@@ -4,7 +4,7 @@ import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
 import { streamChatMessage } from '../../api/chatApi';
 import { getUserLocation } from '../../api/geolocation';
-import { extractBooksFromAnswer } from './bookExtractor';
+import { extractBooksFromAnswer, extractLibraryBooksFromAnswer } from './bookExtractor';
 import MarkdownRenderer from './MarkdownRenderer';
 import WeatherMoodBadge from './WeatherMoodBadge';
 import { useLibrarian } from '../../store/librarianStore';
@@ -13,7 +13,7 @@ import { toKoreanStatus } from '../../api/bookApi';
 // 백엔드(discovery) ChatRequest.message max_length와 동일하게 맞춘다 (CLIAR-184/185)
 const MAX_MESSAGE_LENGTH = 2000;
 
-// 도서명 공백 및 특수기호 무시 정규화 (예: "성공하는 인생의 비밀" vs "성공하는인생의비밀" vs "『 성공하는 인생의 비밀 』")
+// 도서명 공백 및 특수기호 무시 정규화 (책 매칭용)
 function normalizeTitle(str) {
   return (str || '')
     .trim()
@@ -42,50 +42,22 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
   const [lastUserMessage, setLastUserMessage] = useState(''); // 직전 질문 기억 (사서 전환 시 자동 질의용)
 
-  // 1. 내 서재 도서 조회 결과
-  // - 백엔드가 response.library_books로 전달한 경우 우선 사용
-  // - 스트리밍 응답처럼 백엔드 배열이 비어있더라도, 내 서재(books)에 등록된 도서명이 답변 본문에 언급된 경우 공백/특수문자 무관 자동 매칭
+  // 1. 내 서재 도서 조회 결과 (ADR 0006: 백엔드 response.library_books 또는 ### 📚 마크다운 블록)
   const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
-  const isRecommendationText =
-    Boolean(answer?.text && (answer.text.includes('### 📖') || answer.text.includes('###')) && backendLibraryBooks.length === 0);
+  const parsedLibraryBooks = useMemo(
+    () => (answer?.text && !loading ? extractLibraryBooksFromAnswer(answer.text) : []),
+    [answer?.text, loading]
+  );
+  const libraryBooks = backendLibraryBooks.length > 0 ? backendLibraryBooks : parsedLibraryBooks;
 
-  const libraryBooks = useMemo(() => {
-    if (backendLibraryBooks.length > 0) return backendLibraryBooks;
-    if (!answer?.text || isRecommendationText || loading) return [];
-
-    // 본문에서 낫표(『...』) 또는 화살괄호(《...》)로 묶인 텍스트 추출 (앞뒤 공백 trim)
-    const bracketedTitles = Array.from(
-      answer.text.matchAll(/[『《]\s*([^』》]+?)\s*[』》]/g)
-    ).map((m) => m[1].trim());
-
-    const normalizedAnswer = normalizeTitle(answer.text);
-
-    return books.filter((b) => {
-      if (!b.title || b.title.trim().length < 1) return false;
-      const bTitle = b.title.trim();
-      const normBTitle = normalizeTitle(bTitle);
-      if (!normBTitle) return false;
-
-      // 1) 낫표/화살괄호 안에 감싸진 제목과 공백 무관 일치
-      const matchedInBracket = bracketedTitles.some(
-        (t) => normalizeTitle(t) === normBTitle
-      );
-      if (matchedInBracket) return true;
-
-      // 2) 본문 텍스트 내 완전 일치 또는 공백 무관 일치 (도서명이 2글자 이상인 경우)
-      if (normBTitle.length >= 2 && normalizedAnswer.includes(normBTitle)) {
-        return true;
-      }
-
-      return false;
-    });
-  }, [backendLibraryBooks, answer?.text, isRecommendationText, loading, books]);
-
-  // 2. 도서 추천인 경우: 오직 '### 📖' 또는 '###' 마크다운 추천 포맷이 있고 내 서재 도서 결과가 아닐 때만 추출
-  const recommendedBooks =
-    isRecommendationText && !loading && !answer?.switchTo && libraryBooks.length === 0
-      ? extractBooksFromAnswer(answer.text)
-      : [];
+  // 2. 외부 도서 추천 (ADR 0006: ### 📖 마크다운 블록)
+  const recommendedBooks = useMemo(
+    () =>
+      answer?.text && !loading && !answer?.switchTo
+        ? extractBooksFromAnswer(answer.text)
+        : [],
+    [answer?.text, loading, answer?.switchTo]
+  );
 
   const handleRegisterBook = (book) => {
     navigate('/register', {
@@ -103,10 +75,23 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
     });
   };
 
-  const handleOpenDetail = (book) => {
-    if (onOpenDetail) {
-      onOpenDetail(book);
+  const handleOpenDetail = (bookOrId) => {
+    if (!onOpenDetail) return;
+    if (typeof bookOrId === 'object' && bookOrId !== null) {
+      const targetTitle = (bookOrId.title || '').trim();
+      const targetId = bookOrId.book_id ?? bookOrId.bookId ?? bookOrId.id;
+      const found = books.find(
+        (b) =>
+          (targetId && (b.bookId === targetId || b.id === String(targetId) || b.id === targetId)) ||
+          normalizeTitle(b.title) === normalizeTitle(targetTitle) ||
+          b.title.trim() === targetTitle
+      );
+      if (found) {
+        onOpenDetail(found);
+        return;
+      }
     }
+    onOpenDetail(bookOrId);
   };
 
   const sendQuery = async (message, targetLibrarianId = librarian.id) => {
@@ -277,7 +262,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
       {/* 날씨·무드 컨텍스트 뱃지 (백엔드 signals 기반) */}
       {answer?.signals && !loading && <WeatherMoodBadge signals={answer.signals} />}
 
-      {/* 사서 답변 메시지 뷰 (마크다운 포매팅 렌더링) */}
+      {/* 사서 답변 메시지 뷰 (마크다운 포매팅 렌더링 - ADR 0006: ### 📖 추천, ### 📚 내 서재 카드 실시간 렌더링) */}
       {answer?.text && (
         <div
           style={{
@@ -286,16 +271,20 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
             background: 'var(--code-bg)',
             borderRadius: 10,
             border: '1px solid var(--border)',
-            maxHeight: 180,
+            maxHeight: 220,
             overflowY: 'auto',
           }}
         >
-          <MarkdownRenderer text={answer.text} />
+          <MarkdownRenderer
+            text={answer.text}
+            onRegister={handleRegisterBook}
+            onOpenDetail={handleOpenDetail}
+          />
         </div>
       )}
 
-      {/* 1. 내 서재 도서 목록 카드 (조회된 도서 상세 보기 / 책 열기) */}
-      {libraryBooks.length > 0 && !loading && (
+      {/* 1. 내 서재 도서 목록 카드 (백엔드 JSON response.library_books가 마크다운 본문 카드와 별도로 내려온 경우 노출) */}
+      {libraryBooks.length > 0 && !loading && !answer?.text?.includes('### 📚') && (
         <div
           style={{
             marginBottom: 10,
@@ -362,8 +351,8 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
         </div>
       )}
 
-      {/* 2. 추천 도서 바로 등록 카드 리스트 (오직 ### 📖 마크다운 추천 포맷일 때만 노출) */}
-      {recommendedBooks.length > 0 && !loading && (
+      {/* 2. 추천 도서 바로 등록 카드 리스트 (마크다운 본문에 ### 📖 카드가 없는 JSON 응답 대응) */}
+      {recommendedBooks.length > 0 && !loading && !answer?.text?.includes('### 📖') && (
         <div
           style={{
             marginBottom: 10,
