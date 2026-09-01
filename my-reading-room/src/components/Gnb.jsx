@@ -99,7 +99,7 @@ export default function Gnb() {
                         aria-expanded={showDropdown}
                     >
                         <span className="gnb-profile-name">{librarian.displayName}</span>
-                        <img className="gnb-profile" src="/profile.webp" alt="" width={32} height={32} decoding="async" />
+                        <img className="gnb-profile" src={librarian.profileImage} alt="" width={32} height={32} decoding="async" />
                     </button>
 
                     {showDropdown && (
