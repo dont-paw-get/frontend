@@ -4,7 +4,8 @@ import { changePassword, deleteMe, logout, ApiError } from '../api/authApi';
 import { useAuth } from '../store/authStore';
 import './MyPage.css';
 
-const DEFAULT_PROFILE_IMAGE = '/profile.webp';
+// 회원이 프로필 사진을 올리지 않았을 때 쓰는 기본 아바타 (고양이 사서 프로필 이미지 재사용)
+const DEFAULT_PROFILE_IMAGE = '/profile/cat.webp';
 // 백엔드 gender(MALE/FEMALE) → 화면 표시용 한글
 const GENDER_LABEL = { MALE: '남성', FEMALE: '여성' };
 
