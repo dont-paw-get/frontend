@@ -29,10 +29,11 @@ export function answerQuestion({ text, mode, books, librarian, librarianNames = 
   }
 
   // 다른 사서의 이름/키워드를 입력하면 전환할지 물어봄
-  // (예: 대표 사서가 고양이일 때 "황새 사서", "슈빌" 등을 입력)
+  // (예: 대표 사서가 블루일 때 "슈빌 사서", "슈빌", "황새" 등을 입력)
   const mentioned = findLibrarianByKeyword(q, librarianNames);
   if (mentioned && mentioned.id !== librarian.id) {
-    const targetName = librarianNames[mentioned.id] || mentioned.defaultName;
+    const rawTargetName = librarianNames[mentioned.id] || mentioned.defaultName || mentioned.name;
+    const targetName = rawTargetName.replace(/\s*사서$/, '');
     return {
       text: `${mentioned.icon} ${targetName} 사서를 찾으시나요? ${mentioned.specialty}에 특히 자세해요. 지금 바꿔드릴까요?`,
       switchTo: mentioned,

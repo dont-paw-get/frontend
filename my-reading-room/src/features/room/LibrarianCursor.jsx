@@ -29,12 +29,12 @@ function getShortBubbleText(rawText, librarian, answer) {
   const text = rawText.trim();
   const isStork = librarian?.id === 'stork';
 
-  // 1. 내 서재 도서 결과가 있는 경우
-  const libraryBooks = answer?.library_books || answer?.libraryBooks || [];
-  if (libraryBooks.length > 0) {
+  // 1. 내 서재 도서 결과 (ADR 0006: ### 📚 또는 library_books)
+  const isLibrary = text.includes('### 📚') || (answer?.library_books && answer.library_books.length > 0);
+  if (isLibrary) {
     return isStork
-      ? `✨ 두둥! 서재에서 도서 ${libraryBooks.length}권을 확인했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 서재에서 책 ${libraryBooks.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 서재에서 도서를 확인했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 서재에서 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
 
   // 2. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 마크다운 기호 정제 후 표시
@@ -46,18 +46,18 @@ function getShortBubbleText(rawText, librarian, answer) {
       .trim();
   }
 
-  // 3. 도서 추천 결과 등 장문인 경우 요약 리액션 문구 생성
-  const isRecommend = text.includes('### 📖') || text.includes('###');
-  const books = isRecommend ? extractBooksFromAnswer(text) : [];
-  if (books.length >= 2) {
+  // 3. 도서 추천 결과 (ADR 0006: ### 📖)
+  const isRecommend = text.includes('### 📖');
+  const recommendedBooks = isRecommend ? extractBooksFromAnswer(text) : [];
+  if (recommendedBooks.length >= 2) {
     return isStork
-      ? `✨ 두둥! 추천 도서 ${books.length}권을 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 추천 도서 ${books.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 추천 도서 ${recommendedBooks.length}권을 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 추천 도서 ${recommendedBooks.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
-  if (books.length === 1) {
+  if (recommendedBooks.length === 1) {
     return isStork
-      ? `✨ 두둥! 『${books[0].title}』 도서를 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 『${books[0].title}』 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 『${recommendedBooks[0].title}』 도서를 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 『${recommendedBooks[0].title}』 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
 
   return isStork
