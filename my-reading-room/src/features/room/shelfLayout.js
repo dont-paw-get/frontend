@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // 배경 이미지 (public/room/) — CLIAR-180: 내 서재 UI 갱신, WebP로 변환(1920px, 16:9 비율 유지)
-export const BG_SRC_CAT = '/room/readingroom1.webp';
+export const BG_SRC_CAT = '/room/readingroom_cat.webp';
 export const BG_SRC_STORK = '/room/readingroom2.webp';
 export const BG_SRC = BG_SRC_CAT; // 기본값 (하위 호환)
 // 배경 원본 비율 (원본 픽셀에 맞게 조정)
