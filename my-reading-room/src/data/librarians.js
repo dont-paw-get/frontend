@@ -26,7 +26,7 @@ export const LIBRARIANS = [
   {
     id: 'cat',
     typeCode: 'RUSSIAN_BLUE',
-    name: '고양이 사서',
+    name: '블루 사서',
     species: '러시안블루',
     defaultName: '블루',
     icon: '🐱',
@@ -43,7 +43,7 @@ export const LIBRARIANS = [
   {
     id: 'stork',
     typeCode: 'SHOEBILL',
-    name: '황새 사서',
+    name: '슈빌 사서',
     species: '슈빌',
     defaultName: '슈빌',
     icon: '🪿',
@@ -93,7 +93,7 @@ export function genreLabelForLibrarian(librarian) {
 
 /**
  * 사서 이름(사용자 지정 이름 포함)이나 캐릭터 키워드로 사서를 찾습니다.
- * 채팅에서 "황새 사서", "슈빌" 등을 입력했을 때 전환 대상을 감지하는 데 사용합니다.
+ * 채팅에서 "슈빌 사서", "블루 사서", "황새", "고양이" 등을 입력했을 때 전환 대상을 감지하는 데 사용합니다.
  *
  * @param {string} text - 사용자 입력
  * @param {Record<string,string>} [names] - { [id]: 사용자 지정 이름 }
@@ -109,7 +109,9 @@ export function findLibrarianByKeyword(text, names = {}) {
       lib.defaultName,
       lib.name,
       lib.species,
-      lib.name.replace(/\s*사서$/, ''), // '고양이 사서' → '고양이'
+      lib.name.replace(/\s*사서$/, ''), // '블루 사서' → '블루'
+      lib.id === 'cat' ? '고양이 사서' : '황새 사서',
+      lib.id === 'cat' ? '고양이' : '황새',
     ]
       .filter(Boolean)
       .map((k) => k.toLowerCase());
