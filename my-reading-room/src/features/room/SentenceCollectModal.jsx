@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBooks } from '../../store/booksStore';
-import { recognizeText } from '../register/ocrUtils';
+import { createOcrSentence } from '../../api/recordApi';
 
 /**
  * SentenceCollectModal — "문장 수집" 팝업.
@@ -27,6 +27,7 @@ export default function SentenceCollectModal({ book, onClose }) {
   const [quotes, setQuotes] = useState([]);
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [ocrError, setOcrError] = useState('');
 
   // 문장 목록 로드 (서버)
   const reloadQuotes = useCallback(async () => {
@@ -45,15 +46,24 @@ export default function SentenceCollectModal({ book, onClose }) {
     reloadQuotes();
   }, [reloadQuotes]);
 
+  /*
+   * 사진 경로는 backend-record(POST /ocr/sentences)가 OCR 인식과 scrap 저장을
+   * 한 번에 처리한다. 그래서 여기서는 "인식 → 폼에 채우기"가 아니라
+   * "업로드 → 서버가 즉시 저장 → 목록 갱신"까지 끝낸다. 수정이 필요하면
+   * 저장된 문장의 "수정" 버튼(backend-book scrap PATCH)에서 편집한다.
+   */
   async function handleFile(file) {
     if (!file) return;
     setPreviewUrl(URL.createObjectURL(file));
     setOcrLoading(true);
+    setOcrError('');
     try {
-      const recognized = await recognizeText(file);
-      setText(recognized);
+      const pageNumber = page.trim() ? page.trim() : null;
+      await createOcrSentence({ imageFile: file, bookId: book.bookId, pageNumber, memo: memo || null });
+      resetForm();
+      await reloadQuotes();
     } catch {
-      // 인식 실패 시 빈 텍스트로 유지, 사용자가 직접 입력
+      setOcrError('문장 인식 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setOcrLoading(false);
     }
@@ -158,17 +168,22 @@ export default function SentenceCollectModal({ book, onClose }) {
             <button
               type="button"
               onClick={() => captureInputRef.current?.click()}
-              style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: 'pointer', fontSize: 13 }}
+              disabled={ocrLoading}
+              style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: ocrLoading ? 0.6 : 1 }}
             >
               📷 사진 촬영
             </button>
             <button
               type="button"
               onClick={() => uploadInputRef.current?.click()}
-              style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: 'pointer', fontSize: 13 }}
+              disabled={ocrLoading}
+              style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: ocrLoading ? 0.6 : 1 }}
             >
               🖼️ 이미지 선택
             </button>
+            <span style={{ fontSize: 11, color: 'var(--text)', lineHeight: 1.5 }}>
+              사진을 스캔하면 자동으로 인식·저장됩니다. 페이지·메모를 함께 남기려면 아래에 먼저 입력한 뒤 촬영하세요.
+            </span>
 
             {previewUrl && (
               <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', aspectRatio: '3/4', background: '#000' }}>
@@ -176,17 +191,18 @@ export default function SentenceCollectModal({ book, onClose }) {
               </div>
             )}
 
-            {ocrLoading && <span style={{ fontSize: 12, color: 'var(--text)' }}>문장 인식 중이에요냥... 🐾</span>}
+            {ocrLoading && <span style={{ fontSize: 12, color: 'var(--text)' }}>문장을 인식하고 저장하는 중이에요...</span>}
+            {ocrError && <span style={{ fontSize: 12, color: '#e05a4e' }}>{ocrError}</span>}
           </div>
 
           {/* 중앙: 인식 결과 + 메모 + 페이지 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <label style={labelStyle}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{editingQuoteId ? '문장 수정' : '인식된 문장'}</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{editingQuoteId ? '문장 수정' : '직접 입력'}</span>
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="사진을 스캔하거나 직접 문장을 입력하세요"
+                placeholder="문장을 직접 입력하세요 (사진 촬영 시에는 비워둬도 됩니다)"
                 rows={5}
                 style={{ ...fieldStyle, resize: 'vertical', fontFamily: 'inherit' }}
               />
