@@ -88,11 +88,14 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
     }
 
     const data = await response.json();
+    const libraryBooks = data.library_books || data.libraryBooks || [];
     return {
       text: data.message,
       switchTo: data.switch_to ?? null,
       sessionId: data.session_id,
       signals: data.signals ?? null,
+      libraryBooks,
+      library_books: libraryBooks,
     };
   } catch (err) {
     console.warn('[chatApi] 백엔드 연결 실패, 로컬 fallback 사용:', err.message);
@@ -110,7 +113,7 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
  * @param {number} [params.latitude] - 사용자 위치 위도 (날씨 연동용, 없으면 백엔드가 서울 기본값 사용)
  * @param {number} [params.longitude] - 사용자 위치 경도
  * @param {(chunk: string, fullText: string) => void} [params.onChunk] - 청크 수신 시 콜백
- * @returns {Promise<{text: string, sessionId: string, switchTo: object|null, signals: object|null}|null>} 최종 응답 또는 null(실패 시)
+ * @returns {Promise<{text: string, sessionId: string, switchTo: object|null, signals: object|null, libraryBooks: Array, library_books: Array}|null>} 최종 응답 또는 null(실패 시)
  */
 export async function streamChatMessage({ message, sessionId = null, librarianId = null, latitude = null, longitude = null, onChunk }) {
   try {
@@ -143,7 +146,7 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
       return null;
     }
 
-    // 응답 헤더에서 세션 ID, switchTo, signals 확인
+    // 응답 헤더에서 세션 ID, switchTo, signals, libraryBooks 확인
     const activeSessionId = response.headers.get('X-Session-Id') || sessionId;
     const switchToHeader = response.headers.get('X-Switch-To');
     let switchTo = null;
@@ -174,6 +177,21 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
       }
     }
 
+    // 내 서재 도서 목록(library_books)은 스트리밍에서 X-Library-Books 헤더(JSON 문자열)로 전달될 수 있음
+    let libraryBooks = [];
+    const libraryBooksHeader = response.headers.get('X-Library-Books');
+    if (libraryBooksHeader) {
+      try {
+        libraryBooks = JSON.parse(decodeURIComponent(libraryBooksHeader));
+      } catch {
+        try {
+          libraryBooks = JSON.parse(libraryBooksHeader);
+        } catch {
+          libraryBooks = [];
+        }
+      }
+    }
+
     if (!response.body) {
       console.warn('[chatApi] 스트리밍 응답 바디가 없습니다.');
       return null;
@@ -198,6 +216,8 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
       switchTo,
       sessionId: activeSessionId,
       signals,
+      libraryBooks: Array.isArray(libraryBooks) ? libraryBooks : [],
+      library_books: Array.isArray(libraryBooks) ? libraryBooks : [],
     };
   } catch (err) {
     console.warn('[chatApi] 스트리밍 실패, 로컬 fallback 사용:', err.message);

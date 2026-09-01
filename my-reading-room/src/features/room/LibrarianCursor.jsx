@@ -24,12 +24,20 @@ const FALLBACK_TIP = { x: 0.26, y: 0.287 };
 /**
  * 말풍선에 노출할 짧은 1~2줄 리액션 텍스트 생성
  */
-function getShortBubbleText(rawText, librarian) {
+function getShortBubbleText(rawText, librarian, answer) {
   if (!rawText) return '';
   const text = rawText.trim();
   const isStork = librarian?.id === 'stork';
 
-  // 1. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 마크다운 기호 정제 후 표시
+  // 1. 내 서재 도서 결과가 있는 경우
+  const libraryBooks = answer?.library_books || answer?.libraryBooks || [];
+  if (libraryBooks.length > 0) {
+    return isStork
+      ? `✨ 두둥! 서재에서 도서 ${libraryBooks.length}권을 확인했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 서재에서 책 ${libraryBooks.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+  }
+
+  // 2. 짧은 문구(로딩 중, 사서 변경 알림, 단순 안내 등)는 마크다운 기호 정제 후 표시
   if (text.length <= 80 && text.split('\n').length <= 2) {
     return text
       .replace(/^#{1,4}\s+/gm, '')
@@ -38,8 +46,9 @@ function getShortBubbleText(rawText, librarian) {
       .trim();
   }
 
-  // 2. 도서 추천 결과 등 장문인 경우 요약 리액션 문구 생성
-  const books = extractBooksFromAnswer(text);
+  // 3. 도서 추천 결과 등 장문인 경우 요약 리액션 문구 생성
+  const isRecommend = text.includes('### 📖') || text.includes('###');
+  const books = isRecommend ? extractBooksFromAnswer(text) : [];
   if (books.length >= 2) {
     return isStork
       ? `✨ 두둥! 추천 도서 ${books.length}권을 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
@@ -52,7 +61,7 @@ function getShortBubbleText(rawText, librarian) {
   }
 
   return isStork
-    ? `✨ 두둥! 사서의 추천 답변이 도착했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+    ? `✨ 두둥! 사서의 답변이 도착했습니다 🪶\n아래 채팅창에서 확인해 보세요`
     : `✨ 사서 답변이 도착했다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
 }
 
@@ -68,7 +77,7 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
   const offsetX = -(tip.x * imgSize);
   const offsetY = -(tip.y * imgSize);
 
-  const bubbleText = answer?.text ? getShortBubbleText(answer.text, librarian) : '';
+  const bubbleText = answer?.text ? getShortBubbleText(answer.text, librarian, answer) : '';
 
   return (
     <div

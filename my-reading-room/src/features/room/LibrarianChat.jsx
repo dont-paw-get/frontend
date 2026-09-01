@@ -8,6 +8,7 @@ import { extractBooksFromAnswer } from './bookExtractor';
 import MarkdownRenderer from './MarkdownRenderer';
 import WeatherMoodBadge from './WeatherMoodBadge';
 import { useLibrarian } from '../../store/librarianStore';
+import { toKoreanStatus } from '../../api/bookApi';
 
 // 백엔드(discovery) ChatRequest.message max_length와 동일하게 맞춘다 (CLIAR-184/185)
 const MAX_MESSAGE_LENGTH = 2000;
@@ -17,11 +18,12 @@ const MAX_MESSAGE_LENGTH = 2000;
  * 백엔드(/api/v1/chat)로 스트리밍 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
  *
  * @param {object} librarian - 현재 사서
- * @param {{text,switchTo}|null} answer - 현재 답변
+ * @param {{text,switchTo,library_books,libraryBooks}|null} answer - 현재 답변
  * @param {(res)=>void} onAnswer - 답변 갱신
  * @param {(id)=>void} onSwitch - 사서 변경
+ * @param {(bookOrId)=>void} [onOpenDetail] - 서재 도서 상세 보기(책 열기) 모달 열기 핸들러
  */
-export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch }) {
+export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, onOpenDetail }) {
   const { books } = useBooks();
   const { names: librarianNames } = useLibrarian();
   const navigate = useNavigate();
@@ -32,9 +34,14 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
   const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
   const [lastUserMessage, setLastUserMessage] = useState(''); // 직전 질문 기억 (사서 전환 시 자동 질의용)
 
-  // 답변 텍스트에서 추천 도서 정보 자동 추출 (사서 전환 제안 멘트일 때는 도서 등록 버튼 비활성화)
+  // 1. 내 서재 도서 조회 결과 (백엔드 response.library_books 또는 로컬 fallback)
+  const libraryBooks = answer?.library_books || answer?.libraryBooks || [];
+
+  // 2. 도서 추천인 경우: 오직 '### 📖' 또는 '###' 마크다운 추천 포맷이 있고 내 서재 도서 결과가 아닐 때만 추출
+  const isRecommendationText =
+    answer?.text && (answer.text.includes('### 📖') || answer.text.includes('###')) && libraryBooks.length === 0;
   const recommendedBooks =
-    answer?.text && !loading && !answer?.switchTo
+    isRecommendationText && !loading && !answer?.switchTo
       ? extractBooksFromAnswer(answer.text)
       : [];
 
@@ -54,6 +61,12 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     });
   };
 
+  const handleOpenDetail = (book) => {
+    if (onOpenDetail) {
+      onOpenDetail(book);
+    }
+  };
+
   const sendQuery = async (message, targetLibrarianId = librarian.id) => {
     setLoading(true);
     setLastUserMessage(message);
@@ -63,7 +76,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
     const initialGreeting = isStork
       ? '🪿 두둥! 슈빌 사서가 전문 분야의 깊이 있는 명저를 선별하고 있습니다... 🪶'
       : '🐾 블루 사서가 딱 맞는 좋은 책을 찾고 있다냥...';
-    onAnswer({ text: initialGreeting });
+    onAnswer({ text: initialGreeting, library_books: [], libraryBooks: [] });
 
     // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)
     const location = await getUserLocation();
@@ -83,7 +96,13 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
       if (result.sessionId) {
         setSessionId(result.sessionId);
       }
-      onAnswer({ text: result.text, switchTo: result.switchTo, signals: result.signals });
+      onAnswer({
+        text: result.text,
+        switchTo: result.switchTo,
+        signals: result.signals,
+        libraryBooks: result.libraryBooks || result.library_books || [],
+        library_books: result.library_books || result.libraryBooks || [],
+      });
     } else {
       // 백엔드 연결 실패 시에만 로컬 서재 검색으로 폴백
       const localResult = answerQuestion({ text: message, books, librarian, librarianNames });
@@ -233,8 +252,76 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch })
         </div>
       )}
 
-      {/* 추천 도서 바로 등록 카드 리스트 */}
-      {recommendedBooks.length > 0 && (
+      {/* 1. 내 서재 도서 목록 카드 (조회된 도서 상세 보기 / 책 열기) */}
+      {libraryBooks.length > 0 && !loading && (
+        <div
+          style={{
+            marginBottom: 10,
+            padding: '8px 10px',
+            background: 'var(--code-bg)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            maxHeight: 160,
+            overflowY: 'auto',
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
+            📖 내 서재 도서 ({libraryBooks.length}권):
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {libraryBooks.map((b, idx) => {
+              const bookId = b.book_id ?? b.bookId ?? b.id;
+              const statusKr = toKoreanStatus(b.reading_status ?? b.readingStatus ?? b.status);
+              const progress = b.progress != null ? `${b.progress}%` : null;
+              return (
+                <div
+                  key={bookId || idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 6,
+                    padding: '6px 8px',
+                    background: 'var(--bg)',
+                    borderRadius: 6,
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    <span style={{ fontWeight: 600 }}>{b.title}</span>
+                    {b.author && <span style={{ fontSize: 11, color: 'var(--text)', marginLeft: 4 }}>({b.author})</span>}
+                    {(statusKr || progress) && (
+                      <span style={{ fontSize: 10, color: 'var(--accent)', marginLeft: 6, fontWeight: 500 }}>
+                        [{statusKr}{progress ? ` · ${progress}` : ''}]
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDetail(b)}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      border: '1px solid var(--accent-border, var(--accent))',
+                      background: 'var(--accent-bg, rgba(0, 229, 255, 0.1))',
+                      color: 'var(--accent)',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    상세 보기 ➔
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 2. 추천 도서 바로 등록 카드 리스트 (오직 ### 📖 마크다운 추천 포맷일 때만 노출) */}
+      {recommendedBooks.length > 0 && !loading && (
         <div
           style={{
             marginBottom: 10,
