@@ -148,6 +148,17 @@ export default function LibraryScene() {
     setWorkingConfig(saved || { camera: getDefaultCamera(librarianId), shelves: getDefaultShelves(librarianId) });
   }, [librarianId]);
 
+  // 서재 페이지에서는 OS 커서를 숨긴다 (CLIAR-214).
+  // 씬 컨테이너는 cursor:none이지만 #root 고정폭(1126px) 바깥 레터박스나 씬 박스
+  // 주변 여백으로 마우스가 나가면 body의 기본 커서가 드러나, 사서 커서 위를 지나
+  // 좌우로 움직일 때 일반 포인터가 튀어 보였다. body에 클래스를 걸어 서재에 있는
+  // 동안 커서를 감춘다. 버튼·링크는 각자 cursor를 지정하므로 클릭 대상엔 여전히
+  // 포인터가 보인다.
+  useEffect(() => {
+    document.body.classList.add('reading-room');
+    return () => document.body.classList.remove('reading-room');
+  }, []);
+
   useEffect(() => {
     if (!isDev) return;
     try {
@@ -483,12 +494,12 @@ export default function LibraryScene() {
           typeof selectedId === 'object'
             ? selectedId
             : books.find(
-                (b) =>
-                  b.id === selectedId ||
-                  b.bookId === selectedId ||
-                  String(b.bookId) === String(selectedId) ||
-                  b.title === selectedId
-              );
+              (b) =>
+                b.id === selectedId ||
+                b.bookId === selectedId ||
+                String(b.bookId) === String(selectedId) ||
+                b.title === selectedId
+            );
         return book ? <BookDetail book={book} onClose={() => setSelectedId(null)} /> : null;
       })()}
     </div>

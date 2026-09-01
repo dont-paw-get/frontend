@@ -97,6 +97,16 @@ body {
   cursor: auto;
 }
 
+/*
+ * 서재 페이지(CLIAR-214): 사서 캐릭터 커서가 유일한 커서가 되도록 페이지 전체의
+ * OS 커서를 숨긴다. 씬 박스 바깥 레터박스/여백에서 일반 포인터가 튀어 보이던 문제
+ * 방지. 버튼·링크는 각자 cursor:pointer를 지정하므로 클릭 대상엔 포인터가 유지된다.
+ * (body.reading-room 클래스는 LibraryScene 마운트 동안에만 부여)
+ */
+body.reading-room {
+  cursor: none;
+}
+
 #root {
   width: 1126px;
   max-width: 100%;
