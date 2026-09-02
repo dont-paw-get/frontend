@@ -30,6 +30,10 @@ export default function SentenceCollectModal({ book, onClose }) {
   const [saving, setSaving] = useState(false);
   const [ocrError, setOcrError] = useState('');
   const [webcamOpen, setWebcamOpen] = useState(false);
+  // OCR로 스캔한(또는 수정 중인 기존 스크랩의) 원본 이미지 URL.
+  // backend-book이 scrapImageUrl을 필수로 요구하므로, 저장 시 이 값을 함께 보낸다.
+  // 새 문장은 스캔을 해야 이 값이 생기고, 값이 없으면 저장할 수 없다.
+  const [pendingImageUrl, setPendingImageUrl] = useState(null);
 
   // 문장 목록 로드 (서버)
   const reloadQuotes = useCallback(async () => {
@@ -49,21 +53,25 @@ export default function SentenceCollectModal({ book, onClose }) {
   }, [reloadQuotes]);
 
   /*
-   * 사진 경로는 backend-record(POST /ocr/sentences)가 OCR 인식과 scrap 저장을
-   * 한 번에 처리한다. 그래서 여기서는 "인식 → 폼에 채우기"가 아니라
-   * "업로드 → 서버가 즉시 저장 → 목록 갱신"까지 끝낸다. 수정이 필요하면
-   * 저장된 문장의 "수정" 버튼(backend-book scrap PATCH)에서 편집한다.
+   * 확인 후 저장 흐름(CLIAR-228): 사진을 backend-record에 OCR-only(save_scrap=false)로
+   * 보내 텍스트만 인식하고 원본 이미지는 S3에 저장한다. 인식 결과를 편집창에 채워
+   * 사용자가 확인/수정한 뒤 "저장"을 누르면 그때 backend-book에 스크랩을 저장한다.
+   * (여기서는 아직 저장하지 않는다)
    */
   async function handleFile(file) {
     if (!file) return;
     setPreviewUrl(URL.createObjectURL(file));
     setOcrLoading(true);
     setOcrError('');
+    setEditingQuoteId(null);
     try {
-      const pageNumber = page.trim() ? page.trim() : null;
-      await createOcrSentence({ imageFile: file, bookId: book.bookId, pageNumber, memo: memo || null });
-      resetForm();
-      await reloadQuotes();
+      const result = await createOcrSentence({
+        imageFile: file,
+        bookId: book.bookId,
+        saveScrap: false,
+      });
+      setText(result.text || '');
+      setPendingImageUrl(result.scrapImageUrl || null);
     } catch {
       setOcrError('문장 인식 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
@@ -83,16 +91,21 @@ export default function SentenceCollectModal({ book, onClose }) {
     setPage('');
     setPreviewUrl(null);
     setEditingQuoteId(null);
+    setPendingImageUrl(null);
   }
 
+  // 새 문장은 스캔한 이미지 URL이 있어야 저장 가능(backend-book scrapImageUrl 필수).
+  // 기존 문장 수정은 이미 이미지 URL을 갖고 있으므로 항상 가능.
+  const canSave = text.trim() && !saving && (editingQuoteId ? true : !!pendingImageUrl);
+
   async function handleSave() {
-    if (!text.trim() || saving) return;
+    if (!canSave) return;
     setSaving(true);
     try {
       if (editingQuoteId) {
-        await editScrap(editingQuoteId, { text, memo, page });
+        await editScrap(editingQuoteId, { text, memo, page, scrapImageUrl: pendingImageUrl });
       } else {
-        await addScrap(book.bookId, { text, memo, page });
+        await addScrap(book.bookId, { text, memo, page, scrapImageUrl: pendingImageUrl });
       }
       resetForm();
       await reloadQuotes();
@@ -108,6 +121,9 @@ export default function SentenceCollectModal({ book, onClose }) {
     setText(quote.text);
     setMemo(quote.memo || '');
     setPage(quote.page ? String(quote.page) : '');
+    // 수정 시 기존 이미지 URL을 보관(저장 시 재전송)하고, 좌측 미리보기에 원본 이미지를 띄운다.
+    setPendingImageUrl(quote.scrapImageUrl || null);
+    setPreviewUrl(quote.scrapImageUrl || null);
   }
 
   async function handleDeleteQuote(quoteId) {
@@ -205,7 +221,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                   💻 웹캠으로 촬영
                 </button>
                 <span style={{ fontSize: 11, color: 'var(--text)', lineHeight: 1.5 }}>
-                  사진을 스캔하면 자동으로 인식·저장됩니다. 페이지·메모를 함께 남기려면 아래에 먼저 입력한 뒤 촬영하세요.
+                  사진을 스캔하면 인식된 문장이 오른쪽에 채워집니다. 내용을 확인·수정하고 페이지·메모를 입력한 뒤 저장하세요.
                 </span>
 
                 {previewUrl && (
@@ -214,18 +230,18 @@ export default function SentenceCollectModal({ book, onClose }) {
                   </div>
                 )}
 
-                {ocrLoading && <span style={{ fontSize: 12, color: 'var(--text)' }}>문장을 인식하고 저장하는 중이에요...</span>}
+                {ocrLoading && <span style={{ fontSize: 12, color: 'var(--text)' }}>문장을 인식하는 중이에요...</span>}
                 {ocrError && <span style={{ fontSize: 12, color: '#e05a4e' }}>{ocrError}</span>}
               </div>
 
               {/* 중앙: 인식 결과 + 메모 + 페이지 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <label style={labelStyle}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{editingQuoteId ? '문장 수정' : '직접 입력'}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>{editingQuoteId ? '문장 수정' : '인식된 문장'}</span>
                   <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    placeholder="문장을 직접 입력하세요 (사진 촬영 시에는 비워둬도 됩니다)"
+                    placeholder="왼쪽에서 사진을 스캔하면 인식된 문장이 여기에 채워져요. 필요하면 직접 고칠 수 있어요."
                     rows={5}
                     style={{ ...fieldStyle, resize: 'vertical', fontFamily: 'inherit' }}
                   />
@@ -258,12 +274,12 @@ export default function SentenceCollectModal({ book, onClose }) {
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={!text.trim() || saving}
+                    disabled={!canSave}
                     style={{
                       flex: 1, padding: '9px 0', borderRadius: 8, border: 'none',
-                      background: text.trim() && !saving ? 'var(--accent)' : 'var(--border)',
-                      color: text.trim() && !saving ? '#fff' : 'var(--text)',
-                      fontWeight: 700, cursor: text.trim() && !saving ? 'pointer' : 'not-allowed', fontSize: 13,
+                      background: canSave ? 'var(--accent)' : 'var(--border)',
+                      color: canSave ? '#fff' : 'var(--text)',
+                      fontWeight: 700, cursor: canSave ? 'pointer' : 'not-allowed', fontSize: 13,
                     }}
                   >
                     {saving ? '저장 중...' : editingQuoteId ? '수정 저장' : '문장 저장'}
@@ -278,6 +294,12 @@ export default function SentenceCollectModal({ book, onClose }) {
                     </button>
                   )}
                 </div>
+                {/* 새 문장은 사진 스캔이 있어야 저장 가능(원본 이미지가 필요) */}
+                {!editingQuoteId && !pendingImageUrl && text.trim() && (
+                  <span style={{ fontSize: 11, color: 'var(--text)' }}>
+                    저장하려면 왼쪽에서 사진을 먼저 스캔해 주세요.
+                  </span>
+                )}
               </div>
 
               {/* 오른쪽: 저장된 문장 목록 */}

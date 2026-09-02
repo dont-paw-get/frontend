@@ -120,28 +120,31 @@ export function BooksProvider({ children }) {
   // ── 문장수집(scrap) ── 도서에 종속. 목록/추가/수정/삭제 모두 API 경유.
   const fetchScraps = useCallback(async (bookId) => {
     const scraps = await bookApi.listScraps(bookId);
-    // 프론트 quote 모델로 변환
+    // 프론트 quote 모델로 변환. scrapImageUrl은 수정 시 재전송해야 하므로 함께 보관한다.
     return scraps.map((s) => ({
       id: s.scrapId,
       text: s.sentence,
       memo: s.memo || '',
       page: s.pageNumber ?? null,
+      scrapImageUrl: s.scrapImageUrl ?? null,
     }));
   }, []);
 
-  const addScrap = useCallback((bookId, { text, memo, page }) => {
+  const addScrap = useCallback((bookId, { text, memo, page, scrapImageUrl }) => {
     return bookApi.createScrap(bookId, {
       sentence: text,
       memo: memo || null,
       pageNumber: Number(page) || null,
+      scrapImageUrl,
     });
   }, []);
 
-  const editScrap = useCallback((scrapId, { text, memo, page }) => {
+  const editScrap = useCallback((scrapId, { text, memo, page, scrapImageUrl }) => {
     return bookApi.updateScrap(scrapId, {
       sentence: text,
       memo: memo || null,
       pageNumber: Number(page) || null,
+      scrapImageUrl,
     });
   }, []);
 

@@ -47,7 +47,7 @@ export async function listLibraryBooks() {
   const size = 100;
   let page = 0;
   const all = [];
-  for (;;) {
+  for (; ;) {
     const res = await authFetch(`/library/books?page=${page}&size=${size}`);
     if (Array.isArray(res?.books)) all.push(...res.books);
     const totalPages = res?.totalPages ?? 1;
@@ -138,7 +138,7 @@ export async function listScraps(bookId) {
   const size = 100;
   let page = 0;
   const summaries = [];
-  for (;;) {
+  for (; ;) {
     const res = await authFetch(`/library/books/${bookId}/scraps?page=${page}&size=${size}`);
     if (Array.isArray(res?.scraps)) summaries.push(...res.scraps);
     const totalPages = res?.totalPages ?? 1;
@@ -148,17 +148,26 @@ export async function listScraps(bookId) {
   return Promise.all(summaries.map((s) => getScrap(s.scrapId)));
 }
 
-export function createScrap(bookId, { sentence, pageNumber = null, memo = null }) {
+/**
+ * 문장 스크랩 생성.
+ * backend-book은 scrapImageUrl을 필수(non-blank)로 요구한다. 스크랩 원본 이미지는
+ * backend-record가 OCR 시 S3에 업로드해 URL을 만들어 주므로, 그 URL을 그대로 넘긴다.
+ */
+export function createScrap(bookId, { sentence, pageNumber = null, memo = null, scrapImageUrl }) {
   return authFetch(`/library/books/${bookId}/scraps`, {
     method: 'POST',
-    body: { sentence, pageNumber, scrapImageUrl: null, memo },
+    body: { sentence, pageNumber, scrapImageUrl, memo },
   });
 }
 
-export function updateScrap(scrapId, { sentence, pageNumber = null, memo = null }) {
+/**
+ * 문장 스크랩 수정. PATCH도 scrapImageUrl을 필수로 요구하므로,
+ * 호출부가 기존 스크랩의 scrapImageUrl을 함께 전달해야 한다.
+ */
+export function updateScrap(scrapId, { sentence, pageNumber = null, memo = null, scrapImageUrl }) {
   return authFetch(`/library/scraps/${scrapId}`, {
     method: 'PATCH',
-    body: { sentence, pageNumber, scrapImageUrl: null, memo },
+    body: { sentence, pageNumber, scrapImageUrl, memo },
   });
 }
 
