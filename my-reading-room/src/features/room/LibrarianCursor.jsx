@@ -68,15 +68,17 @@ function getShortBubbleText(rawText, librarian, answer) {
     : `✨ 사서 답변이 도착했다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
 }
 
-export default function LibrarianCursor({ librarian, answer, hovering }) {
-  const useHover = hovering && librarian.imageHover;
-  const imgSrc = useHover ? librarian.imageHover : librarian.image;
+export default function LibrarianCursor({ librarian, answer, active }) {
+  // 책을 선택(클릭)했을 때만 모션 이미지로 전환한다 (CLIAR-239). 예전에는 책 위에
+  // 마우스를 올리기만 해도(hover) 바뀌었지만, 선택 상태에서만 움직이도록 변경했다.
+  const useActive = active && librarian.imageHover;
+  const imgSrc = useActive ? librarian.imageHover : librarian.image;
 
   // 사서별 표시 크기 (imgScale 미지정 시 기본 배율)
   const imgSize = Math.round(IMG_SIZE * (librarian.imgScale ?? 1));
 
   // 포인터 지점(손끝·부리 끝)이 실제 커서 위치(--mx, --my)에 오도록 이미지를 이동
-  const tip = (useHover ? librarian.tipHover : librarian.tip) || librarian.tip || FALLBACK_TIP;
+  const tip = (useActive ? librarian.tipHover : librarian.tip) || librarian.tip || FALLBACK_TIP;
   const offsetX = -(tip.x * imgSize);
   const offsetY = -(tip.y * imgSize);
 
@@ -99,14 +101,14 @@ export default function LibrarianCursor({ librarian, answer, hovering }) {
         {/* 사서 이미지 (없으면 이모지) */}
         {imgSrc ? (
           /*
-           * key에 src를 넣어 호버 상태가 바뀔 때마다 img 요소를 새로 마운트한다.
-           * 황새 호버 이미지는 1회 재생 후 마지막 프레임에 멈추는 애니메이션 WebP라,
+           * key에 src를 넣어 선택 상태가 바뀔 때마다 img 요소를 새로 마운트한다.
+           * 황새 모션 이미지는 1회 재생 후 마지막 프레임에 멈추는 애니메이션 WebP라,
            * 같은 요소의 src만 교체하면 브라우저가 완료된 애니메이션을 다시 재생하지
-           * 않을 수 있다. 요소를 새로 만들면 책 위에 올릴 때마다 처음부터 재생된다.
+           * 않을 수 있다. 요소를 새로 만들면 책을 선택할 때마다 처음부터 재생된다.
            */
           <img
             key={imgSrc}
-            className={`librarian-cursor-img${useHover ? ' librarian-cursor-img--hover' : ''}`}
+            className={`librarian-cursor-img${useActive ? ' librarian-cursor-img--active' : ''}`}
             src={imgSrc}
             alt={librarian.name}
             style={{ width: imgSize, height: imgSize }}
