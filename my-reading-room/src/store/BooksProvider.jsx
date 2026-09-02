@@ -74,6 +74,8 @@ export function BooksProvider({ children }) {
       author: input.author,
       totalPages: Number(input.totalPage) || null,
       readingStatus: bookApi.toReadingStatus(input.status),
+      // 장르는 등록 화면에서 분류/선택한 값 (미지정이면 'NONE')
+      genre: input.genre || 'NONE',
     });
     setVisual(created.bookId, {
       spineColor: input.spineColor,

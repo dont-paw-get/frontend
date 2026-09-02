@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useBooks } from '../../store/booksStore';
 import { getLibraryBook, toReadingStatus } from '../../api/bookApi';
+import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../../data/genres';
 import SentenceCollectModal from './SentenceCollectModal';
 import ScrapGallery from './ScrapGallery';
 
@@ -17,6 +18,8 @@ export default function BookDetail({ book, onClose }) {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPage, setTotalPage] = useState(0);
   const [status, setStatus] = useState(book.status || '시작전');
+  // 장르 (CLIAR-241): 목록 요약에도 genre가 있어 상세 조회 전에도 바로 표시된다.
+  const [genre, setGenre] = useState(book.genre || GENRE_NONE);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showSentenceModal, setShowSentenceModal] = useState(false);
@@ -36,6 +39,7 @@ export default function BookDetail({ book, onClose }) {
         setDetail(d);
         setCurrentPage(d.currentPage || 0);
         setTotalPage(d.totalPages || 0);
+        if (d.genre) setGenre(d.genre);
         if (d.readingStatus) {
           // 서버 상태를 우선 반영(한글 매핑은 provider와 동일 규칙)
           const kr = { PLANNED: '시작전', READING: '읽는 중', COMPLETED: '완독' }[d.readingStatus];
@@ -62,7 +66,8 @@ export default function BookDetail({ book, onClose }) {
         title: detail?.title ?? book.title,
         author: detail?.author ?? book.author,
         isbn: detail?.isbn ?? null,
-        genre: detail?.genre ?? 'NONE',
+        // 장르는 편집 가능하므로 상태값을 보낸다 (PATCH는 null 불허 → 미지정은 'NONE')
+        genre: genre || GENRE_NONE,
         publisher: detail?.publisher ?? null,
         publishedDate: detail?.publishedDate ?? null,
         coverUrl: detail?.coverUrl ?? null,
@@ -222,9 +227,45 @@ export default function BookDetail({ book, onClose }) {
           </h3>
 
           {/* 저자 */}
-          <div style={{ color: 'var(--text)', marginBottom: 14 }}>
+          <div style={{ color: 'var(--text)', marginBottom: 10 }}>
             {book.author || '저자 미입력'}
           </div>
+
+          {/* 장르 (CLIAR-241) — 저자 바로 아래 */}
+          {editing ? (
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
+              <span style={{ fontSize: 12, color: 'var(--text)' }}>장르</span>
+              <select
+                value={genre}
+                onChange={(e) => setGenre(e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
+                }}
+              >
+                <option value={GENRE_NONE}>미지정</option>
+                {GENRE_DEFS.map((g) => (
+                  <option key={g.code} value={g.code}>{g.label}</option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <div style={{ marginBottom: 14 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '2px 10px',
+                  borderRadius: 999,
+                  border: '1px solid var(--accent-border)',
+                  background: 'var(--accent-bg)',
+                  color: 'var(--text-h)',
+                  fontSize: 12,
+                }}
+              >
+                {genreLabel(genre) || '장르 미지정'}
+              </span>
+            </div>
+          )}
 
           {/* 진행 상태 */}
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
