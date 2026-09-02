@@ -67,15 +67,25 @@ export function getLibraryBook(bookId) {
 /**
  * 도서 등록. shelfId 미전달 시 백엔드가 기본 책장에 자동 배치한다.
  * 색상/두께 등 시각 정보는 백엔드가 저장하지 않으므로 전송하지 않는다.
+ *
+ * genre는 선택 필드로, 미전달 시 'NONE'(미지정)으로 저장된다 (CLIAR-241).
+ * 알라딘 검색은 장르를 주지 않으므로 값은 backend-discovery의 분류 API
+ * (genreApi.classifyGenre) 결과나 사용자가 고른 값을 넘긴다.
  */
-export function createLibraryBook({ title, author, totalPages = null, readingStatus = 'PLANNED' }) {
+export function createLibraryBook({
+  title,
+  author,
+  totalPages = null,
+  readingStatus = 'PLANNED',
+  genre = 'NONE',
+}) {
   return authFetch('/library/books', {
     method: 'POST',
     body: {
       title,
       author,
       isbn: null,
-      genre: 'NONE',
+      genre,
       publisher: null,
       publishedDate: null,
       totalPages,

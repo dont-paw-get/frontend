@@ -1,7 +1,9 @@
-import { useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBooks } from '../store/booksStore';
 import { colorPresets, recognizeCover, extractDominantColorIndex, loadImage } from '../features/register/ocrUtils';
+import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../data/genres';
+import { classifyGenre } from '../api/genreApi';
 
 const thicknessPresets = [
   { label: '얇음', value: 0.16 },
@@ -36,12 +38,31 @@ export default function RegisterBook() {
   const [author, setAuthor] = useState('');
   const [colorIdx, setColorIdx] = useState(null);
   const [thickness, setThickness] = useState(null);
+  // 장르 (CLIAR-241): backend-discovery 분류 결과를 기본값으로 채우고 사용자가 바꿀 수 있다.
+  const [genre, setGenre] = useState(GENRE_NONE);
+  const [genreLoading, setGenreLoading] = useState(false);
 
   const [totalPage, setTotalPage] = useState('');
   const [currentPage, setCurrentPage] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+
+  /**
+   * 인식/전달된 도서 정보로 장르를 자동 분류해 채운다 (CLIAR-241).
+   * 알라딘 검색은 장르를 주지 않으므로 backend-discovery의 분류 API를 쓴다.
+   * 실패하면 '미지정'으로 남기고 사용자가 직접 고르게 한다(등록은 막지 않음).
+   */
+  const autoClassifyGenre = useCallback(async ({ title: t, author: a, isbn = '', rawCategory = '' }) => {
+    if (!t?.trim()) return;
+    setGenreLoading(true);
+    try {
+      const result = await classifyGenre({ title: t, author: a, isbn, rawCategory });
+      if (result?.genre) setGenre(result.genre);
+    } finally {
+      setGenreLoading(false);
+    }
+  }, []);
 
   // AI 도서 추천 등 외부 state로 넘어온 도서 정보 자동 채움 (CLIAR-229)
   useEffect(() => {
@@ -64,8 +85,14 @@ export default function RegisterBook() {
       setOcrDone(true);
       setEditing(true);
       setFromRecommendation(true);
+      // 추천 응답에 장르가 있으면 그대로 쓰고, 없으면 제목·저자로 분류한다.
+      if (book.genre) {
+        setGenre(book.genre);
+      } else {
+        autoClassifyGenre({ title: book.title, author: book.author });
+      }
     }
-  }, [location.state]);
+  }, [location.state, autoClassifyGenre]);
 
   async function handleFile(file) {
     if (!file) return;
@@ -80,6 +107,12 @@ export default function RegisterBook() {
       setAuthor(ocrResult.author || '');
       setColorIdx(extractDominantColorIndex(img));
       setThickness(0.22); // 기본 두께(보통), 이후 수정 가능
+      /*
+       * 인식된 제목·저자로 장르를 자동 분류 (실패해도 등록은 계속 가능).
+       * recognizeCover는 { title, author, rawText }만 주고 ISBN·카테고리는 없어
+       * 제목·저자만 넘긴다. ISBN 기반 조회가 붙으면 isbn도 함께 전달하면 된다.
+       */
+      autoClassifyGenre({ title: ocrResult.title, author: ocrResult.author });
     } catch {
       setColorIdx(0);
       setThickness(0.22);
@@ -114,6 +147,7 @@ export default function RegisterBook() {
         thickness,
         totalPage: Number(totalPage),
         status: deriveStatus(currentPage, totalPage),
+        genre,
       });
       // 현재 읽은 페이지가 있으면 진행도까지 반영 (생성 API엔 currentPage가 없음)
       if (created?.bookId && initialPage > 0) {
@@ -278,6 +312,28 @@ export default function RegisterBook() {
                   <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="저자명" style={fieldStyle} />
                 ) : (
                   <div style={{ ...fieldStyle, background: 'transparent' }}>{author || '(인식된 저자 없음)'}</div>
+                )}
+              </label>
+
+              {/* 장르 (CLIAR-241): 자동 분류 결과를 기본값으로, 수정 모드에서 변경 가능 */}
+              <label style={labelStyle}>
+                <span>
+                  장르
+                  {genreLoading && (
+                    <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--text)' }}>분류 중...</span>
+                  )}
+                </span>
+                {editing ? (
+                  <select value={genre} onChange={(e) => setGenre(e.target.value)} style={fieldStyle}>
+                    <option value={GENRE_NONE}>미지정</option>
+                    {GENRE_DEFS.map((g) => (
+                      <option key={g.code} value={g.code}>{g.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div style={{ ...fieldStyle, background: 'transparent' }}>
+                    {genreLabel(genre) || '미지정'}
+                  </div>
                 )}
               </label>
 
