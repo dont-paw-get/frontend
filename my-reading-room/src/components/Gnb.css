@@ -102,11 +102,19 @@
     text-decoration: none;
     font-size: 13px;
     color: #c1470c;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* CLIAR-245: 버튼임을 더 뚜렷하게 — 배경 채움 + 살짝 떠오르는 그림자 */
 .gnb-menu a:hover {
     background: var(--accent-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.gnb-menu a:active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 .gnb-menu a.on {
@@ -115,10 +123,51 @@
     font-weight: 600;
 }
 
+/* 이미 선택된 탭은 눌러도 더 떠오르지 않게(중복 강조 방지) */
+.gnb-menu a.on:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 .gnb-right {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+/*
+ * 키보드 포커스 링 (CLIAR-245): hover 효과와 별개로, Tab으로 이동했을 때도
+ * 버튼임을 알 수 있게 한다. 마우스 클릭 시(:focus-visible 미해당)에는 표시되지 않는다.
+ */
+.gnb-menu a:focus-visible,
+.gnb-theme button:focus-visible,
+.gnb-logout-btn:focus-visible,
+.gnb-profile-btn:focus-visible,
+.gnb-dropdown-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* 모션 최소화를 선호하는 사용자는 이동/스케일 애니메이션을 끈다 (배경·색 전환은 유지) */
+@media (prefers-reduced-motion: reduce) {
+
+    .gnb-menu a,
+    .gnb-theme button,
+    .gnb-logout-btn,
+    .gnb-profile-btn {
+        transition-property: background, color, border-color;
+    }
+
+    .gnb-menu a:hover,
+    .gnb-logout-btn:hover:not(:disabled),
+    .gnb-profile-btn:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .gnb-theme button:active {
+        transform: none;
+    }
 }
 
 .gnb-profile-wrap {
@@ -136,12 +185,21 @@
     background: transparent;
     color: var(--text);
     cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* CLIAR-245: 배경 채움 + 떠오르는 느낌으로 클릭 가능함을 명확히 */
 .gnb-profile-btn:hover {
     color: var(--text-h);
     border-color: var(--accent);
+    background: var(--accent-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.gnb-profile-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 .gnb-profile-name {
@@ -189,6 +247,10 @@
     color: var(--accent);
 }
 
+.gnb-dropdown-item:active {
+    background: var(--accent-border);
+}
+
 .gnb-theme {
     display: flex;
     gap: 2px;
@@ -208,10 +270,26 @@
     background: transparent;
     color: var(--text);
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+/* CLIAR-245: 아이콘만 있어 버튼이라는 신호가 약했음 — hover 배경으로 명확히 표시 */
+.gnb-theme button:hover {
+    background: var(--accent-bg);
+    color: var(--accent);
+}
+
+.gnb-theme button:active {
+    transform: scale(0.92);
 }
 
 .gnb-theme button.on {
+    background: var(--accent);
+    color: #fff;
+}
+
+/* 이미 선택된 모드는 hover해도 색이 바뀌지 않게(활성 상태와 hover 상태 혼동 방지) */
+.gnb-theme button.on:hover {
     background: var(--accent);
     color: #fff;
 }
@@ -227,10 +305,24 @@
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.gnb-logout-btn:hover {
+/* CLIAR-245: 배경 채움 + 떠오르는 느낌으로 클릭 가능함을 명확히 */
+.gnb-logout-btn:hover:not(:disabled) {
     color: var(--text-h);
     border-color: var(--accent);
+    background: var(--accent-bg);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.gnb-logout-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.gnb-logout-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
