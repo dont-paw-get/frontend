@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useBooks } from '../../store/booksStore';
 import { getLibraryBook, toReadingStatus } from '../../api/bookApi';
 import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../../data/genres';
@@ -28,6 +28,8 @@ export default function BookDetail({ book, onClose }) {
   const [detail, setDetail] = useState(null); // 서버 상세(전체 메타 — 저장 시 full payload에 필요)
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
+  // 우측 문장 갤러리의 편집 내용을 "완료" 시 함께 저장하기 위한 핸들 (CLIAR-241)
+  const galleryRef = useRef(null);
 
   // 목록 요약엔 페이지/장르 등이 없어, 상세를 조회해 현재/총 페이지·상태를 초기화한다.
   useEffect(() => {
@@ -76,9 +78,14 @@ export default function BookDetail({ book, onClose }) {
       });
       // 진행도(현재 페이지) 저장
       await saveReadingProgress(book.bookId, cur, total || null);
+      // 우측 갤러리에서 고친 문장·메모도 함께 저장 (CLIAR-241)
+      await galleryRef.current?.saveEdits();
       setEditing(false);
-    } catch {
-      setActionError('저장 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
+    } catch (err) {
+      // 문장 검증 실패는 갤러리가 자체 메시지를 띄우므로(err.handled) 중복 안내를 피한다.
+      if (!err?.handled) {
+        setActionError('저장 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
+      }
     } finally {
       setSaving(false);
     }
@@ -167,28 +174,65 @@ export default function BookDetail({ book, onClose }) {
 
   return (
     <div style={panelStyle}>
-      {/* 우측 상단 버튼: 수정 / 삭제 (가로 배치) */}
+      {/*
+       * 우측 상단 버튼.
+       * 평소엔 [수정][삭제], 수정 중엔 [완료][취소]로 바뀐다 — 같은 자리의 버튼이
+       * 글자와 색상만 바뀌고, "완료"를 누를 때 좌측 상세와 우측 문장 편집이
+       * 함께 저장된다.
+       */}
       <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            style={{
-              padding: '4px 10px', borderRadius: 6, border: '1px solid var(--accent)',
-              background: 'transparent', color: 'var(--accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            수정
-          </button>
+        {editing ? (
+          <>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                padding: '4px 12px', borderRadius: 6, border: '1px solid var(--accent)',
+                background: 'var(--accent)', color: '#fff', fontSize: 11, fontWeight: 700,
+                cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1,
+              }}
+            >
+              {saving ? '저장 중...' : '완료'}
+            </button>
+            <button
+              onClick={() => {
+                setEditing(false);
+                setActionError(null);
+                // 저장하지 않은 문장·메모 편집값은 버린다
+                galleryRef.current?.discardEdits();
+              }}
+              disabled={saving}
+              style={{
+                padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)',
+                background: 'transparent', color: 'var(--text)', fontSize: 11, fontWeight: 600,
+                cursor: saving ? 'not-allowed' : 'pointer',
+              }}
+            >
+              취소
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setEditing(true)}
+              style={{
+                padding: '4px 10px', borderRadius: 6, border: '1px solid var(--accent)',
+                background: 'transparent', color: 'var(--accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              수정
+            </button>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              style={{
+                padding: '4px 10px', borderRadius: 6, border: '1px solid #e74c3c',
+                background: 'transparent', color: '#e74c3c', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              삭제
+            </button>
+          </>
         )}
-        <button
-          onClick={() => setConfirmDelete(true)}
-          style={{
-            padding: '4px 10px', borderRadius: 6, border: '1px solid #e74c3c',
-            background: 'transparent', color: '#e74c3c', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-          }}
-        >
-          삭제
-        </button>
       </div>
 
       {/* 닫기 */}
@@ -325,21 +369,7 @@ export default function BookDetail({ book, onClose }) {
             </div>
           </div>
 
-          {/* 저장/취소 (편집 모드일 때만) */}
-          {editing && (
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff', opacity: saving ? 0.6 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
-              >
-                {saving ? '저장 중...' : '저장'}
-              </button>
-              <button onClick={() => setEditing(false)} disabled={saving} style={{ ...btnStyle, flex: 1, background: 'var(--border)', color: 'var(--text-h)' }}>
-                취소
-              </button>
-            </div>
-          )}
+          {/* 저장은 우측 상단 "완료" 버튼에서 처리한다 (CLIAR-241) */}
 
           {actionError && (
             <p style={{ margin: '0 0 12px', fontSize: 12, color: '#e05a4e', textAlign: 'center' }}>{actionError}</p>
@@ -366,7 +396,12 @@ export default function BookDetail({ book, onClose }) {
          * key에 scrapVersion을 넣어, 문장 수집 후에는 갤러리를 remount해
          * 첫 페이지부터 다시 불러오게 한다.
          */}
-        <ScrapGallery key={`${book.bookId}-${scrapVersion}`} bookId={book.bookId} />
+        <ScrapGallery
+          key={`${book.bookId}-${scrapVersion}`}
+          ref={galleryRef}
+          bookId={book.bookId}
+          editing={editing}
+        />
       </div>
 
       {showSentenceModal && (
