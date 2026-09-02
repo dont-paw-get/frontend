@@ -4,12 +4,7 @@ import { useBooks } from '../store/booksStore';
 import { colorPresets, recognizeCover, extractDominantColorIndex, loadImage } from '../features/register/ocrUtils';
 import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../data/genres';
 import { classifyGenre } from '../api/genreApi';
-
-const thicknessPresets = [
-  { label: '얇음', value: 0.16 },
-  { label: '보통', value: 0.22 },
-  { label: '두꺼움', value: 0.3 },
-];
+import { getBookThickness } from '../features/room/bookExtractor';
 
 // 페이지 진행 상황으로 진행 상태 자동 계산
 function deriveStatus(currentPage, totalPage) {
@@ -37,7 +32,6 @@ export default function RegisterBook() {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [colorIdx, setColorIdx] = useState(null);
-  const [thickness, setThickness] = useState(null);
   // 장르 (CLIAR-241): backend-discovery 분류 결과를 기본값으로 채우고 사용자가 바꿀 수 있다.
   const [genre, setGenre] = useState(GENRE_NONE);
   const [genreLoading, setGenreLoading] = useState(false);
@@ -72,7 +66,6 @@ export default function RegisterBook() {
       // 저자: recommended_books[i].author 사용 (쪽수 제외된 순수 저자명)
       setAuthor(book.author || '');
       setColorIdx(book.colorIdx ?? 0);
-      setThickness(book.thickness ?? 0.22);
       // 총 페이지 수: recommended_books[i].page_count 사용 (정수, 확인 불가 시 null -> 수동 입력 유도)
       const parsedTotalPage =
         book.page_count != null
@@ -106,7 +99,6 @@ export default function RegisterBook() {
       setTitle(ocrResult.title || '');
       setAuthor(ocrResult.author || '');
       setColorIdx(extractDominantColorIndex(img));
-      setThickness(0.22); // 기본 두께(보통), 이후 수정 가능
       /*
        * 인식된 제목·저자로 장르를 자동 분류 (실패해도 등록은 계속 가능).
        * recognizeCover는 { title, author, rawText }만 주고 ISBN·카테고리는 없어
@@ -115,18 +107,19 @@ export default function RegisterBook() {
       autoClassifyGenre({ title: ocrResult.title, author: ocrResult.author });
     } catch {
       setColorIdx(0);
-      setThickness(0.22);
     } finally {
       setOcrLoading(false);
       setOcrDone(true);
     }
   }
 
+  // 두께는 더 이상 사용자가 고르지 않고 총 페이지 수로 자동 계산한다 (CLIAR-247)
+  const thickness = getBookThickness(Number(totalPage) || null);
+
   const allFilled =
     title.trim() &&
     author.trim() &&
     colorIdx !== null &&
-    thickness !== null &&
     String(totalPage).trim() !== '' &&
     String(currentPage).trim() !== '';
 
@@ -138,7 +131,7 @@ export default function RegisterBook() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // 서버에 도서 생성 (색/두께는 provider가 로컬 bookVisuals에 저장)
+      // 서버에 도서 생성 (색은 선택값, 두께는 총 페이지 수로 자동 계산 — provider가 로컬 bookVisuals에 저장)
       const created = await addBook({
         title,
         author,
@@ -361,30 +354,6 @@ export default function RegisterBook() {
                 </div>
               </div>
 
-              <div style={labelStyle}>
-                <span>두께</span>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {thicknessPresets.map((t) => (
-                    <button
-                      type="button"
-                      key={t.value}
-                      disabled={!editing}
-                      onClick={() => editing && setThickness(t.value)}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: 6,
-                        border: thickness === t.value ? '2px solid var(--accent)' : '1px solid var(--border)',
-                        background: thickness === t.value ? 'var(--accent-bg)' : 'transparent',
-                        color: 'var(--text-h)',
-                        cursor: editing ? 'pointer' : 'default',
-                        opacity: editing ? 1 : 0.85,
-                      }}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </>
           )}
         </div>
@@ -420,6 +389,13 @@ export default function RegisterBook() {
           {totalPage && currentPage !== '' && (
             <span style={{ fontSize: 12, color: 'var(--text)' }}>
               진행 상태: {deriveStatus(currentPage, totalPage)}
+            </span>
+          )}
+
+          {/* 두께는 총 페이지 수로 자동 계산되므로 별도 입력 없이 안내만 표시 (CLIAR-247) */}
+          {String(totalPage).trim() !== '' && (
+            <span style={{ fontSize: 12, color: 'var(--text)' }}>
+              책 두께는 총 페이지 수에 맞춰 자동으로 정해져요.
             </span>
           )}
         </div>
