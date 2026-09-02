@@ -43,16 +43,24 @@ export default function RegisterBook() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  // AI 도서 추천 등 외부 state로 넘어온 도서 정보 자동 채움
+  // AI 도서 추천 등 외부 state로 넘어온 도서 정보 자동 채움 (CLIAR-229)
   useEffect(() => {
     if (location.state?.book) {
       const { book } = location.state;
       setTitle(book.title || '');
+      // 저자: recommended_books[i].author 사용 (쪽수 제외된 순수 저자명)
       setAuthor(book.author || '');
       setColorIdx(book.colorIdx ?? 0);
       setThickness(book.thickness ?? 0.22);
-      setTotalPage(String(book.totalPage || 300));
-      setCurrentPage(String(book.currentPage !== undefined ? book.currentPage : 0));
+      // 총 페이지 수: recommended_books[i].page_count 사용 (정수, 확인 불가 시 null -> 수동 입력 유도)
+      const parsedTotalPage =
+        book.page_count != null
+          ? book.page_count
+          : book.totalPage != null
+            ? book.totalPage
+            : '';
+      setTotalPage(parsedTotalPage !== '' && parsedTotalPage !== null ? String(parsedTotalPage) : '');
+      setCurrentPage(String(book.currentPage !== undefined && book.currentPage !== null ? book.currentPage : 0));
       setOcrDone(true);
       setEditing(true);
       setFromRecommendation(true);
