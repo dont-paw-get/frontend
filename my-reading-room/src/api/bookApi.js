@@ -124,8 +124,32 @@ export function deleteLibraryBook(bookId) {
 
 // ── 문장수집(scrap) ──
 
+/**
+ * 문장 목록 조회 기본 페이지 크기 (CLIAR-241).
+ * backend-book의 기본값과 동일하게 20개씩 가져온다.
+ */
+export const SCRAP_PAGE_SIZE = 20;
+
 export function getScrap(scrapId) {
   return authFetch(`/library/scraps/${scrapId}`);
+}
+
+/**
+ * 특정 도서의 문장 목록을 페이지 단위로 조회한다 (CLIAR-241).
+ *
+ * backend-book의 GET /library/books/{bookId}/scraps는 page/size(기본 20, 최대 100)
+ * 페이징을 지원하고 createdAt 오름차순으로 정렬해 준다. 응답의 ScrapSummary에는
+ * memo가 없으므로(상세 조회 전용) 이 함수는 요청 1회로 끝나며, memo가 필요한
+ * 호출부가 별도로 getScrap을 호출해 채운다.
+ *
+ * @param {number|string} bookId
+ * @param {object} [options]
+ * @param {number} [options.page=0] - 0-based 페이지 번호
+ * @param {number} [options.size=20] - 페이지 크기 (백엔드 허용 범위 1~100)
+ * @returns {Promise<{scraps: Array, page: number, size: number, totalElements: number, totalPages: number}>}
+ */
+export function listScrapsPage(bookId, { page = 0, size = SCRAP_PAGE_SIZE } = {}) {
+  return authFetch(`/library/books/${bookId}/scraps?page=${page}&size=${size}`);
 }
 
 /**

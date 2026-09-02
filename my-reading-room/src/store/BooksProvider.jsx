@@ -130,6 +130,59 @@ export function BooksProvider({ children }) {
     }));
   }, []);
 
+  /**
+   * 문장 목록을 페이지 단위(기본 20개)로 조회한다 (CLIAR-241).
+   *
+   * 요청 1회로 해당 페이지만 가져온다. 응답(ScrapSummary)에는 memo가 없어
+   * memo는 null로 두고, 필요하면 호출부가 hydrateScrapMemos로 채운다.
+   *
+   * @param {number|string} bookId
+   * @param {object} [options]
+   * @param {number} [options.page=0]
+   * @param {number} [options.size]
+   * @returns {Promise<{items: Array, page: number, totalPages: number, totalElements: number}>}
+   */
+  const fetchScrapsPage = useCallback(async (bookId, { page = 0, size } = {}) => {
+    const res = await bookApi.listScrapsPage(bookId, { page, size });
+    const items = (res?.scraps ?? []).map((s) => ({
+      id: s.scrapId,
+      text: s.sentence,
+      // 목록 응답엔 memo가 없다. hydrateScrapMemos로 나중에 채운다.
+      memo: null,
+      page: s.pageNumber ?? null,
+      scrapImageUrl: s.scrapImageUrl ?? null,
+      createdAt: s.createdAt ?? null,
+    }));
+    return {
+      items,
+      page: res?.page ?? page,
+      totalPages: res?.totalPages ?? 1,
+      totalElements: res?.totalElements ?? items.length,
+    };
+  }, []);
+
+  /**
+   * 주어진 문장들의 memo를 상세 조회로 채운다 (CLIAR-241).
+   * 목록 응답에 memo가 없어 필요한 페이지(최대 20건)에 대해서만 병렬 조회한다.
+   * 실패한 건은 memo 없이 그대로 둔다(카드 렌더는 계속 유지).
+   *
+   * @param {Array<{id: number}>} items
+   * @returns {Promise<Record<number, string>>} { [scrapId]: memo }
+   */
+  const hydrateScrapMemos = useCallback(async (items) => {
+    const results = await Promise.all(
+      (items ?? []).map(async (it) => {
+        try {
+          const d = await bookApi.getScrap(it.id);
+          return [it.id, d?.memo || ''];
+        } catch {
+          return null;
+        }
+      })
+    );
+    return Object.fromEntries(results.filter(Boolean));
+  }, []);
+
   const addScrap = useCallback((bookId, { text, memo, page, scrapImageUrl }) => {
     return bookApi.createScrap(bookId, {
       sentence: text,
@@ -164,6 +217,8 @@ export function BooksProvider({ children }) {
         saveReadingProgress,
         saveBookMeta,
         fetchScraps,
+        fetchScrapsPage,
+        hydrateScrapMemos,
         addScrap,
         editScrap,
         removeScrap,
