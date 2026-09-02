@@ -3,7 +3,7 @@
  */
 
 /**
- * 인라인 볼드(**...**) 및 특수문자를 React 노드로 변환
+ * 인라인 볼드(**...**), <br> 태그 및 특수문자를 React 노드로 안전하게 변환
  */
 function renderInline(text) {
   if (!text) return null;
@@ -15,9 +15,13 @@ function renderInline(text) {
     .replace(/《\s+/g, '《')
     .replace(/\s+》/g, '》');
 
-  // **볼드** 패턴 분리
-  const parts = cleanedText.split(/(\*\*[^*]+\*\*)/g);
+  // <br> 태그 및 **볼드** 패턴 분리 (<br>, <br/>, <br /> 모두 JSX <br />로 렌더링)
+  const parts = cleanedText.split(/(<br\s*\/?>|\*\*[^*]+\*\*)/gi);
   return parts.map((part, i) => {
+    if (!part) return null;
+    if (/^<br\s*\/?>$/i.test(part)) {
+      return <br key={`br-${i}`} />;
+    }
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
         <strong key={i} style={{ color: 'var(--text-h)', fontWeight: 700 }}>
@@ -34,7 +38,7 @@ function renderInline(text) {
  * - type='recommend' (### 📖): [서재에 등록 ➔] 버튼
  * - type='library'   (### 📚): [책 열기 ➔] 버튼
  */
-function BookCardView({ type = 'recommend', title, author, reason, status, onRegister, onOpenDetail, keyPrefix }) {
+function BookCardView({ type = 'recommend', title, author, reason, status, bookData, onRegister, onOpenDetail, keyPrefix }) {
   const isLibrary = type === 'library';
 
   return (
@@ -95,7 +99,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, onReg
         {!isLibrary && onRegister && (
           <button
             type="button"
-            onClick={() => onRegister({ title, author })}
+            onClick={() => onRegister(bookData || { title, author })}
             style={{
               fontSize: 11,
               fontWeight: 600,
@@ -179,13 +183,16 @@ function BookCardView({ type = 'recommend', title, author, reason, status, onReg
  * 마크다운 텍스트를 줄 단위로 분석하여 도서 카드(추천/내서재), 헤딩, 목록, 일반 단락으로 렌더링
  * @param {object} props
  * @param {string} props.text - 마크다운 텍스트
+ * @param {Array} [props.recommendedBooks] - 백엔드 recommended_books 구조화 데이터
  * @param {(book: object) => void} [props.onRegister] - 추천 도서 등록 콜백
  * @param {(book: object) => void} [props.onOpenDetail] - 내 서재 도서 상세 열기 콜백
  */
-export default function MarkdownRenderer({ text, onRegister, onOpenDetail }) {
+export default function MarkdownRenderer({ text, recommendedBooks = [], onRegister, onOpenDetail }) {
   if (!text) return null;
 
-  const lines = text.split('\n');
+  // <br>, <br/>, <BR> 태그를 마크다운 개행(\n)으로 정규화하여 텍스트 노출 방지
+  const normalizedText = text.replace(/<br\s*\/?>/gi, '\n');
+  const lines = normalizedText.split('\n');
   const elements = [];
 
   let currentList = [];
@@ -202,6 +209,7 @@ export default function MarkdownRenderer({ text, onRegister, onOpenDetail }) {
           author={currentBook.author}
           reason={currentBook.reason}
           status={currentBook.status}
+          bookData={currentBook.bookData}
           onRegister={onRegister}
           onOpenDetail={onOpenDetail}
         />
@@ -250,7 +258,21 @@ export default function MarkdownRenderer({ text, onRegister, onOpenDetail }) {
       flushBook(idx);
       const rawTitle = trimmed.replace(/^#{1,4}\s*📖\s*/, '').trim();
       const title = rawTitle.replace(/^[『《"'\s]+|[』》"'\s]+$/g, '').trim();
-      currentBook = { type: 'recommend', title, author: '', reason: '' };
+
+      // API 응답의 recommended_books 배열에서 해당 도서 구조화 데이터 매칭 (CLIAR-229)
+      const matchedRec = recommendedBooks.find(
+        (b) =>
+          (b.title || '').trim() === title ||
+          (b.title || '').trim().replace(/^[『《"'\s]+|[』》"'\s]+$/g, '') === title
+      );
+
+      currentBook = {
+        type: 'recommend',
+        title,
+        author: matchedRec?.author || '',
+        reason: matchedRec?.reason || '',
+        bookData: matchedRec || { title, author: '', page_count: null, totalPage: null },
+      };
       return;
     }
 
@@ -267,11 +289,21 @@ export default function MarkdownRenderer({ text, onRegister, onOpenDetail }) {
     // 2-1. 도서 카드 내부 항목 파싱 (- **저자**:, - **추천 이유**:, - **독서 상태**:)
     if (currentBook) {
       if (/^[-*•]\s*\*\*저자\*\*\s*[:：]\s*/.test(trimmed)) {
-        currentBook.author = trimmed.replace(/^[-*•]\s*\*\*저자\*\*\s*[:：]\s*/, '').trim();
+        const rawAuthor = trimmed.replace(/^[-*•]\s*\*\*저자\*\*\s*[:：]\s*/, '').trim();
+        // 구조화된 author가 없는 경우에만 마크다운 텍스트에서 저자 세팅
+        if (!currentBook.author) {
+          currentBook.author = rawAuthor;
+          if (currentBook.bookData) {
+            currentBook.bookData.author = rawAuthor;
+          }
+        }
         return;
       }
       if (/^[-*•]\s*\*\*추천\s*이유\*\*\s*[:：]\s*/.test(trimmed)) {
-        currentBook.reason = trimmed.replace(/^[-*•]\s*\*\*추천\s*이유\*\*\s*[:：]\s*/, '').trim();
+        const rawReason = trimmed.replace(/^[-*•]\s*\*\*추천\s*이유\*\*\s*[:：]\s*/, '').trim();
+        if (!currentBook.reason) {
+          currentBook.reason = rawReason;
+        }
         return;
       }
       if (/^[-*•]\s*\*\*독서\s*상태\*\*\s*[:：]\s*/.test(trimmed)) {

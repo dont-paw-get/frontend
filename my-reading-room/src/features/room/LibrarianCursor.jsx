@@ -26,7 +26,8 @@ const FALLBACK_TIP = { x: 0.26, y: 0.287 };
  */
 function getShortBubbleText(rawText, librarian, answer) {
   if (!rawText) return '';
-  const text = rawText.trim();
+  // <br> 태그 텍스트 노출 방지 및 개행 정규화
+  const text = rawText.replace(/<br\s*\/?>/gi, '\n').trim();
   const isStork = librarian?.id === 'stork';
 
   // 1. 내 서재 도서 결과 (ADR 0006: ### 📚 또는 library_books)
@@ -46,18 +47,20 @@ function getShortBubbleText(rawText, librarian, answer) {
       .trim();
   }
 
-  // 3. 도서 추천 결과 (ADR 0006: ### 📖)
-  const isRecommend = text.includes('### 📖');
-  const recommendedBooks = isRecommend ? extractBooksFromAnswer(text) : [];
+  // 3. 도서 추천 결과 (recommended_books 구조화 데이터 또는 ### 📖 마크다운)
+  const backendRec = answer?.recommended_books || answer?.recommendedBooks || [];
+  const isRecommend = backendRec.length > 0 || text.includes('### 📖');
+  const recommendedBooks = backendRec.length > 0 ? backendRec : (isRecommend ? extractBooksFromAnswer(text) : []);
   if (recommendedBooks.length >= 2) {
     return isStork
       ? `✨ 두둥! 추천 도서 ${recommendedBooks.length}권을 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
       : `✨ 추천 도서 ${recommendedBooks.length}권을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
   if (recommendedBooks.length === 1) {
+    const bookTitle = recommendedBooks[0].title || '';
     return isStork
-      ? `✨ 두둥! 『${recommendedBooks[0].title}』 도서를 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
-      : `✨ 『${recommendedBooks[0].title}』 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
+      ? `✨ 두둥! 『${bookTitle}』 도서를 선별했습니다 🪶\n아래 채팅창에서 확인해 보세요`
+      : `✨ 『${bookTitle}』 책을 찾았다냥! 📚\n아래 채팅창에서 확인해보라냥 🐾`;
   }
 
   return isStork

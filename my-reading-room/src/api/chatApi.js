@@ -54,7 +54,7 @@ function isValidCoords(latitude, longitude) {
  * @param {string} [params.librarianId] - 사서 id ('cat' | 'stork', 미전달 시 백엔드 기본값 cat)
  * @param {number} [params.latitude] - 사용자 위치 위도 (날씨 연동용, 없으면 백엔드가 서울 기본값 사용)
  * @param {number} [params.longitude] - 사용자 위치 경도
- * @returns {Promise<{text: string, sessionId: string, switchTo: object|null, signals: object|null}|null>} 응답 또는 null(실패 시)
+ * @returns {Promise<{text: string, sessionId: string, switchTo: object|null, signals: object|null, libraryBooks: Array, library_books: Array, recommendedBooks: Array, recommended_books: Array}|null>} 응답 또는 null(실패 시)
  */
 export async function sendChatMessage({ message, sessionId = null, librarianId = null, latitude = null, longitude = null }) {
   try {
@@ -89,6 +89,7 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
 
     const data = await response.json();
     const libraryBooks = data.library_books || data.libraryBooks || [];
+    const recommendedBooks = data.recommended_books || data.recommendedBooks || [];
     return {
       text: data.message,
       switchTo: data.switch_to ?? null,
@@ -96,6 +97,8 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
       signals: data.signals ?? null,
       libraryBooks,
       library_books: libraryBooks,
+      recommendedBooks,
+      recommended_books: recommendedBooks,
     };
   } catch (err) {
     console.warn('[chatApi] 백엔드 연결 실패, 로컬 fallback 사용:', err.message);

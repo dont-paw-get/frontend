@@ -2,9 +2,9 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
-import { streamChatMessage } from '../../api/chatApi';
+import { sendChatMessage } from '../../api/chatApi';
 import { getUserLocation } from '../../api/geolocation';
-import { extractBooksFromAnswer, extractLibraryBooksFromAnswer } from './bookExtractor';
+import { formatRecommendedBooks, extractLibraryBooksFromAnswer, getColorIndex, getBookThickness } from './bookExtractor';
 import MarkdownRenderer from './MarkdownRenderer';
 import WeatherMoodBadge from './WeatherMoodBadge';
 import { useLibrarian } from '../../store/librarianStore';
@@ -64,10 +64,10 @@ function getContextualLoadingMessage(message, librarianId) {
 
 /**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
- * 백엔드(/api/v1/chat)로 스트리밍 요청하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
+ * 백엔드(/api/v1/chat)로 동기 요청(stream: false)하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
  *
  * @param {object} librarian - 현재 사서
- * @param {{text,switchTo,library_books,libraryBooks}|null} answer - 현재 답변
+ * @param {{text,switchTo,library_books,libraryBooks,recommended_books,recommendedBooks}|null} answer - 현재 답변
  * @param {(res)=>void} onAnswer - 답변 갱신
  * @param {(id)=>void} onSwitch - 사서 변경
  * @param {(bookOrId)=>void} [onOpenDetail] - 서재 도서 상세 보기(책 열기) 모달 열기 핸들러
@@ -84,24 +84,29 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   const [lastUserMessage, setLastUserMessage] = useState(''); // 직전 질문 기억 (사서 전환 시 자동 질의용)
 
   // 1. 내 서재 도서 조회 결과 (ADR 0006: 백엔드 response.library_books 또는 ### 📚 마크다운 블록 또는 내 서재 본문 매칭)
-  const backendLibraryBooks = answer?.library_books || answer?.libraryBooks || [];
+  const backendLibraryBooks = useMemo(
+    () => answer?.library_books || answer?.libraryBooks || [],
+    [answer?.library_books, answer?.libraryBooks]
+  );
+
+  const answerText = answer?.text;
 
   const libraryBooks = useMemo(() => {
     if (backendLibraryBooks.length > 0) return backendLibraryBooks;
-    if (!answer?.text || loading) return [];
+    if (!answerText || loading) return [];
 
     // 1) ADR 0006 표준: ### 📚 마크다운 블록 우선 파싱
-    const fromMarkdown = extractLibraryBooksFromAnswer(answer.text);
+    const fromMarkdown = extractLibraryBooksFromAnswer(answerText);
     if (fromMarkdown.length > 0) return fromMarkdown;
 
     // 2) 백엔드가 자연어로 서재 도서를 설명한 경우:
     //    내 서재(books)에서 본문에 언급된 도서를 자동 탐색하여 [책 열기]로 연결!
     //    (단, 신규 도서 추천(### 📖)인 경우는 절대 서재 도서로 오인하지 않음)
-    if (!answer.text.includes('### 📖')) {
+    if (!answerText.includes('### 📖')) {
       const bracketedTitles = Array.from(
-        answer.text.matchAll(/[『《]\s*([^』》]+?)\s*[』》]/g)
+        answerText.matchAll(/[『《]\s*([^』》]+?)\s*[』》]/g)
       ).map((m) => m[1].trim());
-      const normalizedAnswer = normalizeTitle(answer.text);
+      const normalizedAnswer = normalizeTitle(answerText);
 
       return books.filter((b) => {
         if (!b.title || b.title.trim().length < 1) return false;
@@ -115,28 +120,54 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
     }
 
     return [];
-  }, [backendLibraryBooks, answer?.text, loading, books]);
+  }, [backendLibraryBooks, answerText, loading, books]);
 
-  // 2. 외부 도서 추천: 오직 '### 📖' 마크다운 추천 포맷이 명시적으로 존재할 때만 추출 (내 서재 질문에는 절대 노출 안 됨)
-  const recommendedBooks = useMemo(
-    () =>
-      answer?.text && !loading && !answer?.switchTo && answer.text.includes('### 📖')
-        ? extractBooksFromAnswer(answer.text)
-        : [],
-    [answer?.text, loading, answer?.switchTo]
+  // 2. 외부 도서 추천: 백엔드 recommended_books 구조화 배열 직접 활용 (CLIAR-229)
+  const backendRecommendedBooks = useMemo(
+    () => answer?.recommended_books || answer?.recommendedBooks || [],
+    [answer?.recommended_books, answer?.recommendedBooks]
   );
+  const switchTo = answer?.switchTo;
+
+  const recommendedBooks = useMemo(() => {
+    if (backendRecommendedBooks.length > 0 && !loading && !switchTo) {
+      return formatRecommendedBooks(backendRecommendedBooks);
+    }
+    return [];
+  }, [backendRecommendedBooks, loading, switchTo]);
 
   const handleRegisterBook = (book) => {
+    // API 응답의 recommended_books 배열에서 매칭되는 항목 확인
+    const matchedBook = backendRecommendedBooks.find(
+      (b) =>
+        (b.title || '').trim() === (book.title || '').trim() ||
+        normalizeTitle(b.title) === normalizeTitle(book.title)
+    );
+
+    const title = (matchedBook?.title || book.title || '').trim();
+    // 1. "저자" 입력란 -> recommended_books[i].author 사용 (쪽수 제외된 순수 저자명)
+    const author = (matchedBook?.author ?? book.author ?? '').trim();
+    // 2. "총 페이지 수" 입력란 -> recommended_books[i].page_count 사용 (정수, 확인 불가 시 null)
+    const pageCount =
+      typeof matchedBook?.page_count === 'number' && Number.isFinite(matchedBook.page_count)
+        ? matchedBook.page_count
+        : typeof book.page_count === 'number' && Number.isFinite(book.page_count)
+          ? book.page_count
+          : typeof book.totalPage === 'number' && Number.isFinite(book.totalPage)
+            ? book.totalPage
+            : null;
+
     navigate('/register', {
       state: {
         fromAIRecommendation: true,
         book: {
-          title: book.title,
-          author: book.author,
-          totalPage: book.totalPage ?? 300,
+          title,
+          author,
+          page_count: pageCount,
+          totalPage: pageCount,
           currentPage: book.currentPage ?? 0,
-          colorIdx: book.colorIdx ?? 0,
-          thickness: book.thickness ?? 0.22,
+          colorIdx: book.colorIdx ?? getColorIndex(title),
+          thickness: book.thickness ?? getBookThickness(pageCount),
         },
       },
     });
@@ -167,20 +198,24 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
 
     // 질문 의도(인사/서재/추천/날씨 등)에 따른 사서별 맥락 맞춤형 로딩 안내 멘트
     const initialLoadingMsg = getContextualLoadingMessage(message, targetLibrarianId);
-    onAnswer({ text: initialLoadingMsg, library_books: [], libraryBooks: [] });
+    onAnswer({
+      text: initialLoadingMsg,
+      library_books: [],
+      libraryBooks: [],
+      recommended_books: [],
+      recommendedBooks: [],
+    });
 
     // 날씨 연동을 위한 사용자 위치 (권한 거부/실패 시 null → 백엔드가 서울 기본값 사용)
     const location = await getUserLocation();
 
-    const result = await streamChatMessage({
+    // 도서 등록 자동 입력 연동 플로우: 동기 요청(stream: false) 사용 (CLIAR-229)
+    const result = await sendChatMessage({
       message,
       sessionId,
       librarianId: targetLibrarianId,
       latitude: location?.latitude,
       longitude: location?.longitude,
-      onChunk: (_chunk, fullText) => {
-        onAnswer({ text: fullText });
-      },
     });
 
     if (result) {
@@ -193,6 +228,8 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
         signals: result.signals,
         libraryBooks: result.libraryBooks || result.library_books || [],
         library_books: result.library_books || result.libraryBooks || [],
+        recommendedBooks: result.recommendedBooks || result.recommended_books || [],
+        recommended_books: result.recommended_books || result.recommendedBooks || [],
       });
     } else {
       // 백엔드 연결 실패 시에만 로컬 서재 검색으로 폴백
@@ -341,6 +378,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
         >
           <MarkdownRenderer
             text={answer.text}
+            recommendedBooks={recommendedBooks}
             onRegister={handleRegisterBook}
             onOpenDetail={handleOpenDetail}
           />
