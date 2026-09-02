@@ -45,11 +45,11 @@
 }
 
 /*
- * 책 위에 올렸을 때: 그림자를 키워 캐릭터가 한 단계 더 떠오르게 하고,
- * 등장 시 짧은 팝 모션을 준다. 호버 시 img 요소가 새로 마운트되므로
+ * 책을 선택(클릭)했을 때: 그림자를 키워 캐릭터가 한 단계 더 떠오르게 하고,
+ * 등장 시 짧은 팝 모션을 준다. 선택 시 img 요소가 새로 마운트되므로
  * (LibrarianCursor의 key={imgSrc}) 이 애니메이션은 매번 다시 재생된다.
  */
-.librarian-cursor-img--hover {
+.librarian-cursor-img--active {
   filter:
     saturate(1.2) contrast(1.06) drop-shadow(0 13px 20px rgba(0, 0, 0, 0.48)) drop-shadow(0 1px var(--cursor-glow-blur-hover) var(--cursor-glow-hover));
   animation: librarian-cursor-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -72,7 +72,7 @@
 
 /* 모션 최소화를 선호하는 사용자는 팝 애니메이션을 끈다 (그림자는 유지) */
 @media (prefers-reduced-motion: reduce) {
-  .librarian-cursor-img--hover {
+  .librarian-cursor-img--active {
     animation: none;
   }
 }

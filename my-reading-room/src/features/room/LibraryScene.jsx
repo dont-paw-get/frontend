@@ -126,7 +126,6 @@ export default function LibraryScene() {
   // 사서 상태는 전역(LibrarianProvider) — Gnb·사서 프로필 페이지와 공유
   const { activeId: librarianId, setActiveId, librarian, names } = useLibrarian();
   const [chatAnswer, setChatAnswer] = useState(null);
-  const [hoveringBook, setHoveringBook] = useState(false);
   const sceneRef = useRef(null);
 
   const switchLibrarian = (id) => {
@@ -321,7 +320,6 @@ export default function LibraryScene() {
             coverColor={b.coverColor}
             selected={selectedId === b.id}
             onSelect={() => setSelectedId((prev) => (prev === b.id ? null : b.id))}
-            onHover={setHoveringBook}
           />
         ))}
       </Canvas>
@@ -452,8 +450,9 @@ export default function LibraryScene() {
         </div>
       )}
 
-      {/* 마우스를 따라다니는 사서 + 우상단 말풍선(답변) */}
-      {!calibrating && <LibrarianCursor librarian={librarian} answer={chatAnswer} hovering={hoveringBook} />}
+      {/* 마우스를 따라다니는 사서 + 우상단 말풍선(답변).
+          커서 모션은 hover가 아니라 책을 선택(클릭)했을 때만 전환된다 (CLIAR-239). */}
+      {!calibrating && <LibrarianCursor librarian={librarian} answer={chatAnswer} active={selectedId != null} />}
 
       {/* 사서 질문 입력 패널 (오른쪽 하단) */}
       {!calibrating && (
