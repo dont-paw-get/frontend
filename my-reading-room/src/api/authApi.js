@@ -12,6 +12,8 @@
  *  - refresh도 401이면 세션 만료로 보고 onSessionExpired 콜백 호출
  */
 
+import { fetchWithTimeout } from './fetchWithTimeout';
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // ── Access Token (메모리 보관) ──
@@ -88,7 +90,7 @@ export async function refreshAccessToken() {
 
   refreshPromise = (async () => {
     try {
-      const res = await fetch(`${API_BASE}/auth/refresh`, {
+      const res = await fetchWithTimeout(`${API_BASE}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -131,7 +133,7 @@ export async function authFetch(path, { method = 'GET', body, auth = true, _retr
   if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
   if (auth && accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetchWithTimeout(`${API_BASE}${path}`, {
     method,
     headers,
     credentials: 'include',
