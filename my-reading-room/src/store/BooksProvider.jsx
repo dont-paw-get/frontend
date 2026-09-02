@@ -92,10 +92,20 @@ export function BooksProvider({ children }) {
   }, []);
 
   /**
-   * 독서 진행도(현재 페이지) 저장. 목록 모델엔 페이지가 없어 로컬 상태 변경은 없다.
+   * 독서 진행도(현재 페이지) 저장.
+   *
+   * 응답의 progress를 목록 상태에 반영한다 (CLIAR-241). 상세 팝업에서 엔터로 바로
+   * 저장할 수 있게 되면서, 반영하지 않으면 사서 채팅 등이 저장 전 진행률을 계속
+   * 보여주게 된다.
    */
-  const saveReadingProgress = useCallback((bookId, currentPage, totalPages) => {
-    return bookApi.updateReadingProgress(bookId, currentPage, totalPages);
+  const saveReadingProgress = useCallback(async (bookId, currentPage, totalPages) => {
+    const res = await bookApi.updateReadingProgress(bookId, currentPage, totalPages);
+    if (res?.progress != null) {
+      setBooks((prev) =>
+        prev.map((b) => (b.bookId === bookId ? { ...b, progress: res.progress } : b))
+      );
+    }
+    return res;
   }, []);
 
   /**
