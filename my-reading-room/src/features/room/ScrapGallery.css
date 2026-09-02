@@ -1,0 +1,28 @@
+/*
+ * 문장 갤러리 가로 스크롤바 (CLIAR-241)
+ *
+ * 좌우로 넘겨보는 UI라 스크롤바가 보여야 "더 있다"는 게 전달된다.
+ * 기본 스크롤바는 서재 팔레트와 어울리지 않아 테마 변수로 다시 칠한다.
+ */
+.scrap-gallery-strip {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-border) var(--code-bg);
+}
+
+.scrap-gallery-strip::-webkit-scrollbar {
+  height: 10px;
+}
+
+.scrap-gallery-strip::-webkit-scrollbar-track {
+  background: var(--code-bg);
+  border-radius: 999px;
+}
+
+.scrap-gallery-strip::-webkit-scrollbar-thumb {
+  background: var(--accent-border);
+  border-radius: 999px;
+}
+
+.scrap-gallery-strip::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}

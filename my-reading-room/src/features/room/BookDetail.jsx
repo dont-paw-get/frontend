@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useBooks } from '../../store/booksStore';
 import { getLibraryBook, toReadingStatus } from '../../api/bookApi';
 import SentenceCollectModal from './SentenceCollectModal';
+import ScrapGallery from './ScrapGallery';
 
 const STATUS_OPTIONS = ['시작전', '읽는 중', '잠시 멈춤', '완독'];
 
@@ -19,6 +20,8 @@ export default function BookDetail({ book, onClose }) {
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showSentenceModal, setShowSentenceModal] = useState(false);
+  // 문장 수집 모달을 닫을 때 값을 올려 갤러리를 처음부터 다시 로드시킨다 (CLIAR-241)
+  const [scrapVersion, setScrapVersion] = useState(0);
   const [detail, setDetail] = useState(null); // 서버 상세(전체 메타 — 저장 시 full payload에 필요)
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState(null);
@@ -86,13 +89,16 @@ export default function BookDetail({ book, onClose }) {
     }
   };
 
-  const panelStyle = {
+  /*
+   * 팝업 기본 스타일 (CLIAR-241).
+   * 좌측 상세 + 우측 문장 갤러리 2단 구성을 담기 위해 폭을 크게 늘렸다.
+   * 삭제 확인 등 단독 화면은 좁은 폭(narrowPanelStyle)을 그대로 쓴다.
+   */
+  const basePanelStyle = {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 320,
-    maxWidth: '90vw',
     boxSizing: 'border-box',
     background: 'var(--bg)',
     border: '1px solid var(--border)',
@@ -104,6 +110,18 @@ export default function BookDetail({ book, onClose }) {
     fontSize: 14,
     lineHeight: 1.6,
   };
+
+  const panelStyle = {
+    ...basePanelStyle,
+    width: 'min(1000px, 94%)',
+    maxHeight: '88%',
+    // 내부(문장 갤러리)가 남은 높이를 다 쓰도록 flex 컨테이너로 둔다.
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  };
+
+  const narrowPanelStyle = { ...basePanelStyle, width: 320, maxWidth: '90vw' };
 
   const btnStyle = {
     padding: '6px 12px',
@@ -117,7 +135,7 @@ export default function BookDetail({ book, onClose }) {
   // 삭제 확인 팝업
   if (confirmDelete) {
     return (
-      <div style={panelStyle}>
+      <div style={narrowPanelStyle}>
         <p style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600, textAlign: 'center' }}>
           정말 삭제하시겠습니까?
         </p>
@@ -144,8 +162,8 @@ export default function BookDetail({ book, onClose }) {
 
   return (
     <div style={panelStyle}>
-      {/* 우측 상단 버튼: 수정 / 삭제 (세로 배치) */}
-      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* 우측 상단 버튼: 수정 / 삭제 (가로 배치) */}
+      <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: 6 }}>
         {!editing && (
           <button
             onClick={() => setEditing(true)}
@@ -179,108 +197,146 @@ export default function BookDetail({ book, onClose }) {
         ✕
       </button>
 
-      {/* 제목 */}
-      <h3 style={{ margin: '0 70px 6px 24px', fontSize: 17, fontWeight: 700 }}>
-        {book.title}
-      </h3>
-
-      {/* 저자 */}
-      <div style={{ color: 'var(--text)', marginBottom: 14 }}>
-        {book.author || '저자 미입력'}
-      </div>
-
-      {/* 진행 상태 */}
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
-        <span style={{ fontSize: 12, color: 'var(--text)' }}>진행 상태</span>
-        {editing ? (
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            style={{
-              width: '100%', boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
-              border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
-            }}
-          >
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        ) : (
-          <span style={{ fontSize: 14, color: 'var(--text-h)' }}>{status}</span>
-        )}
-      </label>
-
-      {/* 현재 읽은 페이지 / 총 페이지 (같은 행) */}
-      <div style={{ marginBottom: 14 }}>
-        <span style={{ fontSize: 12, color: 'var(--text)', display: 'block', marginBottom: 4 }}>
-          페이지 📖
-        </span>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
-          <input
-            type="number"
-            min={0}
-            value={currentPage}
-            onChange={(e) => setCurrentPage(e.target.value)}
-            disabled={!editing}
-            placeholder="현재"
-            style={{
-              flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
-              border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
-              opacity: editing ? 1 : 0.7,
-            }}
-          />
-          <span style={{ color: 'var(--text)', fontSize: 13, flexShrink: 0 }}>/</span>
-          <input
-            type="number"
-            min={0}
-            value={totalPage}
-            onChange={(e) => setTotalPage(e.target.value)}
-            disabled={!editing}
-            placeholder="총"
-            style={{
-              flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
-              border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
-              opacity: editing ? 1 : 0.7,
-            }}
-          />
-          <span style={{ fontSize: 11, color: 'var(--text)', flexShrink: 0 }}>쪽</span>
-        </div>
-      </div>
-
-      {/* 저장/취소 (편집 모드일 때만) */}
-      {editing && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff', opacity: saving ? 0.6 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
-          >
-            {saving ? '저장 중...' : '저장'}
-          </button>
-          <button onClick={() => setEditing(false)} disabled={saving} style={{ ...btnStyle, flex: 1, background: 'var(--border)', color: 'var(--text-h)' }}>
-            취소
-          </button>
-        </div>
-      )}
-
-      {actionError && (
-        <p style={{ margin: '0 0 12px', fontSize: 12, color: '#e05a4e', textAlign: 'center' }}>{actionError}</p>
-      )}
-
-      {/* 문장 수집 */}
-      <button
-        onClick={() => setShowSentenceModal(true)}
+      {/*
+       * 2단 레이아웃 (CLIAR-241): 왼쪽은 기존 책 상세, 오른쪽은 수집한 문장 갤러리.
+       * 가운데 세로 구분선으로 영역을 나눈다.
+       */}
+      <div
         style={{
-          width: '100%', padding: '10px 0', borderRadius: 8,
-          border: '1px solid var(--accent-border)', background: 'var(--accent-bg)',
-          color: 'var(--text-h)', fontWeight: 600, cursor: 'pointer',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(240px, 300px) 1px minmax(0, 1fr)',
+          gap: 20,
+          alignItems: 'stretch',
+          marginTop: 30,
+          minHeight: 320,
+          flex: 1,
+          // 좌측 열이 길어도 갤러리가 넘치지 않도록 (내부에서 각자 스크롤)
+          minWidth: 0,
         }}
       >
-        문장 수집
-      </button>
+        {/* ── 왼쪽: 책 상세 ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto' }}>
+          {/* 제목 */}
+          <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 700, wordBreak: 'break-word' }}>
+            {book.title}
+          </h3>
+
+          {/* 저자 */}
+          <div style={{ color: 'var(--text)', marginBottom: 14 }}>
+            {book.author || '저자 미입력'}
+          </div>
+
+          {/* 진행 상태 */}
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
+            <span style={{ fontSize: 12, color: 'var(--text)' }}>진행 상태</span>
+            {editing ? (
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
+                }}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            ) : (
+              <span style={{ fontSize: 14, color: 'var(--text-h)' }}>{status}</span>
+            )}
+          </label>
+
+          {/* 현재 읽은 페이지 / 총 페이지 (같은 행) */}
+          <div style={{ marginBottom: 14 }}>
+            <span style={{ fontSize: 12, color: 'var(--text)', display: 'block', marginBottom: 4 }}>
+              페이지 📖
+            </span>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: '100%' }}>
+              <input
+                type="number"
+                min={0}
+                value={currentPage}
+                onChange={(e) => setCurrentPage(e.target.value)}
+                disabled={!editing}
+                placeholder="현재"
+                style={{
+                  flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
+                  opacity: editing ? 1 : 0.7,
+                }}
+              />
+              <span style={{ color: 'var(--text)', fontSize: 13, flexShrink: 0 }}>/</span>
+              <input
+                type="number"
+                min={0}
+                value={totalPage}
+                onChange={(e) => setTotalPage(e.target.value)}
+                disabled={!editing}
+                placeholder="총"
+                style={{
+                  flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
+                  opacity: editing ? 1 : 0.7,
+                }}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text)', flexShrink: 0 }}>쪽</span>
+            </div>
+          </div>
+
+          {/* 저장/취소 (편집 모드일 때만) */}
+          {editing && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{ ...btnStyle, flex: 1, background: 'var(--accent)', color: '#fff', opacity: saving ? 0.6 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+              >
+                {saving ? '저장 중...' : '저장'}
+              </button>
+              <button onClick={() => setEditing(false)} disabled={saving} style={{ ...btnStyle, flex: 1, background: 'var(--border)', color: 'var(--text-h)' }}>
+                취소
+              </button>
+            </div>
+          )}
+
+          {actionError && (
+            <p style={{ margin: '0 0 12px', fontSize: 12, color: '#e05a4e', textAlign: 'center' }}>{actionError}</p>
+          )}
+
+          {/* 문장 수집 */}
+          <button
+            onClick={() => setShowSentenceModal(true)}
+            style={{
+              width: '100%', padding: '10px 0', borderRadius: 8,
+              border: '1px solid var(--accent-border)', background: 'var(--accent-bg)',
+              color: 'var(--text-h)', fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            문장 수집
+          </button>
+        </div>
+
+        {/* ── 가운데 구분선 ── */}
+        <div style={{ background: 'var(--border)', width: 1, alignSelf: 'stretch' }} />
+
+        {/*
+         * ── 오른쪽: 수집한 문장 갤러리 (가로 무한 스크롤) ──
+         * key에 scrapVersion을 넣어, 문장 수집 후에는 갤러리를 remount해
+         * 첫 페이지부터 다시 불러오게 한다.
+         */}
+        <ScrapGallery key={`${book.bookId}-${scrapVersion}`} bookId={book.bookId} />
+      </div>
 
       {showSentenceModal && (
-        <SentenceCollectModal book={book} onClose={() => setShowSentenceModal(false)} />
+        <SentenceCollectModal
+          book={book}
+          onClose={() => {
+            setShowSentenceModal(false);
+            // 모달에서 문장을 추가/수정/삭제했을 수 있으니 갤러리를 새로 로드한다.
+            setScrapVersion((v) => v + 1);
+          }}
+        />
       )}
     </div>
   );
