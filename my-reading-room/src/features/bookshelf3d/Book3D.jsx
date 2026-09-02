@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Edges } from '@react-three/drei';
 import * as THREE from 'three';
 
 /**
@@ -12,8 +13,10 @@ import * as THREE from 'three';
  *
  * BoxGeometry material 인덱스 순서: [+X, -X, +Y, -Y, +Z, -Z]
  *
- * 상호작용:
- *  - hover: 책이 살짝 앞으로(+Z) 당겨짐
+ * 상호작용 (CLIAR-243: 인식 고도화 — hover 밀림을 줄이고 테두리 glow로 대체):
+ *  - hover: 아주 살짝만 앞으로(+Z) 당겨지고(0.05, 예전 0.25), 테두리에 accent色 glow가 페이드인.
+ *    예전엔 hover 시 책이 크게 밀려나 옆 책을 가리고, 그 밀림이 옆 책의 히트박스까지
+ *    침범해 "이 책은 잘 잡히고 저 책은 안 잡히는" 인식 불균형을 만들었다.
  *  - selected: 책이 앞으로 빠져나와 위로 올라오고, Y축 -90° 회전하여 앞표지(+X)를 카메라로 향함
  *
  * @param {[number,number,number]} position - 책 중심 위치(선반에 꽂힌 기본 위치)
@@ -28,6 +31,7 @@ import * as THREE from 'three';
  * @param {number} [pullDir] - 선택 시 빠져나오는 로컬 방향 부호(+1 또는 -1)
  * @param {number} [selectedDepthScale] - 선택 시 depth(로컬 Z) 추가 확대 배율
  * @param {number} [selectedScale] - 선택 시 전체 크기 확대 배율
+ * @param {string} [glowColor] - hover/selected 시 테두리 glow 색상 (사서/테마 accent 색)
  * @param {function} [onSelect] - 클릭 콜백
  */
 export default function Book3D({
@@ -44,12 +48,16 @@ export default function Book3D({
   pullDir = 1,
   selectedDepthScale = 2.6,
   selectedScale = 2.6,
+  glowColor = '#ff9a3c',
   onSelect,
   onHover,
 }) {
   // 기본 자세: rotation([x,y,z]) 우선, 없으면 rotationY만
   const [rx, ry, rz] = rotation || [0, rotationY, 0];
   const groupRef = useRef(null);
+  // 테두리 glow(핵심선 + 은은한 halo) 머티리얼 참조 — useFrame에서 opacity를 댐핑
+  const edgeCoreRef = useRef(null);
+  const edgeHaloRef = useRef(null);
   const [hovered, setHovered] = useState(false);
 
   const materials = useMemo(() => {
@@ -97,7 +105,9 @@ export default function Book3D({
       lift = 0.35;
       extraRotY = (-Math.PI / 2) * pullDir; // 앞표지가 보이도록
     } else if (hovered) {
-      pull = 0.25;
+      // CLIAR-243: 옆 책을 가리지 않도록 밀림을 최소화(예전 0.25 → 0.05).
+      // 선택 가능 여부는 아래 테두리 glow(Edges)로 표시한다.
+      pull = 0.05;
     }
 
     const targetX = position[0] + forward[0] * pull * pullDir;
@@ -118,6 +128,20 @@ export default function Book3D({
     g.scale.x = THREE.MathUtils.damp(g.scale.x, targetScaleXY, lambda, delta);
     g.scale.y = THREE.MathUtils.damp(g.scale.y, targetScaleXY, lambda, delta);
     g.scale.z = THREE.MathUtils.damp(g.scale.z, targetScaleZ, lambda, delta);
+
+    // 테두리 glow — hover/selected일 때 은은하게 페이드인 (CLIAR-243)
+    // Edges의 ref는 Line2 메시를 가리키므로 실제 투명도는 .material.opacity에 있다.
+    const glowOn = hovered || selected;
+    const targetCore = glowOn ? 0.9 : 0;
+    const targetHalo = glowOn ? 0.35 : 0;
+    const coreMat = edgeCoreRef.current?.material;
+    const haloMat = edgeHaloRef.current?.material;
+    if (coreMat) {
+      coreMat.opacity = THREE.MathUtils.damp(coreMat.opacity, targetCore, 10, delta);
+    }
+    if (haloMat) {
+      haloMat.opacity = THREE.MathUtils.damp(haloMat.opacity, targetHalo, 10, delta);
+    }
   });
 
   return (
@@ -141,11 +165,44 @@ export default function Book3D({
     >
       <mesh castShadow receiveShadow material={materials}>
         <boxGeometry args={size} />
+        {/*
+         * 테두리 glow (CLIAR-243): 버튼 active 표시처럼 hover/선택된 책의 윤곽만 밝힌다.
+         * 핵심선(core) + 살짝 더 두꺼운 halo 두 겹으로 은은한 발광 느낌을 낸다.
+         * ref는 Edges가 만드는 Line2 메시를 가리키므로, opacity는 .material.opacity로 댐핑한다.
+         * 초기 opacity 0이라 평소엔 보이지 않는다.
+         */}
+        <Edges
+          ref={edgeCoreRef}
+          scale={1.001}
+          color={glowColor}
+          lineWidth={2.5}
+          transparent
+          opacity={0}
+          depthTest={false}
+          toneMapped={false}
+          raycast={() => null}
+        />
+        <Edges
+          ref={edgeHaloRef}
+          scale={1.03}
+          color={glowColor}
+          lineWidth={6}
+          transparent
+          opacity={0}
+          depthTest={false}
+          toneMapped={false}
+          raycast={() => null}
+        />
       </mesh>
 
-      {/* 넓은 투명 히트박스: 얇은 책도 hover/클릭이 잘 잡히도록 */}
+      {/*
+       * 넓은 투명 히트박스: 얇은 책도 hover/클릭이 잘 잡히도록.
+       * CLIAR-243: 고정 최소값(0.5)이 책 사이 간격(0.02)보다 훨씬 커서 옆 책과
+       * 히트박스가 크게 겹쳐, 어떤 책은 잘 잡히고 어떤 책은 안 잡히는 원인이었다.
+       * 실제 두께에 비례한 여유(최대 +0.06)만 주어 이웃 책을 침범하지 않게 한다.
+       */}
       <mesh>
-        <boxGeometry args={[Math.max(size[0] * 3, 0.5), size[1] * 1.1, Math.max(size[2] * 1.3, 0.5)]} />
+        <boxGeometry args={[size[0] + Math.min(size[0] * 0.6, 0.06), size[1] * 1.1, size[2] * 1.15]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
     </group >
