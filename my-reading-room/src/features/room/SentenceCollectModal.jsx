@@ -2,7 +2,28 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useBooks } from '../../store/booksStore';
 import { createOcrSentence } from '../../api/recordApi';
+import { ApiError } from '../../api/authApi';
 import WebcamCaptureModal from './WebcamCaptureModal';
+
+/**
+ * OCR 실패 원인을 사용자에게 구체적으로 안내한다.
+ * backend-record는 상태코드별로 다른 detail을 준다(422: 인식 텍스트 없음,
+ * 502: OCR/이미지 저장 오류, 504: 시간 초과). 예전엔 전부 뭉뚱그려 표시해
+ * 원인 파악이 어려웠다.
+ */
+function describeOcrError(err) {
+  if (err instanceof ApiError) {
+    if (err.status === 422) return '이미지에서 문장을 찾지 못했어요. 글자가 선명하게 보이도록 다시 찍어 주세요.';
+    if (err.status === 413) return '이미지가 너무 커요. 더 작은 사진으로 다시 시도해 주세요.';
+    if (err.status === 415) return '지원하지 않는 이미지 형식이에요. JPG 또는 PNG로 올려 주세요.';
+    if (err.status === 504) return '인식이 오래 걸려 시간이 초과됐어요. 잠시 후 다시 시도해 주세요.';
+    if (err.status === 502) return '문장 인식 서비스에 일시적인 문제가 있어요. 잠시 후 다시 시도해 주세요.';
+    if (err.status === 401) return '로그인이 만료됐어요. 다시 로그인해 주세요.';
+    // 그 외에는 서버가 준 메시지를 그대로 노출
+    return err.message || '문장 인식 중 문제가 발생했어요.';
+  }
+  return '서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.';
+}
 
 /**
  * SentenceCollectModal — "문장 수집" 팝업.
@@ -72,8 +93,11 @@ export default function SentenceCollectModal({ book, onClose }) {
       });
       setText(result.text || '');
       setPendingImageUrl(result.scrapImageUrl || null);
-    } catch {
-      setOcrError('문장 인식 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.');
+      if (!result.text?.trim()) {
+        setOcrError('이미지에서 문장을 찾지 못했어요. 글자가 선명하게 보이도록 다시 찍어 주세요.');
+      }
+    } catch (err) {
+      setOcrError(describeOcrError(err));
     } finally {
       setOcrLoading(false);
     }
