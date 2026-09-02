@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useBooks } from '../../store/booksStore';
 import { getLibraryBook, toReadingStatus } from '../../api/bookApi';
-import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../../data/genres';
+import { GENRE_NONE, genreLabel } from '../../data/genres';
 import SentenceCollectModal from './SentenceCollectModal';
 import ScrapGallery from './ScrapGallery';
 
@@ -18,9 +19,16 @@ export default function BookDetail({ book, onClose }) {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPage, setTotalPage] = useState(0);
   const [status, setStatus] = useState(book.status || '시작전');
-  // 장르 (CLIAR-241): 목록 요약에도 genre가 있어 상세 조회 전에도 바로 표시된다.
+  /*
+   * 장르 (CLIAR-241): 목록 요약에도 genre가 있어 상세 조회 전에도 바로 표시된다.
+   * 장르와 총 페이지 수는 책 등록 시 자동 인식되는 값이라 여기서는 읽기 전용이다
+   * (수정 모드에서도 바꾸지 않는다).
+   */
   const [genre, setGenre] = useState(book.genre || GENRE_NONE);
   const [editing, setEditing] = useState(false);
+  // 현재 페이지 저장 결과 안내 팝업 ("확인"으로 닫음)
+  const [notice, setNotice] = useState(null);
+  const [savingProgress, setSavingProgress] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showSentenceModal, setShowSentenceModal] = useState(false);
   // 문장 수집 모달을 닫을 때 값을 올려 갤러리를 처음부터 다시 로드시킨다 (CLIAR-241)
@@ -56,28 +64,29 @@ export default function BookDetail({ book, onClose }) {
     };
   }, [book.bookId]);
 
+  /**
+   * "완료" 저장 — 진행 상태와 우측 문장 편집을 저장한다.
+   *
+   * 장르·총 페이지 수는 등록 시 자동 인식되는 읽기 전용 값이라 상세 조회값을 그대로
+   * 재전송한다(backend-book PATCH는 전체 페이로드를 요구하고 null을 허용하지 않음).
+   * 현재 페이지는 입력란에서 엔터로 따로 저장하므로 여기서 다루지 않는다.
+   */
   const handleSave = async () => {
     if (saving) return;
-    const cur = Number(currentPage) || 0;
-    const total = Number(totalPage) || 0;
     setSaving(true);
     setActionError(null);
     try {
-      // 메타(상태 포함) 저장 — 백엔드 PATCH는 전체 페이로드를 요구하므로 상세값과 합친다.
       await saveBookMeta(book.bookId, {
         title: detail?.title ?? book.title,
         author: detail?.author ?? book.author,
         isbn: detail?.isbn ?? null,
-        // 장르는 편집 가능하므로 상태값을 보낸다 (PATCH는 null 불허 → 미지정은 'NONE')
-        genre: genre || GENRE_NONE,
+        genre: detail?.genre ?? genre ?? GENRE_NONE,
         publisher: detail?.publisher ?? null,
         publishedDate: detail?.publishedDate ?? null,
         coverUrl: detail?.coverUrl ?? null,
         readingStatus: toReadingStatus(status),
-        totalPages: total || null,
+        totalPages: detail?.totalPages ?? null,
       });
-      // 진행도(현재 페이지) 저장
-      await saveReadingProgress(book.bookId, cur, total || null);
       // 우측 갤러리에서 고친 문장·메모도 함께 저장 (CLIAR-241)
       await galleryRef.current?.saveEdits();
       setEditing(false);
@@ -88,6 +97,36 @@ export default function BookDetail({ book, onClose }) {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  /**
+   * 현재 읽은 페이지 저장 (입력란에서 엔터).
+   * 수정 모드와 무관하게 바로 기록할 수 있고, 저장 결과를 팝업으로 알린다.
+   */
+  const handleSaveProgress = async () => {
+    if (savingProgress) return;
+    const total = Number(totalPage) || 0;
+    const cur = Number(currentPage);
+
+    if (!Number.isFinite(cur) || cur < 0) {
+      setNotice({ type: 'error', text: '현재 페이지는 0 이상의 숫자로 입력해 주세요.' });
+      return;
+    }
+    if (total > 0 && cur > total) {
+      setNotice({ type: 'error', text: `총 ${total}쪽을 넘을 수 없어요.` });
+      return;
+    }
+
+    setSavingProgress(true);
+    setActionError(null);
+    try {
+      await saveReadingProgress(book.bookId, cur, total || null);
+      setNotice({ type: 'success', text: `현재 페이지가 ${cur}쪽으로 새로 저장되었습니다.` });
+    } catch {
+      setNotice({ type: 'error', text: '현재 페이지를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.' });
+    } finally {
+      setSavingProgress(false);
     }
   };
 
@@ -275,41 +314,25 @@ export default function BookDetail({ book, onClose }) {
             {book.author || '저자 미입력'}
           </div>
 
-          {/* 장르 (CLIAR-241) — 저자 바로 아래 */}
-          {editing ? (
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
-              <span style={{ fontSize: 12, color: 'var(--text)' }}>장르</span>
-              <select
-                value={genre}
-                onChange={(e) => setGenre(e.target.value)}
-                style={{
-                  width: '100%', boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
-                  border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
-                }}
-              >
-                <option value={GENRE_NONE}>미지정</option>
-                {GENRE_DEFS.map((g) => (
-                  <option key={g.code} value={g.code}>{g.label}</option>
-                ))}
-              </select>
-            </label>
-          ) : (
-            <div style={{ marginBottom: 14 }}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  padding: '2px 10px',
-                  borderRadius: 999,
-                  border: '1px solid var(--accent-border)',
-                  background: 'var(--accent-bg)',
-                  color: 'var(--text-h)',
-                  fontSize: 12,
-                }}
-              >
-                {genreLabel(genre) || '장르 미지정'}
-              </span>
-            </div>
-          )}
+          {/*
+           * 장르 (CLIAR-241) — 저자 바로 아래.
+           * 등록 시 자동 인식되는 값이라 수정 모드에서도 바꾸지 않는다.
+           */}
+          <div style={{ marginBottom: 14 }}>
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '2px 10px',
+                borderRadius: 999,
+                border: '1px solid var(--accent-border)',
+                background: 'var(--accent-bg)',
+                color: 'var(--text-h)',
+                fontSize: 12,
+              }}
+            >
+              {genreLabel(genre) || '장르 미지정'}
+            </span>
+          </div>
 
           {/* 진행 상태 */}
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 14 }}>
@@ -332,7 +355,11 @@ export default function BookDetail({ book, onClose }) {
             )}
           </label>
 
-          {/* 현재 읽은 페이지 / 총 페이지 (같은 행) */}
+          {/*
+           * 페이지 (CLIAR-241).
+           * 현재 페이지는 수정 모드와 무관하게 항상 입력할 수 있고, 엔터로 바로 저장된다.
+           * 총 페이지 수는 등록 시 자동 인식되는 값이라 읽기 전용으로 표시한다.
+           */}
           <div style={{ marginBottom: 14 }}>
             <span style={{ fontSize: 12, color: 'var(--text)', display: 'block', marginBottom: 4 }}>
               페이지 📖
@@ -341,32 +368,37 @@ export default function BookDetail({ book, onClose }) {
               <input
                 type="number"
                 min={0}
+                max={Number(totalPage) || undefined}
                 value={currentPage}
                 onChange={(e) => setCurrentPage(e.target.value)}
-                disabled={!editing}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveProgress();
+                  }
+                }}
+                disabled={savingProgress}
                 placeholder="현재"
+                aria-label="현재 읽은 페이지"
                 style={{
                   flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
                   border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
-                  opacity: editing ? 1 : 0.7,
                 }}
               />
               <span style={{ color: 'var(--text)', fontSize: 13, flexShrink: 0 }}>/</span>
-              <input
-                type="number"
-                min={0}
-                value={totalPage}
-                onChange={(e) => setTotalPage(e.target.value)}
-                disabled={!editing}
-                placeholder="총"
+              <span
                 style={{
-                  flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '6px 8px', borderRadius: 8,
-                  border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)',
-                  opacity: editing ? 1 : 0.7,
+                  flex: 1, minWidth: 0, padding: '6px 8px', fontSize: 13,
+                  color: 'var(--text)', textAlign: 'center',
                 }}
-              />
+              >
+                {Number(totalPage) > 0 ? totalPage : '-'}
+              </span>
               <span style={{ fontSize: 11, color: 'var(--text)', flexShrink: 0 }}>쪽</span>
             </div>
+            <span style={{ fontSize: 11, color: 'var(--text)', display: 'block', marginTop: 4 }}>
+              {savingProgress ? '저장 중...' : '현재 페이지를 입력하고 엔터를 누르면 저장돼요'}
+            </span>
           </div>
 
           {/* 저장은 우측 상단 "완료" 버튼에서 처리한다 (CLIAR-241) */}
@@ -414,6 +446,46 @@ export default function BookDetail({ book, onClose }) {
           }}
         />
       )}
+
+      {/* 현재 페이지 저장 결과 안내 팝업 — "확인"으로 닫는다 (CLIAR-241) */}
+      {notice &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100,
+            }}
+            onClick={() => setNotice(null)}
+          >
+            <div
+              role="alertdialog"
+              aria-label="현재 페이지 저장 안내"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: 'min(320px, 88vw)', background: 'var(--bg)', color: 'var(--text-h)',
+                border: '1px solid var(--border)', borderRadius: 14, padding: 22,
+                boxShadow: '0 16px 48px rgba(0,0,0,0.5)', textAlign: 'center',
+              }}
+            >
+              <p style={{ margin: '0 0 18px', fontSize: 14, lineHeight: 1.6 }}>
+                {notice.type === 'success' ? '✅ ' : '⚠️ '}
+                {notice.text}
+              </p>
+              <button
+                autoFocus
+                onClick={() => setNotice(null)}
+                style={{
+                  padding: '8px 28px', borderRadius: 8, border: 'none',
+                  background: notice.type === 'success' ? 'var(--accent)' : '#e74c3c',
+                  color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                }}
+              >
+                확인
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
