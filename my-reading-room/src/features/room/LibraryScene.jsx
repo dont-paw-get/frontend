@@ -107,6 +107,21 @@ function CalibrationControls({ camera, shelf, activeIdx, onCamera, onCamComp, on
   return null;
 }
 
+/*
+ * 책 hover/선택 시 테두리 glow 색상 (CLIAR-243).
+ * index.css의 --accent 값과 동일하게 맞춰, 서재 배경/사서별 팔레트와 일관되게 한다.
+ * (CSS 변수를 3D 캔버스 안에서 직접 읽기 어려워 값을 그대로 복제해 둔다)
+ */
+const GLOW_COLOR = {
+  cat: { dark: '#ff9a3c', light: '#e06a10' },
+  stork: { dark: '#9b7bf0', light: '#7d50c0' },
+};
+
+function getGlowColor(librarianId, isDark) {
+  const palette = GLOW_COLOR[librarianId] || GLOW_COLOR.cat;
+  return isDark ? palette.dark : palette.light;
+}
+
 function loadCalibration(librarianId) {
   try {
     const raw = localStorage.getItem(getCalibKey(librarianId));
@@ -319,6 +334,7 @@ export default function LibraryScene() {
             spineColor={b.spineColor}
             coverColor={b.coverColor}
             selected={selectedId === b.id}
+            glowColor={getGlowColor(librarianId, isDark)}
             onSelect={() => setSelectedId((prev) => (prev === b.id ? null : b.id))}
           />
         ))}
