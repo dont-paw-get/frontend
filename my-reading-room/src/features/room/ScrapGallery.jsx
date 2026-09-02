@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useBooks } from '../../store/booksStore';
 import { SCRAP_PAGE_SIZE } from '../../api/bookApi';
 import './ScrapGallery.css';
@@ -51,6 +52,8 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
   const [drafts, setDrafts] = useState({});
   const [deletingId, setDeletingId] = useState(null);
   const [editError, setEditError] = useState('');
+  // ✕를 눌러 삭제를 확인 중인 카드 (CLIAR-241) — 바로 지우지 않고 한 번 물어본다
+  const [pendingDelete, setPendingDelete] = useState(null);
 
   const { items, nextPage, totalPages, totalElements } = feed;
   const hasMore = totalPages === null || nextPage < totalPages;
@@ -169,37 +172,46 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
   }, []);
 
   /**
-   * 카드(수집한 문장) 삭제.
+   * 사진의 ✕ 클릭 — 바로 지우지 않고 확인 팝업을 띄운다 (CLIAR-241).
+   */
+  const requestDelete = useCallback((it) => {
+    setEditError('');
+    setPendingDelete(it);
+  }, []);
+
+  const cancelDelete = useCallback(() => setPendingDelete(null), []);
+
+  /**
+   * 카드(수집한 문장) 삭제 — 확인 팝업에서 "삭제"를 눌렀을 때 실행한다.
    *
    * backend-book은 scrapImageUrl을 필수(non-blank)로 요구해 "사진만 비우기"가
    * 불가능하다. 그래서 사진 위의 ✕는 해당 문장 스크랩 자체를 삭제한다(soft delete).
    */
-  const handleDelete = useCallback(
-    async (id) => {
-      if (deletingId) return;
-      setDeletingId(id);
-      setEditError('');
-      try {
-        await removeScrap(id);
-        if (!aliveRef.current) return;
-        setFeed((prev) => ({
-          ...prev,
-          items: prev.items.filter((it) => it.id !== id),
-          totalElements: prev.totalElements != null ? Math.max(0, prev.totalElements - 1) : null,
-        }));
-        setDrafts((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
-        });
-      } catch {
-        if (aliveRef.current) setEditError('문장을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
-      } finally {
-        if (aliveRef.current) setDeletingId(null);
-      }
-    },
-    [deletingId, removeScrap]
-  );
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete || deletingId) return;
+    const id = pendingDelete.id;
+    setDeletingId(id);
+    setEditError('');
+    try {
+      await removeScrap(id);
+      if (!aliveRef.current) return;
+      setFeed((prev) => ({
+        ...prev,
+        items: prev.items.filter((it) => it.id !== id),
+        totalElements: prev.totalElements != null ? Math.max(0, prev.totalElements - 1) : null,
+      }));
+      setDrafts((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      setPendingDelete(null);
+    } catch {
+      if (aliveRef.current) setEditError('문장을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      if (aliveRef.current) setDeletingId(null);
+    }
+  }, [pendingDelete, deletingId, removeScrap]);
 
   /**
    * 수정한 문장·메모를 저장한다 (부모의 "완료" 버튼에서 호출).
@@ -258,6 +270,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
   const discardEdits = useCallback(() => {
     setDrafts({});
     setEditError('');
+    setPendingDelete(null);
   }, []);
 
   useImperativeHandle(ref, () => ({ saveEdits, discardEdits }), [saveEdits, discardEdits]);
@@ -345,11 +358,11 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                 <span style={{ fontSize: 11, color: 'var(--text)' }}>사진 없음</span>
               )}
 
-              {/* 수정 모드: 사진 우측 상단 ✕ 로 이 문장 삭제 */}
+              {/* 수정 모드: 사진 우측 상단 ✕ 로 이 문장 삭제 (누르면 확인 팝업) */}
               {editing && (
                 <button
                   type="button"
-                  onClick={() => handleDelete(it.id)}
+                  onClick={() => requestDelete(it)}
                   disabled={deletingId === it.id}
                   title="이 문장 삭제"
                   aria-label={`문장 삭제: ${(it.text || '').slice(0, 20)}`}
@@ -461,6 +474,62 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
       )}
       {error && <p style={{ margin: 0, fontSize: 12, color: '#e05a4e' }}>{error}</p>}
       {editError && <p style={{ margin: 0, fontSize: 12, color: '#e05a4e' }}>{editError}</p>}
+
+      {/* 문장 삭제 확인 팝업 (CLIAR-241) — ✕를 눌러도 바로 지우지 않고 한 번 더 확인한다 */}
+      {pendingDelete &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100,
+            }}
+            onClick={cancelDelete}
+          >
+            <div
+              role="alertdialog"
+              aria-label="문장 삭제 확인"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: 'min(300px, 88vw)', background: 'var(--bg)', color: 'var(--text-h)',
+                border: '1px solid var(--border)', borderRadius: 14, padding: 22,
+                boxShadow: '0 16px 48px rgba(0,0,0,0.5)', textAlign: 'center',
+              }}
+            >
+              <p style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 600 }}>
+                이 문장을 삭제하시겠어요?
+              </p>
+              <p style={{ margin: '0 0 18px', fontSize: 12.5, color: 'var(--text)', lineHeight: 1.5 }}>
+                사진과 메모가 함께 지워지고, 되돌릴 수 없어요.
+              </p>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deletingId === pendingDelete.id}
+                  style={{
+                    padding: '8px 20px', borderRadius: 8, border: 'none',
+                    background: '#e74c3c', color: '#fff', fontWeight: 700, fontSize: 13,
+                    cursor: deletingId === pendingDelete.id ? 'not-allowed' : 'pointer',
+                    opacity: deletingId === pendingDelete.id ? 0.7 : 1,
+                  }}
+                >
+                  {deletingId === pendingDelete.id ? '삭제 중...' : '삭제'}
+                </button>
+                <button
+                  onClick={cancelDelete}
+                  disabled={deletingId === pendingDelete.id}
+                  style={{
+                    padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)',
+                    background: 'transparent', color: 'var(--text-h)', fontWeight: 600, fontSize: 13,
+                    cursor: 'pointer',
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
