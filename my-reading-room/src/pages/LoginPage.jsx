@@ -10,25 +10,28 @@ import './LoginPage.css';
 const BUTTONS = [
   {
     id: 'login',
-    src: '/button/button_login.webp',
+    src: '/button/login_btn.webp',
     tooltip: '로그인',
     left: 55.9, top: 61.9, width: 5.6, height: 8.8,
   },
   {
     id: 'signup',
-    src: '/button/button_signup.webp',
+    src: '/button/signup_btn.webp',
     tooltip: '회원가입',
     left: 40.9, top: 61.5, width: 7.8, height: 8.5,
   },
   {
     id: 'password',
-    src: '/button/button_password.webp',
+    src: '/button/forgotpw_btn.webp',
     tooltip: '비밀번호 찾기',
     left: 50.2, top: 62.1, width: 4.3, height: 7.2,
   },
   {
     id: 'eye',
-    src: '/button/button_eye.webp',
+    // 비밀번호 보기 토글: 평소엔 회색(paw_gray), 누르면 비밀번호가 보이는 3초간
+    // 분홍(paw_pink)으로 바뀌고 다시 회색으로 돌아온다. (아래 map에서 eyeActive로 스왑)
+    src: '/button/paw_gray.webp',
+    srcActive: '/button/paw_pink.webp',
     tooltip: '비밀번호 보기',
     left: 59.5, top: 53.9, width: 1.6, height: 2.7,
   },
@@ -215,15 +218,20 @@ export default function LoginPage() {
       />
 
       {/* 버튼들 */}
-      {BUTTONS.map((btn) => (
-        <LoginButton
-          key={btn.id}
-          btn={btn}
-          onClick={() => handleClick(btn.id)}
-          active={btn.id === 'eye' && eyeActive}
-          disabled={btn.id === 'login' && !isLoginEnabled}
-        />
-      ))}
+      {BUTTONS.map((btn) => {
+        // 눈 버튼은 비밀번호 표시 중(eyeActive)이면 분홍 이미지로 스왑
+        const isEye = btn.id === 'eye';
+        const resolvedBtn =
+          isEye && eyeActive ? { ...btn, src: btn.srcActive } : btn;
+        return (
+          <LoginButton
+            key={btn.id}
+            btn={resolvedBtn}
+            onClick={() => handleClick(btn.id)}
+            disabled={btn.id === 'login' && !isLoginEnabled}
+          />
+        );
+      })}
 
       {/* 비밀번호 표시 상태 인디케이터 */}
       {eyeActive && (
