@@ -8,6 +8,7 @@
  */
 
 import { getAccessToken } from './authApi';
+import { fetchWithTimeout } from './fetchWithTimeout';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -75,7 +76,7 @@ export async function sendChatMessage({ message, sessionId = null, librarianId =
       console.warn('[chatApi] 유효하지 않은 좌표라 전송하지 않습니다:', { latitude, longitude });
     }
 
-    const response = await fetch(`${API_BASE}/chat`, {
+    const response = await fetchWithTimeout(`${API_BASE}/chat`, {
       method: 'POST',
       headers: buildHeaders(),
       body: JSON.stringify(payload),
@@ -137,7 +138,7 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
       console.warn('[chatApi] 유효하지 않은 좌표라 전송하지 않습니다:', { latitude, longitude });
     }
 
-    const response = await fetch(`${API_BASE}/chat`, {
+    const response = await fetchWithTimeout(`${API_BASE}/chat`, {
       method: 'POST',
       headers: buildHeaders(),
       body: JSON.stringify(payload),
@@ -234,7 +235,7 @@ export async function streamChatMessage({ message, sessionId = null, librarianId
  */
 export async function checkHealth() {
   try {
-    const response = await fetch(`${API_BASE}/health`);
+    const response = await fetchWithTimeout(`${API_BASE}/health`);
     return response.ok;
   } catch {
     return false;
