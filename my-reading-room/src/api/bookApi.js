@@ -72,24 +72,38 @@ export async function listLibraryBooks() {
  */
 export async function searchBookByIsbn(isbn) {
   const res = await authFetch(`/books/search?isbn=${encodeURIComponent(isbn)}`);
-  const found = res?.libraryBook ?? res?.book ?? null;
 
   return {
     alreadyRegistered: Boolean(res?.alreadyRegistered),
     bookId: res?.libraryBook?.bookId ?? null,
-    book: found
-      ? {
-        title: found.title ?? '',
-        author: found.author ?? '',
-        isbn: found.isbn ?? isbn,
-        publisher: found.publisher ?? null,
-        publishedDate: found.publishedDate ?? null,
-        totalPages: found.totalPages ?? null,
-        coverUrl: found.coverUrl ?? null,
-        // 서재에 있는 책이면 저장된 장르를 그대로 쓸 수 있다 (알라딘 결과엔 없음).
-        genre: found.genre ?? null,
-      }
-      : null,
+    book: normalizeBookInfo(res?.libraryBook ?? res?.book, isbn),
+  };
+}
+
+/**
+ * 도서 조회 결과를 등록 화면이 쓰는 형태로 정규화한다.
+ *
+ * 같은 모양의 데이터가 두 경로로 들어온다 — 프론트가 부른 /books/search 응답과,
+ * backend-record가 /ocr/covers 안에서 대신 조회해 함께 내려주는 book 필드다.
+ * 둘 다 backend-book의 DTO라 필드가 같으므로 여기 한 곳에서 처리한다.
+ *
+ * @param {object|null|undefined} found - LibraryBookDetailResponse 또는 ExternalBook
+ * @param {string} [fallbackIsbn] - 응답에 isbn이 없을 때 채울 값
+ * @returns {object|null}
+ */
+export function normalizeBookInfo(found, fallbackIsbn = '') {
+  if (!found) return null;
+
+  return {
+    title: found.title ?? '',
+    author: found.author ?? '',
+    isbn: found.isbn ?? fallbackIsbn,
+    publisher: found.publisher ?? null,
+    publishedDate: found.publishedDate ?? null,
+    totalPages: found.totalPages ?? null,
+    coverUrl: found.coverUrl ?? null,
+    // 서재에 있는 책이면 저장된 장르를 그대로 쓸 수 있다 (알라딘 결과엔 없음).
+    genre: found.genre ?? null,
   };
 }
 

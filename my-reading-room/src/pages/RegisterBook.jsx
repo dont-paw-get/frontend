@@ -5,7 +5,7 @@ import { colorPresets, extractDominantColorIndex, loadImage } from '../features/
 import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../data/genres';
 import { classifyGenre } from '../api/genreApi';
 import { createOcrCover } from '../api/recordApi';
-import { searchBookByIsbn, toReadingStatus } from '../api/bookApi';
+import { searchBookByIsbn, normalizeBookInfo, toReadingStatus } from '../api/bookApi';
 import { setVisual } from '../store/bookVisuals';
 import { ApiError } from '../api/authApi';
 import { getBookThickness } from '../features/room/bookExtractor';
@@ -128,8 +128,10 @@ export default function RegisterBook() {
   /**
    * 촬영/업로드한 사진으로 도서 정보를 채운다.
    *
-   *  1) POST /ocr/covers (backend-record) — 표지에서 ISBN과 제목·저자 후보를 인식
-   *  2) GET /books/search?isbn= (backend-book) — 그 ISBN으로 알라딘 도서 정보 조회
+   *  1) POST /ocr/covers (backend-record) — 뒷면 바코드에서 ISBN을 인식
+   *  2) 그 ISBN으로 조회한 도서 정보(backend-book /books/search 결과)를 받는다.
+   *     record가 응답의 book 필드로 이미 조회해 주므로 그걸 우선 쓰고,
+   *     없을 때만 프론트가 직접 /books/search를 호출한다.
    *  3) 조회 결과로 제목·저자·총 페이지 수를 채우고, 없으면 OCR 후보로 폴백
    *
    * 책 색상은 어느 API도 주지 않으므로 업로드한 이미지의 평균색으로 고른다.
@@ -168,30 +170,38 @@ export default function RegisterBook() {
       setIsbn(cover.isbn || '');
       setOcrBookId(cover.bookId ?? null);
 
-      // 인식한 ISBN으로 backend-book에서 도서 정보를 조회한다.
-      // 조회가 실패해도 OCR 후보(제목/저자)로 등록을 이어갈 수 있게 한다.
-      let found = null;
-      if (cover.isbn) {
+      // record가 이미 ISBN으로 도서 정보를 조회해 함께 내려준다.
+      let found = normalizeBookInfo(cover.book, cover.isbn || '');
+      if (cover.alreadyRegistered) {
+        setOcrNotice('이미 서재에 있는 책이에요. 등록하면 기존 책 정보가 갱신됩니다.');
+      }
+
+      // record가 못 찾았을 때만 프론트에서 한 번 더 조회한다.
+      // 이 조회가 실패해도 OCR 후보(제목/저자)로 등록을 이어갈 수 있게 한다.
+      if (!found && cover.isbn) {
         try {
           const searched = await searchBookByIsbn(cover.isbn);
           if (runId !== runIdRef.current) return;
           found = searched.book;
           if (searched.bookId) setOcrBookId(searched.bookId);
-          if (found) {
-            setExtraMeta({
-              publisher: found.publisher ?? null,
-              publishedDate: found.publishedDate ?? null,
-              coverUrl: found.coverUrl ?? null,
-            });
-          }
           if (searched.alreadyRegistered) {
             setOcrNotice('이미 서재에 있는 책이에요. 등록하면 기존 책 정보가 갱신됩니다.');
           }
-        } catch (err) {
+        } catch {
+          // 조회 실패는 등록을 막지 않는다. 아래에서 OCR 후보로 폴백한다.
           if (runId !== runIdRef.current) return;
-          setOcrError(describeCoverOcrError(err));
         }
-      } else {
+      }
+
+      if (found) {
+        setExtraMeta({
+          publisher: found.publisher ?? null,
+          publishedDate: found.publishedDate ?? null,
+          coverUrl: found.coverUrl ?? null,
+        });
+      }
+
+      if (!cover.isbn && !found) {
         /*
          * /ocr/covers는 ISBN을 못 찾아도 200에 isbn=null로 응답한다. 이때
          * 무엇이 인식됐는지 보여 줘야 다시 찍을지 직접 입력할지 판단할 수 있다.
