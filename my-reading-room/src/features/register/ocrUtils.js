@@ -54,38 +54,8 @@ export function extractDominantColorIndex(img) {
 }
 
 /**
- * 표지 이미지 파일에서 텍스트를 인식해 제목/저자 후보를 추출.
- * 정확한 구조 인식이 아니라 휴리스틱: 가장 긴 줄 → 제목, "저자/지음/글" 근처 줄 → 저자.
- * @param {File} file
- * @returns {Promise<{ title: string, author: string, rawText: string }>}
- */
-export async function recognizeCover(file) {
-  const worker = await createWorker('kor+eng');
-  try {
-    const { data } = await worker.recognize(file);
-    const lines = (data.text || '')
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean);
-
-    let author = '';
-    const authorLineIdx = lines.findIndex((l) => /지음|저자|글\s*[·,]|저\s*$/.test(l));
-    if (authorLineIdx >= 0) {
-      author = lines[authorLineIdx].replace(/지음|저자|글|[·,]|저\s*$/g, '').trim();
-    }
-
-    const titleCandidates = lines.filter((_, i) => i !== authorLineIdx);
-    const title = titleCandidates.sort((a, b) => b.length - a.length)[0] || '';
-
-    return { title, author, rawText: data.text || '' };
-  } finally {
-    await worker.terminate();
-  }
-}
-
-/**
  * 이미지 파일에서 순수 텍스트를 인식 (문장 수집용).
- * 표지 인식(recognizeCover)과 달리 제목/저자 구조화 없이 원문 텍스트만 반환.
+ * 제목/저자 구조화 없이 원문 텍스트만 반환한다.
  * @param {File} file
  * @returns {Promise<string>} 인식된 텍스트
  */

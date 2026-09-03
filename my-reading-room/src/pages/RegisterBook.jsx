@@ -1,10 +1,31 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBooks } from '../store/booksStore';
-import { colorPresets, recognizeCover, extractDominantColorIndex, loadImage } from '../features/register/ocrUtils';
+import { colorPresets, extractDominantColorIndex, loadImage } from '../features/register/ocrUtils';
 import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../data/genres';
 import { classifyGenre } from '../api/genreApi';
+import { createOcrCover } from '../api/recordApi';
+import { ApiError } from '../api/authApi';
 import { getBookThickness } from '../features/room/bookExtractor';
+
+/**
+ * 표지 OCR(ISBN 인식) 실패 원인을 사용자에게 구체적으로 안내한다.
+ * 상태코드 규약은 SentenceCollectModal의 문장 OCR과 동일하되, 422는
+ * '문장 없음'이 아니라 'ISBN을 못 찾음'으로 읽는다.
+ */
+function describeCoverOcrError(err) {
+  if (err instanceof ApiError) {
+    if (err.status === 422) return 'ISBN을 찾지 못했어요. 바코드 아래 13자리 숫자가 선명하게 보이도록 다시 찍어 주세요.';
+    if (err.status === 404) return '해당 ISBN의 도서 정보를 찾지 못했어요. 아래에서 직접 입력해 주세요.';
+    if (err.status === 413) return '이미지가 너무 커요. 더 작은 사진으로 다시 시도해 주세요.';
+    if (err.status === 415) return '지원하지 않는 이미지 형식이에요. JPG 또는 PNG로 올려 주세요.';
+    if (err.status === 504) return '인식이 오래 걸려 시간이 초과됐어요. 잠시 후 다시 시도해 주세요.';
+    if (err.status === 502) return '도서 조회 서비스에 일시적인 문제가 있어요. 잠시 후 다시 시도해 주세요.';
+    if (err.status === 401) return '로그인이 만료됐어요. 다시 로그인해 주세요.';
+    return err.message || 'ISBN 인식 중 문제가 발생했어요.';
+  }
+  return '서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.';
+}
 
 // 페이지 진행 상황으로 진행 상태 자동 계산
 function deriveStatus(currentPage, totalPage) {
@@ -26,6 +47,7 @@ export default function RegisterBook() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrDone, setOcrDone] = useState(false);
+  const [ocrError, setOcrError] = useState('');
   const [editing, setEditing] = useState(false);
   const [fromRecommendation, setFromRecommendation] = useState(false);
 
@@ -87,27 +109,45 @@ export default function RegisterBook() {
     }
   }, [location.state, autoClassifyGenre]);
 
+  /**
+   * 촬영/업로드한 사진을 backend-record의 표지 OCR(POST /ocr/covers)로 보내
+   * ISBN을 인식하고, 그 ISBN으로 backend-book이 알라딘에서 조회한 도서 정보를 채운다.
+   * 브라우저 내 tesseract 표지 텍스트 인식(recognizeCover)을 대체한다.
+   *
+   * 책 색상은 서버 응답에 없으므로 예전처럼 업로드한 이미지의 평균색으로 고른다.
+   */
   async function handleFile(file) {
     if (!file) return;
     setPreviewUrl(URL.createObjectURL(file));
     setOcrLoading(true);
     setOcrDone(false);
     setEditing(false);
+    setOcrError('');
+
+    // 색상 추출은 인식 성공 여부와 무관하게 진행 (실패 시 첫 번째 색으로 폴백)
+    const colorPromise = loadImage(file)
+      .then((img) => extractDominantColorIndex(img))
+      .catch(() => 0);
 
     try {
-      const [ocrResult, img] = await Promise.all([recognizeCover(file), loadImage(file)]);
-      setTitle(ocrResult.title || '');
-      setAuthor(ocrResult.author || '');
-      setColorIdx(extractDominantColorIndex(img));
-      /*
-       * 인식된 제목·저자로 장르를 자동 분류 (실패해도 등록은 계속 가능).
-       * recognizeCover는 { title, author, rawText }만 주고 ISBN·카테고리는 없어
-       * 제목·저자만 넘긴다. ISBN 기반 조회가 붙으면 isbn도 함께 전달하면 된다.
-       */
-      autoClassifyGenre({ title: ocrResult.title, author: ocrResult.author });
-    } catch {
-      setColorIdx(0);
+      const cover = await createOcrCover({ imageFile: file });
+      setTitle(cover.title || '');
+      setAuthor(cover.author || '');
+      // 알라딘이 쪽수를 주면 총 페이지 수까지 미리 채운다 (없으면 사용자가 직접 입력)
+      if (cover.totalPages) setTotalPage(String(cover.totalPages));
+      // 인식된 ISBN·원본 카테고리까지 넘겨 장르 분류 정확도를 높인다 (실패해도 등록은 계속 가능)
+      autoClassifyGenre({
+        title: cover.title,
+        author: cover.author,
+        isbn: cover.isbn || '',
+        rawCategory: cover.category || '',
+      });
+    } catch (err) {
+      // 인식에 실패해도 직접 입력해 등록할 수 있도록 폼은 수정 모드로 열어 준다.
+      setOcrError(describeCoverOcrError(err));
+      setEditing(true);
     } finally {
+      setColorIdx(await colorPromise);
       setOcrLoading(false);
       setOcrDone(true);
     }
@@ -201,8 +241,8 @@ export default function RegisterBook() {
       >
         {/*
           왼쪽: ISBN 바코드 촬영/업로드
-          ⚠️ UI 문구만 ISBN 방식으로 전환 (CLIAR-154). 실제 인식 로직(recognizeCover)은
-          아직 표지 텍스트 OCR 그대로이며, ISBN 숫자 추출 + 외부 도서 API 연동은 후속 티켓에서 진행.
+          사진은 backend-record의 POST /ocr/covers로 올라가 ISBN이 인식되고,
+          backend-book이 알라딘에서 조회한 제목·저자·쪽수가 아래 인식 결과에 채워진다.
         */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={{ fontWeight: 600 }}>ISBN 촬영</span>
@@ -259,6 +299,7 @@ export default function RegisterBook() {
           )}
 
           {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중입니다...</span>}
+          {ocrError && <span style={{ fontSize: 13, color: '#e05a4e' }}>{ocrError}</span>}
         </div>
 
         {/* 중앙: 인식 결과 + 수정 */}
