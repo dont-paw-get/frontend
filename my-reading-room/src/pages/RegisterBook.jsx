@@ -5,6 +5,8 @@ import { colorPresets, extractDominantColorIndex, loadImage } from '../features/
 import { GENRE_DEFS, GENRE_NONE, genreLabel } from '../data/genres';
 import { classifyGenre } from '../api/genreApi';
 import { createOcrCover } from '../api/recordApi';
+import { searchBookByIsbn, toReadingStatus } from '../api/bookApi';
+import { setVisual } from '../store/bookVisuals';
 import { ApiError } from '../api/authApi';
 import { getBookThickness } from '../features/room/bookExtractor';
 
@@ -17,6 +19,7 @@ function describeCoverOcrError(err) {
   if (err instanceof ApiError) {
     if (err.status === 422) return 'ISBN을 찾지 못했어요. 바코드 아래 13자리 숫자가 선명하게 보이도록 다시 찍어 주세요.';
     if (err.status === 404) return '해당 ISBN의 도서 정보를 찾지 못했어요. 아래에서 직접 입력해 주세요.';
+    if (err.status === 400) return '인식한 ISBN이 올바르지 않아요. 바코드가 잘리지 않게 다시 찍어 주세요.';
     if (err.status === 413) return '이미지가 너무 커요. 더 작은 사진으로 다시 시도해 주세요.';
     if (err.status === 415) return '지원하지 않는 이미지 형식이에요. JPG 또는 PNG로 올려 주세요.';
     if (err.status === 504) return '인식이 오래 걸려 시간이 초과됐어요. 잠시 후 다시 시도해 주세요.';
@@ -37,17 +40,22 @@ function deriveStatus(currentPage, totalPage) {
 }
 
 export default function RegisterBook() {
-  const { addBook, saveReadingProgress } = useBooks();
+  const { addBook, saveReadingProgress, saveBookMeta, reload } = useBooks();
   const navigate = useNavigate();
   const location = useLocation();
 
   const captureInputRef = useRef(null);
   const uploadInputRef = useRef(null);
+  // 연속 업로드 시 늦게 끝난 이전 요청이 최신 결과를 덮어쓰지 않도록 하는 실행 번호
+  const runIdRef = useRef(0);
+  // 마지막으로 만든 미리보기 object URL (언마운트 시 해제용)
+  const previewUrlRef = useRef(null);
 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrDone, setOcrDone] = useState(false);
   const [ocrError, setOcrError] = useState('');
+  const [ocrNotice, setOcrNotice] = useState('');
   const [editing, setEditing] = useState(false);
   const [fromRecommendation, setFromRecommendation] = useState(false);
 
@@ -57,6 +65,14 @@ export default function RegisterBook() {
   // 장르 (CLIAR-241): backend-discovery 분류 결과를 기본값으로 채우고 사용자가 바꿀 수 있다.
   const [genre, setGenre] = useState(GENRE_NONE);
   const [genreLoading, setGenreLoading] = useState(false);
+
+  // 인식한 ISBN과, /ocr/covers가 서재에 만들어 둔 도서 ID.
+  // bookId가 있으면 등록 시 새로 만들지 않고 이 책을 갱신한다(중복 등록 방지).
+  const [isbn, setIsbn] = useState('');
+  const [ocrBookId, setOcrBookId] = useState(null);
+  // 화면에서 편집하지 않지만 PATCH 시 그대로 돌려보내야 하는 조회 결과
+  // (updateLibraryBookMeta는 전체 페이로드를 요구해, 안 넘기면 null로 덮인다)
+  const [extraMeta, setExtraMeta] = useState({ publisher: null, publishedDate: null, coverUrl: null });
 
   const [totalPage, setTotalPage] = useState('');
   const [currentPage, setCurrentPage] = useState('');
@@ -110,19 +126,35 @@ export default function RegisterBook() {
   }, [location.state, autoClassifyGenre]);
 
   /**
-   * 촬영/업로드한 사진을 backend-record의 표지 OCR(POST /ocr/covers)로 보내
-   * ISBN을 인식하고, 그 ISBN으로 backend-book이 알라딘에서 조회한 도서 정보를 채운다.
-   * 브라우저 내 tesseract 표지 텍스트 인식(recognizeCover)을 대체한다.
+   * 촬영/업로드한 사진으로 도서 정보를 채운다.
    *
-   * 책 색상은 서버 응답에 없으므로 예전처럼 업로드한 이미지의 평균색으로 고른다.
+   *  1) POST /ocr/covers (backend-record) — 표지에서 ISBN과 제목·저자 후보를 인식
+   *  2) GET /books/search?isbn= (backend-book) — 그 ISBN으로 알라딘 도서 정보 조회
+   *  3) 조회 결과로 제목·저자·총 페이지 수를 채우고, 없으면 OCR 후보로 폴백
+   *
+   * 책 색상은 어느 API도 주지 않으므로 업로드한 이미지의 평균색으로 고른다.
    */
   async function handleFile(file) {
     if (!file) return;
-    setPreviewUrl(URL.createObjectURL(file));
+
+    // 같은 파일을 다시 올릴 때도 처음부터 다시 인식되도록 이전 결과를 모두 비운다.
+    const runId = ++runIdRef.current;
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = URL.createObjectURL(file);
+    setPreviewUrl(previewUrlRef.current);
     setOcrLoading(true);
     setOcrDone(false);
     setEditing(false);
     setOcrError('');
+    setOcrNotice('');
+    setTitle('');
+    setAuthor('');
+    setGenre(GENRE_NONE);
+    setTotalPage('');
+    setIsbn('');
+    setOcrBookId(null);
+    setExtraMeta({ publisher: null, publishedDate: null, coverUrl: null });
+    setFromRecommendation(false);
 
     // 색상 추출은 인식 성공 여부와 무관하게 진행 (실패 시 첫 번째 색으로 폴백)
     const colorPromise = loadImage(file)
@@ -131,27 +163,86 @@ export default function RegisterBook() {
 
     try {
       const cover = await createOcrCover({ imageFile: file });
-      setTitle(cover.title || '');
-      setAuthor(cover.author || '');
-      // 알라딘이 쪽수를 주면 총 페이지 수까지 미리 채운다 (없으면 사용자가 직접 입력)
-      if (cover.totalPages) setTotalPage(String(cover.totalPages));
-      // 인식된 ISBN·원본 카테고리까지 넘겨 장르 분류 정확도를 높인다 (실패해도 등록은 계속 가능)
-      autoClassifyGenre({
-        title: cover.title,
-        author: cover.author,
-        isbn: cover.isbn || '',
-        rawCategory: cover.category || '',
-      });
+      if (runId !== runIdRef.current) return; // 더 최신 업로드가 진행 중이면 버린다
+
+      setIsbn(cover.isbn || '');
+      setOcrBookId(cover.bookId ?? null);
+
+      // 인식한 ISBN으로 backend-book에서 도서 정보를 조회한다.
+      // 조회가 실패해도 OCR 후보(제목/저자)로 등록을 이어갈 수 있게 한다.
+      let found = null;
+      if (cover.isbn) {
+        try {
+          const searched = await searchBookByIsbn(cover.isbn);
+          if (runId !== runIdRef.current) return;
+          found = searched.book;
+          if (searched.bookId) setOcrBookId(searched.bookId);
+          if (found) {
+            setExtraMeta({
+              publisher: found.publisher ?? null,
+              publishedDate: found.publishedDate ?? null,
+              coverUrl: found.coverUrl ?? null,
+            });
+          }
+          if (searched.alreadyRegistered) {
+            setOcrNotice('이미 서재에 있는 책이에요. 등록하면 기존 책 정보가 갱신됩니다.');
+          }
+        } catch (err) {
+          if (runId !== runIdRef.current) return;
+          setOcrError(describeCoverOcrError(err));
+        }
+      } else {
+        setOcrError('ISBN을 찾지 못했어요. 바코드 아래 13자리 숫자가 보이도록 다시 찍거나, 아래에서 직접 입력해 주세요.');
+      }
+
+      const nextTitle = found?.title || cover.titleCandidate || '';
+      const nextAuthor = found?.author || cover.authorCandidates[0] || '';
+      setTitle(nextTitle);
+      setAuthor(nextAuthor);
+      // 알라딘이 쪽수를 주면 총 페이지 수까지 채운다 (없으면 사용자가 직접 입력)
+      if (found?.totalPages) setTotalPage(String(found.totalPages));
+
+      if (found?.genre) {
+        // 이미 서재에 있는 책은 저장된 장르를 그대로 쓴다
+        setGenre(found.genre);
+      } else {
+        // 인식된 ISBN·제목·저자로 장르를 자동 분류 (실패해도 등록은 계속 가능)
+        autoClassifyGenre({ title: nextTitle, author: nextAuthor, isbn: cover.isbn || '' });
+      }
+
+      // 자동으로 채우지 못한 값이 있으면 바로 고칠 수 있게 수정 모드로 연다.
+      if (!nextTitle || !nextAuthor || !found?.totalPages) setEditing(true);
     } catch (err) {
+      if (runId !== runIdRef.current) return;
       // 인식에 실패해도 직접 입력해 등록할 수 있도록 폼은 수정 모드로 열어 준다.
       setOcrError(describeCoverOcrError(err));
       setEditing(true);
     } finally {
-      setColorIdx(await colorPromise);
-      setOcrLoading(false);
-      setOcrDone(true);
+      if (runId === runIdRef.current) {
+        setColorIdx(await colorPromise);
+        setOcrLoading(false);
+        setOcrDone(true);
+      }
     }
   }
+
+  /**
+   * 파일 선택 핸들러. 같은 파일을 연속으로 고르면 input의 value가 그대로라
+   * change 이벤트가 발생하지 않으므로, 처리 후 value를 비워 다시 고를 수 있게 한다.
+   */
+  function handleInputChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    handleFile(file);
+  }
+
+  // 미리보기로 만든 object URL은 화면을 떠날 때 정리한다.
+  // (StrictMode의 이펙트 두 번 실행에 사용 중인 URL이 해제되지 않도록 ref로 들고 있는다)
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
 
   // 두께는 더 이상 사용자가 고르지 않고 총 페이지 수로 자동 계산한다 (CLIAR-247)
   const thickness = getBookThickness(Number(totalPage) || null);
@@ -170,22 +261,50 @@ export default function RegisterBook() {
     const initialPage = Number(currentPage) || 0;
     setSubmitting(true);
     setSubmitError(null);
+    const readingStatus = toReadingStatus(deriveStatus(currentPage, totalPage));
+
     try {
-      // 서버에 도서 생성 (색은 선택값, 두께는 총 페이지 수로 자동 계산 — provider가 로컬 bookVisuals에 저장)
-      const created = await addBook({
-        title,
-        author,
-        spineColor: color.spine,
-        coverColor: color.cover,
-        thickness,
-        totalPage: Number(totalPage),
-        status: deriveStatus(currentPage, totalPage),
-        genre,
-      });
+      let bookId = ocrBookId;
+
+      if (bookId) {
+        /*
+         * /ocr/covers가 이미 서재에 등록해 둔 책이다. 여기서 또 생성하면 같은 책이
+         * 두 권 꽂히므로, 사용자가 확인·수정한 값으로 그 책을 갱신한다.
+         * PATCH는 전체 페이로드를 요구하므로 화면의 값을 모두 채워 보낸다.
+         */
+        await saveBookMeta(bookId, {
+          title,
+          author,
+          isbn: isbn || null,
+          genre,
+          publisher: extraMeta.publisher,
+          publishedDate: extraMeta.publishedDate,
+          coverUrl: extraMeta.coverUrl,
+          totalPages: Number(totalPage) || null,
+          readingStatus,
+        });
+        // 색/두께는 서버가 저장하지 않는 시각 정보라 로컬에 따로 보관한다.
+        setVisual(bookId, { spineColor: color.spine, coverColor: color.cover, thickness });
+        await reload();
+      } else {
+        // 서버에 도서 생성 (색은 선택값, 두께는 총 페이지 수로 자동 계산 — provider가 로컬 bookVisuals에 저장)
+        const created = await addBook({
+          title,
+          author,
+          spineColor: color.spine,
+          coverColor: color.cover,
+          thickness,
+          totalPage: Number(totalPage),
+          status: deriveStatus(currentPage, totalPage),
+          genre,
+        });
+        bookId = created?.bookId ?? null;
+      }
+
       // 현재 읽은 페이지가 있으면 진행도까지 반영 (생성 API엔 currentPage가 없음)
-      if (created?.bookId && initialPage > 0) {
+      if (bookId && initialPage > 0) {
         try {
-          await saveReadingProgress(created.bookId, initialPage, Number(totalPage) || null);
+          await saveReadingProgress(bookId, initialPage, Number(totalPage) || null);
         } catch {
           // 진행도 저장 실패는 등록 자체를 막지 않는다 (서재에서 다시 수정 가능)
         }
@@ -258,14 +377,14 @@ export default function RegisterBook() {
             accept="image/*"
             capture="environment"
             style={{ display: 'none' }}
-            onChange={(e) => handleFile(e.target.files?.[0])}
+            onChange={handleInputChange}
           />
           <input
             ref={uploadInputRef}
             type="file"
             accept="image/*"
             style={{ display: 'none' }}
-            onChange={(e) => handleFile(e.target.files?.[0])}
+            onChange={handleInputChange}
           />
 
           <button
@@ -300,6 +419,10 @@ export default function RegisterBook() {
 
           {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중입니다...</span>}
           {ocrError && <span style={{ fontSize: 13, color: '#e05a4e' }}>{ocrError}</span>}
+          {ocrNotice && <span style={{ fontSize: 13, color: 'var(--text-h)' }}>{ocrNotice}</span>}
+          {isbn && !ocrLoading && (
+            <span style={{ fontSize: 12, color: 'var(--text)' }}>인식된 ISBN: {isbn}</span>
+          )}
         </div>
 
         {/* 중앙: 인식 결과 + 수정 */}

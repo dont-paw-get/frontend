@@ -60,62 +60,41 @@ export async function createOcrSentence({
 }
 
 /**
- * 응답 키를 camelCase로 통일한다.
- * backend-record는 snake_case(scrap_image_url 등)를 쓰지만 표지 응답은
- * 알라딘 원본 필드가 섞여 들어올 수 있어 호출부가 키 표기에 흔들리지 않도록 한다.
- */
-function toCamelKeys(obj) {
-  if (!obj || typeof obj !== 'object') return {};
-  return Object.fromEntries(
-    Object.entries(obj).map(([k, v]) => [k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()), v])
-  );
-}
-
-function firstValue(source, ...keys) {
-  for (const key of keys) {
-    const v = source[key];
-    if (v !== undefined && v !== null && v !== '') return v;
-  }
-  return null;
-}
-
-/**
- * 표지/바코드 사진을 업로드해 ISBN을 인식하고, 그 ISBN으로 backend-book이
- * 알라딘에서 조회한 도서 정보를 받는다 (CLIAR-154 후속).
+ * 표지/바코드 사진을 업로드해 ISBN과 제목·저자 후보를 인식한다 (CLIAR-154 후속).
  *
- * POST /api/v1/ocr/covers
+ * POST /api/v1/ocr/covers (backend-record app/api/ocr.py)
  *  - multipart/form-data, 이미지 필드명은 /ocr/sentences와 동일한 image
- *  - 응답: 인식된 ISBN + 알라딘 도서 메타데이터(제목/저자/출판사/쪽수/카테고리 등)
+ *  - 응답: { title_candidate, author_candidates[], lines[], request_id, confidence,
+ *           isbn, book_id, already_registered, book }
  *
- * 도서 정보가 book/bookInfo 같은 하위 객체로 오는 경우와 페이지 수 필드명
- * (total_pages / page_count) 차이를 흡수해 화면에서 바로 쓸 형태로 정규화한다.
+ * 주의: 이 엔드포인트는 인식한 ISBN으로 backend-book을 조회한 뒤 사용자의 서재에
+ * 책까지 등록하고 book_id를 돌려준다. 이미 서재에 있으면 already_registered=true와
+ * 기존 book_id를 준다. 따라서 등록 화면은 이 book_id를 이어받아 새로 만들지 말고
+ * 갱신해야 중복 등록이 생기지 않는다.
  *
  * @param {object} params
- * @param {File} params.imageFile - 촬영/선택한 이미지 파일 (image/jpeg 또는 image/png)
- * @returns {Promise<{isbn: string|null, title: string, author: string, publisher: string|null,
- *   publishedDate: string|null, coverUrl: string|null, totalPages: number|null,
- *   category: string, raw: object}>}
+ * @param {File} params.imageFile - 촬영/선택한 이미지 파일 (image/jpeg 또는 image/png, 최대 50MB)
+ * @param {string|null} [params.modelId] - 사용할 Bedrock 모델 ID (미지정 시 서버 설정값)
+ * @returns {Promise<{isbn: string|null, titleCandidate: string, authorCandidates: string[],
+ *   lines: string[], bookId: any, alreadyRegistered: boolean, book: object|null, requestId: string|null}>}
  */
-export async function createOcrCover({ imageFile }) {
+export async function createOcrCover({ imageFile, modelId = null }) {
   const form = new FormData();
   form.append('image', imageFile);
 
-  const res = await authFetch('/ocr/covers', { method: 'POST', body: form });
-
-  const top = toCamelKeys(res);
-  const book = { ...top, ...toCamelKeys(top.book ?? top.bookInfo) };
-  const pages = Number(firstValue(book, 'totalPages', 'pageCount', 'itemPage'));
+  const query = modelId ? `?model_id=${encodeURIComponent(modelId)}` : '';
+  const res = await authFetch(`/ocr/covers${query}`, { method: 'POST', body: form });
 
   return {
-    isbn: firstValue(book, 'isbn13', 'isbn'),
-    title: firstValue(book, 'title') || '',
-    author: firstValue(book, 'author', 'authors') || '',
-    publisher: firstValue(book, 'publisher'),
-    publishedDate: firstValue(book, 'publishedDate', 'pubDate'),
-    coverUrl: firstValue(book, 'coverUrl', 'cover'),
-    totalPages: Number.isFinite(pages) && pages > 0 ? pages : null,
-    // 장르 자동 분류(genreApi.classifyGenre)의 rawCategory로 넘길 알라딘 원본 분류 문자열
-    category: firstValue(book, 'category', 'rawCategory', 'categoryName') || '',
-    raw: res,
+    // 하이픈·공백이 제거된 숫자 문자열. 표지에서 못 찾으면 null이다.
+    isbn: res.isbn ?? null,
+    titleCandidate: res.title_candidate ?? '',
+    authorCandidates: res.author_candidates ?? [],
+    lines: res.lines ?? [],
+    bookId: res.book_id ?? null,
+    alreadyRegistered: Boolean(res.already_registered),
+    // backend-book /search 결과(서재 도서 또는 알라딘 조회 결과). 못 찾으면 null.
+    book: res.book ?? null,
+    requestId: res.request_id ?? null,
   };
 }

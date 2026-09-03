@@ -58,6 +58,42 @@ export async function listLibraryBooks() {
 }
 
 /**
+ * ISBN으로 도서 정보 조회 (backend-book BookDiscoveryController).
+ *
+ * GET /api/v1/books/search?isbn=... → { alreadyRegistered, libraryBook, book }
+ *  - alreadyRegistered=true : 이미 내 서재에 있는 책. libraryBook(LibraryBookDetailResponse)이 온다.
+ *  - alreadyRegistered=false: 알라딘 조회 결과 book(ExternalBook). 어디에도 없으면 book도 null.
+ *
+ * 두 DTO 모두 title/author/isbn/publisher/totalPages/coverUrl을 갖고 있어 하나로 합쳐
+ * 돌려준다(장르·bookId는 서재 도서에만 있다).
+ *
+ * @param {string} isbn - 하이픈 없는 ISBN 문자열
+ * @returns {Promise<{alreadyRegistered: boolean, bookId: any, book: object|null}>}
+ */
+export async function searchBookByIsbn(isbn) {
+  const res = await authFetch(`/books/search?isbn=${encodeURIComponent(isbn)}`);
+  const found = res?.libraryBook ?? res?.book ?? null;
+
+  return {
+    alreadyRegistered: Boolean(res?.alreadyRegistered),
+    bookId: res?.libraryBook?.bookId ?? null,
+    book: found
+      ? {
+        title: found.title ?? '',
+        author: found.author ?? '',
+        isbn: found.isbn ?? isbn,
+        publisher: found.publisher ?? null,
+        publishedDate: found.publishedDate ?? null,
+        totalPages: found.totalPages ?? null,
+        coverUrl: found.coverUrl ?? null,
+        // 서재에 있는 책이면 저장된 장르를 그대로 쓸 수 있다 (알라딘 결과엔 없음).
+        genre: found.genre ?? null,
+      }
+      : null,
+  };
+}
+
+/**
  * 도서 상세 조회 (목록엔 없는 currentPage/totalPages/isbn 등 포함).
  */
 export function getLibraryBook(bookId) {
