@@ -2,12 +2,18 @@ import { createWorker } from 'tesseract.js';
 
 // 오렌지 UI와 어울리는 책 색상 팔레트 (RegisterBook과 동일 소스)
 export const colorPresets = [
-  { spine: '#c96b32', cover: '#e8944a' }, // 앰버
-  { spine: '#8b4513', cover: '#b5651d' }, // 새들브라운
-  { spine: '#a0522d', cover: '#cd853f' }, // 시에나
-  { spine: '#d4763e', cover: '#f2a365' }, // 피치
-  { spine: '#6b3a2a', cover: '#8c5a3c' }, // 다크 코코아
-  { spine: '#bf7830', cover: '#e0a050' }, // 골든
+  { spine: '#7d4b3a', cover: '#a86a4c' }, // 브라운
+  { spine: '#2f4858', cover: '#3d6070' }, // 딥블루그레이
+  { spine: '#6b6b47', cover: '#8a8a5c' }, // 올리브
+  { spine: '#8c3b3b', cover: '#b25050' }, // 버건디
+  { spine: '#3a5a40', cover: '#588157' }, // 포레스트그린
+  { spine: '#4a4058', cover: '#6d5f80' }, // 플럼
+  { spine: '#b08968', cover: '#ddb892' }, // 샌드
+  { spine: '#31363f', cover: '#4b515c' }, // 차콜
+  { spine: '#c96b32', cover: '#e8944a' }, // 앰버 (기존 유지)
+  { spine: '#1e3d59', cover: '#2a5a87' }, // 네이비
+  { spine: '#5d4e75', cover: '#8b7ca3' }, // 라벤더그레이
+  { spine: '#2d5a27', cover: '#3e7a36' }, // 딥그린
 ];
 
 function hexToRgb(hex) {
