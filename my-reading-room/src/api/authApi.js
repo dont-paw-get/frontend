@@ -54,6 +54,18 @@ async function parseBody(res) {
 }
 
 /**
+ * 응답이 JSON이 아니라 HTML인지 판별한다.
+ *
+ * API 경로가 백엔드로 라우팅되지 않으면(배포 환경의 CloudFront SPA fallback,
+ * 프록시 설정 누락 등) 프론트엔드의 index.html이 200으로 돌아온다. 이때 본문을
+ * 문자열 그대로 넘기면 호출부는 필드가 전부 undefined인 '빈 응답'으로 오해하고
+ * 엉뚱한 곳을 디버깅하게 되므로, 여기서 원인을 밝혀 에러로 만든다.
+ */
+function looksLikeHtml(body) {
+  return typeof body === 'string' && /^\s*<(!doctype|html)/i.test(body);
+}
+
+/**
  * API 에러 객체. status와 백엔드가 준 code/detail을 담는다.
  */
 export class ApiError extends Error {
@@ -155,7 +167,14 @@ export async function authFetch(path, { method = 'GET', body, auth = true, _retr
     throw new ApiError(res.status, await parseBody(res));
   }
 
-  return parseBody(res);
+  // 이름이 authFetch의 요청 body와 겹치지 않도록 data로 받는다.
+  const data = await parseBody(res);
+  if (looksLikeHtml(data)) {
+    throw new ApiError(res.status, {
+      detail: `API가 JSON 대신 HTML을 반환했습니다 (${API_BASE}${path}). 요청이 백엔드로 라우팅되지 않고 있습니다 — 배포 환경이면 CloudFront의 /api 동작과 VITE_API_BASE_URL을, 로컬이면 vite.config.js의 프록시 설정을 확인하세요.`,
+    });
+  }
+  return data;
 }
 
 // ============================================================

@@ -25,5 +25,19 @@ npm run dev      # 개발 서버 (http://localhost:5173)
 
 ## 로컬 백엔드 프록시
 
-개발 서버는 `/api` 요청을 `http://127.0.0.1:8000`으로 프록시합니다(`vite.config.js`).
-백엔드를 로컬에서 함께 띄우면 별도 설정 없이 연동됩니다.
+개발 서버는 `/api` 요청을 경로별로 각 백엔드에 프록시합니다(`vite.config.js`).
+
+| 경로 | 서비스 | 기본 대상 |
+|---|---|---|
+| `/api/v1/ocr/*` | backend-record | `http://127.0.0.1:8002` |
+| `/api/v1/books`, `/api/v1/library/*`, `/api/v1/librarian*` | backend-book | `http://127.0.0.1:8080` |
+| `/api/v1/classify-genre` | backend-discovery | `AUTH_API`와 동일 |
+| 그 외 `/api/*` (auth, users, terms) | backend-auth | `http://127.0.0.1:8000` |
+
+로컬에 띄우지 않은 서비스는 `.env.local`에 배포된 주소를 넣으면 됩니다
+(`AUTH_API` / `RECORD_API` / `BOOK_API` / `DISCOVERY_API`, `.env.example` 참고).
+넷 다 배포된 dev 주소를 넣으면 로컬 백엔드 없이 개발할 수 있습니다.
+`.env.local`과 `vite.config.js`는 개발 서버 시작 시에만 읽으므로 변경 후 재시작이 필요합니다.
+
+`VITE_API_BASE_URL`을 채우면 프록시를 거치지 않고 브라우저가 그 주소로 직접
+요청합니다. 이 경우 백엔드의 CORS 허용 오리진에 개발 서버 주소가 있어야 합니다.

@@ -17,13 +17,43 @@ GitHub Actions (push)
         ▼
   S3 버킷 (비공개, 오리진 전용) ──origin──▶ CloudFront 배포 ──▶ 사용자
                                               │
-                                    /api/*   (없음 — 백엔드는 별도 도메인 api.xxx.com 직접 호출)
+                                    /api/*   → 각 백엔드 ALB (아래 "API 라우팅" 참고)
 CloudWatch: CloudFront 표준 로그 + 5xx 에러율 알람
 ```
 
-프론트엔드는 `VITE_API_BASE_URL`(예: `https://api.xxx.com/api/v1`)을 빌드 타임에 주입해
-백엔드를 별도 도메인으로 직접 호출합니다. 백엔드 CORS 설정에 CloudFront 도메인(및 커스텀 도메인)을
-허용 오리진으로 추가해야 합니다.
+### API 라우팅
+
+프론트엔드는 `VITE_API_BASE_URL`이 비어 있으면 같은 오리진의 `/api/v1`을 호출합니다
+(`src/api/authApi.js`). 그런데 백엔드는 auth / record / book / discovery 네 서비스가
+**각각 다른 ALB**에 있어서, 단일 `VITE_API_BASE_URL` 하나로는 전부 커버할 수 없습니다.
+
+그래서 **CloudFront에 `/api/*` 동작(behavior)을 두어 경로별로 각 백엔드 ALB를 오리진으로
+붙이는 방식**을 씁니다. 로컬 개발 서버의 프록시(`vite.config.js`)와 같은 구조입니다.
+
+| 경로 패턴 | 오리진 |
+|---|---|
+| `/api/v1/ocr/*` | backend-record ALB |
+| `/api/v1/books*`, `/api/v1/library/*`, `/api/v1/librarian*` | backend-book ALB |
+| `/api/v1/classify-genre` | backend-discovery ALB |
+| `/api/*` | backend-auth ALB |
+
+각 API 동작에는 **캐시 정책 `CachingDisabled`**, **오리진 요청 정책 `AllViewer`**
+(Authorization 헤더와 쿠키를 오리진까지 전달), 허용 HTTP 메서드에 `POST`/`PATCH`/`DELETE` 포함이
+필요합니다. 오리진 프로토콜은 **HTTP only**로 둡니다 — 각 ALB가 80만 listen하기 때문입니다.
+
+이 구성에서는 `VITE_API_BASE_URL`을 **비워 둡니다**. 같은 오리진이라 CORS 설정도,
+refresh 토큰 쿠키의 도메인 문제도 없습니다.
+
+> ⚠️ `/api/*` 동작을 만들지 않으면 아래 "오류 페이지" 설정(404/403 → `/index.html` 200) 때문에
+> **API 요청이 `index.html`을 200으로 돌려받습니다.** 프론트는 JSON 파싱에 실패한 응답을
+> 감지해 "API가 JSON 대신 HTML을 반환했습니다"라는 에러를 던지니, 이 메시지가 보이면
+> 이 설정이 빠진 것입니다.
+
+백엔드를 굳이 별도 도메인(`https://api.xxx.com`)으로 직접 호출하려면 `VITE_API_BASE_URL`을
+빌드 타임에 주입하고, 그 도메인 하나가 네 서비스를 경로로 라우팅하도록
+(ALB Ingress Group 등) 구성해야 합니다. 이 경우 각 백엔드 CORS 허용 오리진에
+CloudFront 도메인(및 커스텀 도메인)을 추가하고, ALB에 HTTPS를 열어야 합니다
+(HTTPS 페이지에서 HTTP API를 호출하면 브라우저가 mixed content로 차단합니다).
 
 dev/prod 각각 아래 절차를 **두 번** 반복해서 완전히 분리된 리소스를 만드세요.
 
@@ -107,7 +137,11 @@ dev/prod 각각 별도 IAM 사용자를 만들어 자격 증명을 분리하는 
 | `AWS_REGION` | Variable | `ap-northeast-2` | `ap-northeast-2` |
 | `S3_BUCKET` | Variable | `my-reading-room-dev` | `my-reading-room-prod` |
 | `CLOUDFRONT_DISTRIBUTION_ID` | Variable | `E1XXXXXXXXXXX` | `E2XXXXXXXXXXX` |
-| `VITE_API_BASE_URL` | Variable | `https://api-dev.xxx.com/api/v1` | `https://api.xxx.com/api/v1` |
+| `VITE_API_BASE_URL` | Variable | (비움) | (비움) |
+
+`VITE_API_BASE_URL`은 위 "API 라우팅"의 CloudFront `/api/*` 동작을 쓰는 경우 **비워 둡니다**
+(값이 없으면 같은 오리진의 `/api/v1`을 호출). 백엔드를 별도 도메인으로 직접 호출하는 구성일
+때만 `https://api-dev.xxx.com/api/v1` 형태로 채웁니다.
 
 `prod` 환경은 Settings → Environments → `prod` → **Deployment branches** 를 `main`으로 제한해서
 실수로 다른 브랜치에서 prod 시크릿을 사용하지 못하도록 막아두는 것을 권장합니다.
@@ -117,5 +151,7 @@ dev/prod 각각 별도 IAM 사용자를 만들어 자격 증명을 분리하는 
 1. `develop` 브랜치에 push → Actions 탭에서 `Deploy to Dev` 워크플로우 실행 확인
 2. CloudFront 배포 도메인(`dxxxxxxx.cloudfront.net`)으로 접속해 사이트 정상 로딩 확인
 3. 브라우저에서 존재하지 않는 경로(`/foo/bar`) 접속 시 404 대신 SPA가 정상 렌더링되는지 확인 (2단계 오류 페이지 설정 검증)
-4. 사서 채팅 기능을 사용해 `VITE_API_BASE_URL`이 올바르게 백엔드와 통신하는지 확인 (백엔드 CORS에 CloudFront 도메인이 허용되어 있어야 함)
+4. 로그인과 책 등록(ISBN 촬영)을 해서 API가 실제 백엔드로 라우팅되는지 확인
+   - "API가 JSON 대신 HTML을 반환했습니다" 에러가 뜨면 `/api/*` 동작이 없어 SPA fallback에 걸린 것입니다
+   - 브라우저 개발자도구 Network 탭에서 `/api/v1/...` 응답의 Content-Type이 `application/json`인지 봅니다
 5. `main` 브랜치 병합 후 동일하게 `Deploy to Prod` 확인
