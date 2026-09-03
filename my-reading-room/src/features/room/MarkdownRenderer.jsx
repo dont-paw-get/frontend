@@ -2,6 +2,8 @@
  * 마크다운 형식의 AI 사서 답변 텍스트를 파싱하여 깔끔한 React 컴포넌트로 렌더링하는 뷰어
  */
 
+import { genreLabel } from '../../data/genres';
+
 /**
  * 인라인 볼드(**...**), <br> 태그 및 특수문자를 React 노드로 안전하게 변환
  */
@@ -38,8 +40,10 @@ function renderInline(text) {
  * - type='recommend' (### 📖): [서재에 등록 ➔] 버튼
  * - type='library'   (### 📚): [책 열기 ➔] 버튼
  */
-function BookCardView({ type = 'recommend', title, author, reason, status, bookData, onRegister, onOpenDetail, keyPrefix }) {
+function BookCardView({ type = 'recommend', title, author, reason, status, genre, bookData, onRegister, onOpenDetail, keyPrefix }) {
   const isLibrary = type === 'library';
+  // 백엔드 표준 장르 Enum(예: SCIENCE_FICTION) → 한글 라벨(SF). NONE/미매핑/빈값은 미표시.
+  const genreText = !isLibrary && genre && genre !== 'NONE' ? genreLabel(genre) : '';
 
   return (
     <div
@@ -137,6 +141,24 @@ function BookCardView({ type = 'recommend', title, author, reason, status, bookD
             <span>👤 {author}</span>
           </div>
         )}
+        {genreText && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 11.5,
+              color: 'var(--accent, #6366f1)',
+              backgroundColor: 'rgba(99, 102, 241, 0.08)',
+              padding: '2px 8px',
+              borderRadius: 4,
+              width: 'fit-content',
+              fontWeight: 600,
+            }}
+          >
+            <span>🏷️ {genreText}</span>
+          </div>
+        )}
         {status && (
           <div
             style={{
@@ -209,6 +231,7 @@ export default function MarkdownRenderer({ text, recommendedBooks = [], onRegist
           author={currentBook.author}
           reason={currentBook.reason}
           status={currentBook.status}
+          genre={currentBook.genre}
           bookData={currentBook.bookData}
           onRegister={onRegister}
           onOpenDetail={onOpenDetail}
@@ -271,6 +294,7 @@ export default function MarkdownRenderer({ text, recommendedBooks = [], onRegist
         title,
         author: matchedRec?.author || '',
         reason: matchedRec?.reason || '',
+        genre: matchedRec?.genre || '',
         bookData: matchedRec || { title, author: '', page_count: null, totalPage: null },
       };
       return;
@@ -303,6 +327,15 @@ export default function MarkdownRenderer({ text, recommendedBooks = [], onRegist
         const rawReason = trimmed.replace(/^[-*•]\s*\*\*추천\s*이유\*\*\s*[:：]\s*/, '').trim();
         if (!currentBook.reason) {
           currentBook.reason = rawReason;
+        }
+        return;
+      }
+      if (/^[-*•]\s*\*\*장르\*\*\s*[:：]\s*/.test(trimmed)) {
+        // 장르 라인은 카드 칩으로 표시하므로 일반 목록(<li>)으로 새지 않도록 소비한다.
+        // 표시값은 구조화 필드(matchedRec.genre)를 우선 사용하되, 없으면 마크다운의
+        // Enum 텍스트를 fallback으로 채운다(예: 'MYSTERY_THRILLER').
+        if (!currentBook.genre) {
+          currentBook.genre = trimmed.replace(/^[-*•]\s*\*\*장르\*\*\s*[:：]\s*/, '').trim();
         }
         return;
       }
