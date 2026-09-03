@@ -59,6 +59,30 @@ export async function createOcrSentence({
   };
 }
 
+// ISBN-13 본체: 978/979 접두사 + 10자리. 바코드 옆 부가기호(03330 등)나
+// 정가 표기가 같은 줄에 섞여 들어와도 이 패턴만 뽑아낸다.
+const ISBN13_RE = /97[89]\d{10}/;
+
+/**
+ * OCR로 인식된 줄 목록에서 ISBN-13을 찾는다.
+ *
+ * backend-record도 같은 일을 하지만(app/services/bedrock_ocr.py `_extract_isbn`),
+ * 줄에서 숫자만 남긴 뒤 '앞 13자리'만 검사해서 ISBN 앞에 다른 숫자가 붙은 줄
+ * (예: '값 15,000원 ISBN 978-89-349-3960-3')을 놓친다. OCR 결과의 줄 분할은
+ * 실행마다 달라지므로, 응답의 isbn이 비어 있을 때 여기서 한 번 더 찾는다.
+ *
+ * @param {string[]} lines
+ * @returns {string|null}
+ */
+function findIsbnInLines(lines) {
+  for (const line of lines) {
+    const digits = String(line).replace(/\D/g, '');
+    const matched = digits.match(ISBN13_RE);
+    if (matched) return matched[0];
+  }
+  return null;
+}
+
 /**
  * 표지/바코드 사진을 업로드해 ISBN과 제목·저자 후보를 인식한다 (CLIAR-154 후속).
  *
@@ -85,12 +109,14 @@ export async function createOcrCover({ imageFile, modelId = null }) {
   const query = modelId ? `?model_id=${encodeURIComponent(modelId)}` : '';
   const res = await authFetch(`/ocr/covers${query}`, { method: 'POST', body: form });
 
+  const lines = res.lines ?? [];
+
   return {
-    // 하이픈·공백이 제거된 숫자 문자열. 표지에서 못 찾으면 null이다.
-    isbn: res.isbn ?? null,
+    // 하이픈·공백이 제거된 숫자 문자열. 서버가 못 찾았으면 인식된 줄에서 직접 찾는다.
+    isbn: res.isbn ?? findIsbnInLines(lines),
     titleCandidate: res.title_candidate ?? '',
     authorCandidates: res.author_candidates ?? [],
-    lines: res.lines ?? [],
+    lines,
     bookId: res.book_id ?? null,
     alreadyRegistered: Boolean(res.already_registered),
     // backend-book /search 결과(서재 도서 또는 알라딘 조회 결과). 못 찾으면 null.

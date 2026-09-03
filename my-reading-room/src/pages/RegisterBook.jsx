@@ -192,7 +192,17 @@ export default function RegisterBook() {
           setOcrError(describeCoverOcrError(err));
         }
       } else {
-        setOcrError('ISBN을 찾지 못했어요. 바코드 아래 13자리 숫자가 보이도록 다시 찍거나, 아래에서 직접 입력해 주세요.');
+        /*
+         * /ocr/covers는 ISBN을 못 찾아도 200에 isbn=null로 응답한다. 이때
+         * 무엇이 인식됐는지 보여 줘야 다시 찍을지 직접 입력할지 판단할 수 있다.
+         * (숫자가 아예 없으면 바코드가 안 찍힌 것, 숫자가 있는데도 실패하면
+         *  backend-record의 ISBN 추출이 걸러낸 것)
+         */
+        const recognized = cover.lines.slice(0, 3).join(' / ');
+        setOcrError(
+          `ISBN을 찾지 못했어요. 바코드 아래 13자리 숫자가 보이도록 다시 찍거나, 아래에서 직접 입력해 주세요.${recognized ? ` (인식된 텍스트: ${recognized})` : ''}`
+        );
+        console.warn('[RegisterBook] /ocr/covers 응답에 ISBN이 없습니다.', cover);
       }
 
       const nextTitle = found?.title || cover.titleCandidate || '';
