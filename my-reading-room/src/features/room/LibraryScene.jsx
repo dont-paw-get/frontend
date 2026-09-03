@@ -9,7 +9,7 @@ import LibrarianChat from './LibrarianChat';
 import LibrarianCursor from './LibrarianCursor';
 import BookDetail from './BookDetail';
 import { getLibrarian } from '../../data/librarians';
-import { useLibrarian } from '../../store/librarianStore';
+import { useLibrarian, loadSavedChatSession } from '../../store/librarianStore';
 import { toKoreanStatus } from '../../api/bookApi';
 import {
   BG_SRC_CAT,
@@ -140,7 +140,11 @@ export default function LibraryScene() {
   const [calibrating, setCalibrating] = useState(false);
   // 사서 상태는 전역(LibrarianProvider) — Gnb·사서 프로필 페이지와 공유
   const { activeId: librarianId, setActiveId, librarian, names } = useLibrarian();
-  const [chatAnswer, setChatAnswer] = useState(null);
+  // CLIAR-257: 추천 도서 등록 후 복귀 시 이전 대화/추천 카드 유지를 위해 sessionStorage에서 복원
+  const [chatAnswer, setChatAnswer] = useState(() => {
+    const saved = loadSavedChatSession();
+    return saved?.answer || null;
+  });
   const sceneRef = useRef(null);
 
   const switchLibrarian = (id) => {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBooks } from '../../store/booksStore';
 import { answerQuestion } from './chatEngine';
@@ -7,7 +7,7 @@ import { getUserLocation } from '../../api/geolocation';
 import { formatRecommendedBooks, extractLibraryBooksFromAnswer, getColorIndex, getBookThickness } from './bookExtractor';
 import MarkdownRenderer from './MarkdownRenderer';
 import WeatherMoodBadge from './WeatherMoodBadge';
-import { useLibrarian } from '../../store/librarianStore';
+import { useLibrarian, loadSavedChatSession, saveChatSession } from '../../store/librarianStore';
 import { toKoreanStatus } from '../../api/bookApi';
 
 // 백엔드(discovery) ChatRequest.message max_length와 동일하게 맞춘다 (CLIAR-184/185)
@@ -76,12 +76,36 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   const { books } = useBooks();
   const { names: librarianNames } = useLibrarian();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+
+  // CLIAR-257: 추천 도서 등록 후 뒤로가기 시 대화/추천 카드 복원
+  const [open, setOpen] = useState(() => {
+    const saved = loadSavedChatSession();
+    if (saved?.open !== undefined) return saved.open;
+    return Boolean(answer?.text);
+  });
   const [input, setInput] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState(null); // 백엔드 세션 ID 유지
-  const [lastUserMessage, setLastUserMessage] = useState(''); // 직전 질문 기억 (사서 전환 시 자동 질의용)
+  const [sessionId, setSessionId] = useState(() => {
+    const saved = loadSavedChatSession();
+    return saved?.sessionId || answer?.sessionId || null;
+  });
+  const [lastUserMessage, setLastUserMessage] = useState(() => {
+    const saved = loadSavedChatSession();
+    return saved?.lastUserMessage || '';
+  });
+
+  // CLIAR-257: 대화 응답이나 세션 정보 변경 시 sessionStorage에 동기화
+  useEffect(() => {
+    if (answer || sessionId || lastUserMessage) {
+      saveChatSession({
+        answer,
+        sessionId,
+        lastUserMessage,
+        open,
+      });
+    }
+  }, [answer, sessionId, lastUserMessage, open]);
 
   // 1. 내 서재 도서 조회 결과 (ADR 0006: 백엔드 response.library_books 또는 ### 📚 마크다운 블록 또는 내 서재 본문 매칭)
   const backendLibraryBooks = useMemo(
@@ -161,6 +185,14 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
     //    남겨 RegisterBook이 미지정 처리하도록 한다(classify-genre는 ISBN 전용이라
     //    title/author 재분류로는 못 채움).
     const genre = matchedBook?.genre || book.genre || undefined;
+
+    // CLIAR-257: 추천 도서 등록 화면으로 이동하기 직전 현재 대화 상태를 sessionStorage에 저장
+    saveChatSession({
+      answer,
+      sessionId,
+      lastUserMessage,
+      open: true, // 복귀 시 패널이 열린 상태로 복원되도록
+    });
 
     navigate('/register', {
       state: {

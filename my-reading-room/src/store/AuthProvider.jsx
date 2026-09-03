@@ -9,6 +9,7 @@ import {
   setOnSessionExpired,
   getMe,
 } from '../api/authApi';
+import { clearChatSession } from './librarianStore';
 
 /**
  * 인증 전역 상태 (CLIAR-163).
@@ -27,6 +28,7 @@ export function AuthProvider({ children }) {
   // refresh 실패(세션 만료) 시 상태 초기화
   useEffect(() => {
     setOnSessionExpired(() => {
+      clearChatSession();
       setMember(null);
       setStatus('unauthenticated');
     });
@@ -70,6 +72,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     await apiLogout();
+    clearChatSession();
     setMember(null);
     setStatus('unauthenticated');
   }, []);
