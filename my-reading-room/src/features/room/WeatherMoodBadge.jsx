@@ -122,7 +122,8 @@ function WeatherChip({ weather }) {
 export default function WeatherMoodBadge({ signals }) {
   if (!signals) return null;
 
-  const { weather, time_of_day: timeOfDay, mood, genre_focus: genreFocus } = signals;
+  // genre_focus는 표시하지 않으므로(CLIAR-244) 구조분해에서 제외한다.
+  const { weather, time_of_day: timeOfDay, mood } = signals;
   const chips = [];
 
   // 날씨 칩 (condition이 있고 none이 아닐 때만)
@@ -148,14 +149,11 @@ export default function WeatherMoodBadge({ signals }) {
     );
   }
 
-  // 장르 포커스 칩
-  if (genreFocus) {
-    chips.push(
-      <span key="genre" style={{ ...chipStyle, borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}>
-        📚 {genreFocus}
-      </span>
-    );
-  }
+  // 장르 포커스 칩은 표시하지 않는다 (CLIAR-244).
+  // signals.genre_focus는 사서가 대화 무드로 자유 판단한 값이라 16개 표준 장르
+  // Enum과 무관하고 실제 추천 도서 장르와 어긋난다(예: 에세이 추천에 상단 '미스터리').
+  // 각 도서의 실제 표준 장르는 추천 카드(📖) 내부 칩(recommended_books[i].genre)에서
+  // 저자 옆에 표시하므로, 상단에는 날씨/시간대/무드만 남긴다.
 
   if (chips.length === 0) return null;
 

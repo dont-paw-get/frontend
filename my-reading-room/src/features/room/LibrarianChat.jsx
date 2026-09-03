@@ -156,6 +156,11 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
           : typeof book.totalPage === 'number' && Number.isFinite(book.totalPage)
             ? book.totalPage
             : null;
+    // 3. "장르" 입력란 -> recommended_books[i].genre 사용 (16개 표준 Enum). (CLIAR-244)
+    //    추천 시점에 판단된 장르를 그대로 등록 폼에 자동 매칭한다. 없으면 undefined로
+    //    남겨 RegisterBook이 미지정 처리하도록 한다(classify-genre는 ISBN 전용이라
+    //    title/author 재분류로는 못 채움).
+    const genre = matchedBook?.genre || book.genre || undefined;
 
     navigate('/register', {
       state: {
@@ -165,6 +170,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
           author,
           page_count: pageCount,
           totalPage: pageCount,
+          genre,
           currentPage: book.currentPage ?? 0,
           colorIdx: book.colorIdx ?? getColorIndex(title),
           thickness: book.thickness ?? getBookThickness(pageCount),
