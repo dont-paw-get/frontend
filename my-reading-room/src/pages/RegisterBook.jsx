@@ -202,7 +202,7 @@ export default function RegisterBook() {
         setOcrError(
           `ISBN을 찾지 못했어요. 바코드 아래 13자리 숫자가 보이도록 다시 찍거나, 아래에서 직접 입력해 주세요.${recognized ? ` (인식된 텍스트: ${recognized})` : ''}`
         );
-        console.warn('[RegisterBook] /ocr/covers 응답에 ISBN이 없습니다.', cover);
+        console.warn('[RegisterBook] /ocr/covers 응답에 ISBN이 없습니다. 서버 원본 응답:', cover.raw);
       }
 
       const nextTitle = found?.title || cover.titleCandidate || '';

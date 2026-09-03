@@ -100,7 +100,8 @@ function findIsbnInLines(lines) {
  * @param {File} params.imageFile - 촬영/선택한 이미지 파일 (image/jpeg 또는 image/png, 최대 50MB)
  * @param {string|null} [params.modelId] - 사용할 Bedrock 모델 ID (미지정 시 서버 설정값)
  * @returns {Promise<{isbn: string|null, titleCandidate: string, authorCandidates: string[],
- *   lines: string[], bookId: any, alreadyRegistered: boolean, book: object|null, requestId: string|null}>}
+ *   lines: string[], bookId: any, alreadyRegistered: boolean, book: object|null,
+ *   requestId: string|null, raw: any}>}
  */
 export async function createOcrCover({ imageFile, modelId = null }) {
   const form = new FormData();
@@ -122,5 +123,7 @@ export async function createOcrCover({ imageFile, modelId = null }) {
     // backend-book /search 결과(서재 도서 또는 알라딘 조회 결과). 못 찾으면 null.
     book: res.book ?? null,
     requestId: res.request_id ?? null,
+    // 응답 형식이 예상과 다를 때 원인을 파악하기 위한 원본 응답.
+    raw: res,
   };
 }
