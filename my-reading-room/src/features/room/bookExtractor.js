@@ -90,6 +90,7 @@ export function formatRecommendedBooks(recommendedBooks) {
       author: author || '미상',
       page_count: pageCount,
       totalPage: pageCount, // 확인 불가 시 null -> 수동 입력 유도
+      genre: b.genre || 'NONE', // 추천 시점 판단된 표준 장르 Enum (CLIAR-244)
       currentPage: 0,
       colorIdx: getColorIndex(title),
       thickness: getBookThickness(pageCount),
