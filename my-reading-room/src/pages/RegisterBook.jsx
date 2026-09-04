@@ -441,7 +441,33 @@ export default function RegisterBook() {
             </div>
           )}
 
-          {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중입니다...</span>}
+          {ocrLoading && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 12px',
+                background: 'var(--code-bg)',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                fontSize: 13,
+                color: 'var(--text)',
+              }}
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid transparent',
+                  borderTop: '2px solid var(--accent)',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
+              ISBN 인식 중입니다...
+            </div>
+          )}
           {ocrError && <span style={{ fontSize: 13, color: '#e05a4e' }}>{ocrError}</span>}
           {ocrNotice && <span style={{ fontSize: 13, color: 'var(--text-h)' }}>{ocrNotice}</span>}
           {isbn && !ocrLoading && (
@@ -520,7 +546,21 @@ export default function RegisterBook() {
                   {
                     key: 'genre',
                     // CLIAR-241: 자동 분류 결과를 기본값으로, 수정 모드에서 변경 가능
-                    label: genreLoading ? '장르 (분류 중...)' : '장르',
+                    label: genreLoading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <div
+                          style={{
+                            width: 12,
+                            height: 12,
+                            border: '1.5px solid transparent',
+                            borderTop: '1.5px solid var(--accent)',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                          }}
+                        />
+                        장르 (분류 중...)
+                      </span>
+                    ) : '장르',
                     node: editing ? (
                       <select value={genre} onChange={(e) => setGenre(e.target.value)} style={compactFieldStyle}>
                         <option value={GENRE_NONE}>미지정</option>
@@ -627,8 +667,24 @@ export default function RegisterBook() {
               background: allFilled && !submitting ? 'var(--accent)' : 'var(--border)',
               color: allFilled && !submitting ? '#fff' : 'var(--text)',
               cursor: allFilled && !submitting ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
             }}
           >
+            {submitting && (
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid transparent',
+                  borderTop: '2px solid currentColor',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
+            )}
             {submitting ? '등록 중...' : '등록하고 서재에 꽂기'}
           </button>
         </div>
