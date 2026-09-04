@@ -5,7 +5,7 @@ import { getLibraryBook, toReadingStatus } from '../../api/bookApi'
 import { GENRE_NONE, genreLabel } from '../../data/genres'
 import SentenceCollectModal from './SentenceCollectModal'
 import ScrapGallery from './ScrapGallery'
-import { highResCoverUrl } from '../../lib/coverImage'
+import { coverImageSrc, onFallbackCover } from '../../lib/coverImage'
 
 const STATUS_OPTIONS = ['시작전', '읽는 중', '잠시 멈춤', '완독']
 
@@ -395,27 +395,24 @@ export default function BookDetail({ book, onClose }) {
             {book.title}
           </h3>
 
-          {/* 책 표지 — 제목 바로 아래 가운데 정렬. ISBN 조회로 받은 이미지가 있을 때만 표시 */}
-          {coverUrl && (
-            <div style={{ marginBottom: 12 }}>
-              <img
-                src={highResCoverUrl(coverUrl)}
-                alt={`${book.title} 표지`}
-                style={{
-                  width: '70%',
-                  height: 'auto',
-                  display: 'block',
-                  margin: '0 auto',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                }}
-                onError={(e) => {
-                  e.currentTarget.parentElement.style.display = 'none'
-                }}
-              />
-            </div>
-          )}
+          {/* 책 표지 — 제목 바로 아래 가운데 정렬. 표지 URL이 없으면 기본 표지를 쓴다 */}
+          <div style={{ marginBottom: 12 }}>
+            <img
+              src={coverImageSrc(coverUrl)}
+              alt={`${book.title} 표지`}
+              style={{
+                width: '70%',
+                height: 'auto',
+                display: 'block',
+                margin: '0 auto',
+                background: '#fff',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              }}
+              onError={onFallbackCover}
+            />
+          </div>
 
           {/*
            * 표지 아래 메타 정보 한 줄 (저자·장르·진행 상태·페이지) — CLIAR-241.

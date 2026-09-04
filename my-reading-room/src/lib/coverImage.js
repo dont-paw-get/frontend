@@ -15,6 +15,12 @@
 const COVER_SIZE_SEGMENT = /\/cover(?:sum|small|mid|big|\d+)\//i;
 
 /**
+ * 표지 URL이 없거나 이미지 로드에 실패했을 때 쓰는 기본 표지 (public/books.webp).
+ * <img onError>에서 이 값으로 바꿀 때 무한 루프를 막으려면 onFallbackCover를 함께 쓴다.
+ */
+export const DEFAULT_COVER_SRC = '/books.webp';
+
+/**
  * 표지 URL을 고화질(cover500) 버전으로 바꿔 준다.
  *
  * - 값이 없거나 문자열이 아니면 그대로 반환한다(호출부에서 falsy 체크 그대로 사용 가능).
@@ -27,4 +33,28 @@ const COVER_SIZE_SEGMENT = /\/cover(?:sum|small|mid|big|\d+)\//i;
 export function highResCoverUrl(url, size = 'cover500') {
   if (typeof url !== 'string' || !url) return url;
   return url.replace(COVER_SIZE_SEGMENT, `/${size}/`);
+}
+
+/**
+ * <img src>에 바로 넣을 표지 경로를 돌려준다.
+ * 유효한 URL이면 고화질로 변환하고, 없으면 기본 표지(DEFAULT_COVER_SRC)를 쓴다.
+ *
+ * @param {string|null|undefined} url - 원본 표지 URL
+ * @param {string} [size='cover500'] - 고화질 구간 이름
+ * @returns {string} 항상 문자열(표시 가능한 src)
+ */
+export function coverImageSrc(url, size = 'cover500') {
+  const hi = highResCoverUrl(url, size);
+  return typeof hi === 'string' && hi ? hi : DEFAULT_COVER_SRC;
+}
+
+/**
+ * <img onError> 핸들러 — 로드 실패 시 기본 표지로 한 번만 교체한다(무한 루프 방지).
+ * @param {import('react').SyntheticEvent<HTMLImageElement>} e
+ */
+export function onFallbackCover(e) {
+  const img = e.currentTarget;
+  if (img.dataset.fallbackApplied) return;
+  img.dataset.fallbackApplied = '1';
+  img.src = DEFAULT_COVER_SRC;
 }

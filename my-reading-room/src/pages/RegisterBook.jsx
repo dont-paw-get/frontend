@@ -9,7 +9,7 @@ import { searchBookByIsbn, normalizeBookInfo, toReadingStatus } from '../api/boo
 import { setVisual } from '../store/bookVisuals';
 import { ApiError } from '../api/authApi';
 import { getBookThickness } from '../features/room/bookExtractor';
-import { highResCoverUrl } from '../lib/coverImage';
+import { coverImageSrc, onFallbackCover } from '../lib/coverImage';
 
 /**
  * 표지 OCR(ISBN 인식) 실패 원인을 사용자에게 구체적으로 안내한다.
@@ -478,23 +478,20 @@ export default function RegisterBook() {
             </p>
           ) : (
             <>
-              {/* 책 표지 — 인식 결과 맨 위. ISBN 조회로 받은 이미지가 있을 때만 표시 */}
-              {extraMeta.coverUrl && (
-                <img
-                  src={highResCoverUrl(extraMeta.coverUrl)}
-                  alt={title ? `${title} 표지` : '책 표지'}
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    display: 'block',
-                    borderRadius: 6,
-                    border: '1px solid var(--border)',
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              )}
+              {/* 책 표지 — 인식 결과 맨 위. 표지 URL이 없으면 기본 표지를 쓴다 */}
+              <img
+                src={coverImageSrc(extraMeta.coverUrl)}
+                alt={title ? `${title} 표지` : '책 표지'}
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'block',
+                  background: '#fff',
+                  borderRadius: 6,
+                  border: '1px solid var(--border)',
+                }}
+                onError={onFallbackCover}
+              />
 
               {/*
                * 표지 아래 인식 정보(제목·저자·장르)를 컴팩트하게 세로로 모은다.
