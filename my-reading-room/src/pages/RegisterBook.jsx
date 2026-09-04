@@ -9,6 +9,7 @@ import { searchBookByIsbn, normalizeBookInfo, toReadingStatus } from '../api/boo
 import { setVisual } from '../store/bookVisuals';
 import { ApiError } from '../api/authApi';
 import { getBookThickness } from '../features/room/bookExtractor';
+import { highResCoverUrl } from '../lib/coverImage';
 
 /**
  * 표지 OCR(ISBN 인식) 실패 원인을 사용자에게 구체적으로 안내한다.
@@ -343,6 +344,9 @@ export default function RegisterBook() {
 
   const fieldStyle = { padding: 8, fontSize: 15, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)' };
   const labelStyle = { display: 'flex', flexDirection: 'column', gap: 6 };
+  // 표지 아래 인식 정보(제목·저자·장르)용 축소 스타일
+  const compactFieldStyle = { ...fieldStyle, padding: '5px 8px', fontSize: 14 };
+  const compactViewStyle = { fontSize: 14, color: 'var(--text-h)', lineHeight: 1.4, wordBreak: 'break-word' };
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px', textAlign: 'left' }}>
@@ -474,45 +478,70 @@ export default function RegisterBook() {
             </p>
           ) : (
             <>
-              <label style={labelStyle}>
-                <span>제목</span>
-                {editing ? (
-                  <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="책 제목" style={fieldStyle} />
-                ) : (
-                  <div style={{ ...fieldStyle, background: 'transparent' }}>{title || '(인식된 제목 없음)'}</div>
-                )}
-              </label>
+              {/* 책 표지 — 인식 결과 맨 위. ISBN 조회로 받은 이미지가 있을 때만 표시 */}
+              {extraMeta.coverUrl && (
+                <img
+                  src={highResCoverUrl(extraMeta.coverUrl)}
+                  alt={title ? `${title} 표지` : '책 표지'}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    borderRadius: 6,
+                    border: '1px solid var(--border)',
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
 
-              <label style={labelStyle}>
-                <span>저자</span>
-                {editing ? (
-                  <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="저자명" style={fieldStyle} />
-                ) : (
-                  <div style={{ ...fieldStyle, background: 'transparent' }}>{author || '(인식된 저자 없음)'}</div>
-                )}
-              </label>
-
-              {/* 장르 (CLIAR-241): 자동 분류 결과를 기본값으로, 수정 모드에서 변경 가능 */}
-              <label style={labelStyle}>
-                <span>
-                  장르
-                  {genreLoading && (
-                    <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--text)' }}>분류 중...</span>
-                  )}
-                </span>
-                {editing ? (
-                  <select value={genre} onChange={(e) => setGenre(e.target.value)} style={fieldStyle}>
-                    <option value={GENRE_NONE}>미지정</option>
-                    {GENRE_DEFS.map((g) => (
-                      <option key={g.code} value={g.code}>{g.label}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <div style={{ ...fieldStyle, background: 'transparent' }}>
-                    {genreLabel(genre) || '미지정'}
-                  </div>
-                )}
-              </label>
+              {/*
+               * 표지 아래 인식 정보(제목·저자·장르)를 컴팩트하게 세로로 모은다.
+               * 라벨은 작게, 값 칸은 여백을 줄여 표지 옆 정보 카드처럼 보이게 한다.
+               */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  {
+                    key: 'title',
+                    label: '제목',
+                    node: editing ? (
+                      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="책 제목" style={compactFieldStyle} />
+                    ) : (
+                      <div style={compactViewStyle}>{title || '(인식된 제목 없음)'}</div>
+                    ),
+                  },
+                  {
+                    key: 'author',
+                    label: '저자',
+                    node: editing ? (
+                      <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="저자명" style={compactFieldStyle} />
+                    ) : (
+                      <div style={compactViewStyle}>{author || '(인식된 저자 없음)'}</div>
+                    ),
+                  },
+                  {
+                    key: 'genre',
+                    // CLIAR-241: 자동 분류 결과를 기본값으로, 수정 모드에서 변경 가능
+                    label: genreLoading ? '장르 (분류 중...)' : '장르',
+                    node: editing ? (
+                      <select value={genre} onChange={(e) => setGenre(e.target.value)} style={compactFieldStyle}>
+                        <option value={GENRE_NONE}>미지정</option>
+                        {GENRE_DEFS.map((g) => (
+                          <option key={g.code} value={g.code}>{g.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div style={compactViewStyle}>{genreLabel(genre) || '미지정'}</div>
+                    ),
+                  },
+                ].map(({ key, label, node }) => (
+                  <label key={key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text)' }}>{label}</span>
+                    {node}
+                  </label>
+                ))}
+              </div>
 
               <div style={labelStyle}>
                 <span>책 색상</span>
