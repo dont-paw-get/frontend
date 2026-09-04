@@ -296,11 +296,11 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   };
 
   const box = {
-    position: 'absolute',
-    right: 16,
-    bottom: 16,
+    position: 'fixed', // absolute → fixed로 변경하여 뷰포트 기준으로 고정 (CLIAR-284)
+    right: 'min(16px, 2vw)', // 작은 화면에서 여백 조정 (CLIAR-284)
+    bottom: 'min(16px, 2vh)', // 작은 화면에서 여백 조정 (CLIAR-284)
     zIndex: 20,
-    width: open ? 340 : 'auto',
+    width: open ? 'min(340px, calc(100vw - 32px))' : 'auto', // 작은 화면에서 반응형 조정 (CLIAR-284)
     fontSize: 13,
     cursor: 'auto',
   };
@@ -341,7 +341,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
         padding: 12,
         boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
         color: 'var(--text-h)',
-        maxHeight: '85vh',
+        maxHeight: 'calc(100vh - 32px)', // 뷰포트 높이에서 여백 고려하여 조정 (CLIAR-284)
         display: 'flex',
         flexDirection: 'column',
       }}
