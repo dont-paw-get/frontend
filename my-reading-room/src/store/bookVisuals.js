@@ -13,12 +13,18 @@ const STORAGE_KEY = 'myReadingRoom.bookVisuals';
 
 // RegisterBook / ocrUtils와 동일한 색상 팔레트
 const COLOR_PRESETS = [
-  { spine: '#c96b32', cover: '#e8944a' },
-  { spine: '#8b4513', cover: '#b5651d' },
-  { spine: '#a0522d', cover: '#cd853f' },
-  { spine: '#d4763e', cover: '#f2a365' },
-  { spine: '#6b3a2a', cover: '#8c5a3c' },
-  { spine: '#bf7830', cover: '#e0a050' },
+  { spine: '#7d4b3a', cover: '#a86a4c' }, // 브라운
+  { spine: '#2f4858', cover: '#3d6070' }, // 딥블루그레이
+  { spine: '#6b6b47', cover: '#8a8a5c' }, // 올리브
+  { spine: '#8c3b3b', cover: '#b25050' }, // 버건디
+  { spine: '#3a5a40', cover: '#588157' }, // 포레스트그린
+  { spine: '#4a4058', cover: '#6d5f80' }, // 플럼
+  { spine: '#b08968', cover: '#ddb892' }, // 샌드
+  { spine: '#31363f', cover: '#4b515c' }, // 차콜
+  { spine: '#c96b32', cover: '#e8944a' }, // 앰버 (기존 유지)
+  { spine: '#1e3d59', cover: '#2a5a87' }, // 네이비
+  { spine: '#5d4e75', cover: '#8b7ca3' }, // 라벤더그레이
+  { spine: '#2d5a27', cover: '#3e7a36' }, // 딥그린
 ];
 
 const THICKNESS_OPTIONS = [0.16, 0.22, 0.3];
@@ -54,11 +60,16 @@ function hashString(str) {
 function deterministicVisual(bookId) {
   const h = hashString(bookId);
   const preset = COLOR_PRESETS[h % COLOR_PRESETS.length];
+
+  // 높낮이를 더 다양하게 적용 (기존 0-1000 범위를 0.8-1.3 배율로 확장)
+  const heightSeed = (h * 7919) % 10000; // 다른 시드로 더 랜덤하게
+  const heightFactor = 0.8 + (heightSeed / 10000) * 0.5; // 0.8 ~ 1.3 범위
+
   return {
     spineColor: preset.spine,
     coverColor: preset.cover,
     thickness: THICKNESS_OPTIONS[h % THICKNESS_OPTIONS.length],
-    heightFactor: (h % 1000) / 1000,
+    heightFactor,
   };
 }
 
