@@ -43,8 +43,12 @@
    */
   --answer-border: #969088;
   --bubble-bg: #8a8682;
-  /* --answer-bg: 답변 박스 배경(--code-bg를 흰색과 50% 블렌드해 더 밝게) */
-  --answer-bg: #8f8a84;
+  /*
+   * --answer-bg: 채팅 답변 박스 배경.
+   * --code-bg를 흰색과 50% 블렌드한 뒤, 너무 밝아 20% 어둡게 되돌린 값 (CLIAR-301).
+   * 답변 위 컨텍스트 태그(날씨·무드 칩)와 질문 입력창도 이 색을 공유한다.
+   */
+  --answer-bg: #726e6a;
 
   /* 한글 폰트 명시: Mac(Apple SD Gothic Neo) / Windows(Malgun Gothic) 폴백 포함 */
   --sans: 'Chau Philomene One', 'Memoment Kkukkukk', system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', Roboto, sans-serif;
@@ -83,7 +87,7 @@
   /* CLIAR-301: 채팅창 답변 테두리/사서 말풍선 배경 전용 (라이트, 고양이) */
   --answer-border: #ead4b6;
   --bubble-bg: #faead2;
-  --answer-bg: #f8e4c6;
+  --answer-bg: #c6b69e;
 }
 
 /* 황새(슈빌) 사서 다크 모드 — CLIAR-181: 보라색에 더 가깝게 조정 */
@@ -99,7 +103,7 @@
   /* CLIAR-301: 채팅창 답변 테두리/사서 말풍선 배경 전용 (다크, 황새) */
   --answer-border: #a09cb0;
   --bubble-bg: #908ea0;
-  --answer-bg: #9692a4;
+  --answer-bg: #787583;
 }
 
 /* 황새(슈빌) 사서 라이트 모드 — CLIAR-181: 보라색에 더 가깝게 조정 */
@@ -115,7 +119,7 @@
   /* CLIAR-301: 채팅창 답변 테두리/사서 말풍선 배경 전용 (라이트, 황새) */
   --answer-border: #d6ccea;
   --bubble-bg: #e6e0f6;
-  --answer-bg: #eeeaf8;
+  --answer-bg: #bebbc6;
 }
 
 body {

@@ -44,7 +44,8 @@ const chipStyle = {
   padding: '3px 9px',
   borderRadius: 999,
   border: '1px solid var(--border)',
-  background: 'var(--code-bg)',
+  // CLIAR-301: 채팅 답변 박스와 동일한 배경 톤 공유
+  background: 'var(--answer-bg)',
   color: 'var(--text-h)',
   fontSize: 15,
   fontWeight: 600,
