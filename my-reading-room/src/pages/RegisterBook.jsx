@@ -427,7 +427,7 @@ export default function RegisterBook() {
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: 'grid', gridTemplateColumns: '220px 1fr 200px', gap: 24, alignItems: 'start' }}
+        style={{ display: 'grid', gridTemplateColumns: '220px minmax(0, 1fr) 200px', gap: 24, alignItems: 'start', width: '100%' }}
       >
         {/*
           왼쪽: ISBN 바코드 촬영/업로드
