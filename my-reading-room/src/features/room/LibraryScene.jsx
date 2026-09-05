@@ -312,6 +312,10 @@ export default function LibraryScene() {
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
         cursor: calibrating ? 'auto' : 'none',
+        // CLIAR-288: 커서를 따라다니는 사서 커서/호버 툴팁이 씬 밖(오른쪽·아래)으로
+        // 삐져나가 페이지 스크롤 영역이 늘어나던 버그 방지. 씬 경계에서 잘라낸다.
+        // (LibrarianChat은 fixed, 안내 팝업은 portal이라 영향 없음)
+        overflow: 'hidden',
         '--mx': '50%',
         '--my': '50%',
       }}
