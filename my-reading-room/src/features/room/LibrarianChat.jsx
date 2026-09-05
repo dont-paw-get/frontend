@@ -9,6 +9,7 @@ import MarkdownRenderer from './MarkdownRenderer';
 import WeatherMoodBadge from './WeatherMoodBadge';
 import { useLibrarian, loadSavedChatSession, saveChatSession } from '../../store/librarianStore';
 import { toKoreanStatus } from '../../api/bookApi';
+import LoadingSequence from '../../components/LoadingSequence';
 
 // 백엔드(discovery) ChatRequest.message max_length와 동일하게 맞춘다 (CLIAR-184/185)
 const MAX_MESSAGE_LENGTH = 2000;
@@ -398,33 +399,26 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
         </div>
       </div>
 
-      {/* 로딩 중일 때 맥락 맞춤형 안내 메시지 표시 (CLIAR-285) */}
+      {/* 로딩 중일 때 순차 로딩 애니메이션과 안내 문구 표시 (CLIAR-285) */}
       {loading && (
         <div
           style={{
             marginBottom: 8,
-            padding: '10px 12px',
             background: 'var(--code-bg)',
             borderRadius: 10,
             border: '1px solid var(--border)',
-            fontSize: 13,
-            color: 'var(--text)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
           }}
         >
-          <div
-            style={{
-              width: 16,
-              height: 16,
-              border: '2px solid transparent',
-              borderTop: '2px solid var(--accent)',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }}
+          <LoadingSequence
+            size={120}
+            padding={20}
+            label={
+              <>
+                따스한 햇살 아래 포근히 잠든{' '}
+                <strong>{librarianNames[librarian.id] || librarian.name} 사서</strong>를 살며시 깨우고 있어요...
+              </>
+            }
           />
-          {getContextualLoadingMessage(lastUserMessage, librarian.id)}
         </div>
       )}
 
