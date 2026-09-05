@@ -306,18 +306,12 @@ export default function LibraryScene() {
       style={{
         position: 'relative',
         // CLIAR-288: 서재는 몰입형 화면이라 #root(1126px) 좌우 레터박스 여백을 없애고
-        // 뷰포트 전체 폭으로 채운다(full-bleed). 배경 비율(16:9)은 3D 정합 위해 유지.
+        // 뷰포트 전체(가로·세로)를 채운다. 배경/3D는 아래 16:9 레이어에서 처리.
         width: '100vw',
         marginLeft: 'calc(50% - 50vw)',
-        aspectRatio: String(BG_ASPECT),
-        backgroundImage: `url(${librarianId === 'stork' ? BG_SRC_STORK : BG_SRC_CAT})`,
-        backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
+        height: '100svh',
         cursor: calibrating ? 'auto' : 'none',
-        // CLIAR-288: 커서를 따라다니는 사서 커서/호버 툴팁이 씬 밖(오른쪽·아래)으로
-        // 삐져나가 페이지 스크롤 영역이 늘어나던 버그 방지. 씬 경계에서 잘라낸다.
-        // (LibrarianChat은 fixed, 안내 팝업은 portal이라 영향 없음)
+        // 화면을 덮도록 확대한 16:9 레이어의 넘치는 부분(위쪽)과 커서 추종 요소를 잘라낸다.
         overflow: 'hidden',
         '--mx': '50%',
         '--my': '50%',
@@ -325,36 +319,57 @@ export default function LibraryScene() {
     >
       {isDev && calibrating && <Leva collapsed={false} />}
 
-      <Canvas
-        gl={{ alpha: true, antialias: true }}
-        style={{ position: 'absolute', inset: 0 }}
-        camera={{ position: camera.position, fov: camera.fov }}
+      {/*
+       * CLIAR-288: 배경 그림과 3D 캔버스를 같은 16:9 레이어에 담아, 이 레이어를
+       * 뷰포트를 덮도록 확대(cover)하고 하단 정렬한다. 화면이 16:9보다 넓으면(짧으면)
+       * 레이어가 뷰포트보다 커져 위쪽이 잘리고, 좁으면 좌우가 잘린다.
+       * 배경과 캔버스가 항상 같은 16:9 박스를 공유하므로 3D 책과 책장 정합이 유지된다.
+       */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          bottom: 0,
+          transform: 'translateX(-50%)',
+          width: `max(100vw, calc(100svh * ${BG_ASPECT}))`,
+          aspectRatio: String(BG_ASPECT),
+          backgroundImage: `url(${librarianId === 'stork' ? BG_SRC_STORK : BG_SRC_CAT})`,
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+        }}
       >
-        <CameraRig fov={camera.fov} position={camera.position} target={camera.target} />
+        <Canvas
+          gl={{ alpha: true, antialias: true }}
+          style={{ position: 'absolute', inset: 0 }}
+          camera={{ position: camera.position, fov: camera.fov }}
+        >
+          <CameraRig fov={camera.fov} position={camera.position} target={camera.target} />
 
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[4, 8, 6]} intensity={1.0} />
-        <directionalLight position={[-5, 3, 4]} intensity={0.3} />
+          <ambientLight intensity={0.8} />
+          <directionalLight position={[4, 8, 6]} intensity={1.0} />
+          <directionalLight position={[-5, 3, 4]} intensity={0.3} />
 
-        {calibrating && <ShelfGuides shelves={activeConfig.shelves} activeIdx={activeIdx} />}
+          {calibrating && <ShelfGuides shelves={activeConfig.shelves} activeIdx={activeIdx} />}
 
-        {placements.map((b) => (
-          <Book3D
-            key={b.id}
-            position={b.position}
-            size={b.size}
-            rotation={b.rotation}
-            spineColor={b.spineColor}
-            coverColor={b.coverColor}
-            selected={selectedId === b.id}
-            glowColor={getGlowColor(librarianId, isDark)}
-            onSelect={() => setSelectedId((prev) => (prev === b.id ? null : b.id))}
-            onHover={(over) =>
-              setHoveredBook((cur) => (over ? b : cur?.id === b.id ? null : cur))
-            }
-          />
-        ))}
-      </Canvas>
+          {placements.map((b) => (
+            <Book3D
+              key={b.id}
+              position={b.position}
+              size={b.size}
+              rotation={b.rotation}
+              spineColor={b.spineColor}
+              coverColor={b.coverColor}
+              selected={selectedId === b.id}
+              glowColor={getGlowColor(librarianId, isDark)}
+              onSelect={() => setSelectedId((prev) => (prev === b.id ? null : b.id))}
+              onHover={(over) =>
+                setHoveredBook((cur) => (over ? b : cur?.id === b.id ? null : cur))
+              }
+            />
+          ))}
+        </Canvas>
+      </div>
 
       {/* 손전등 효과: 다크 모드에서만. 바깥은 어둡게 + 커서 주변은 따뜻한 빛으로 더 밝게 (캘리브레이션 중엔 끔) */}
       {isDark && !calibrating && (
