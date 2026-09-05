@@ -11,38 +11,49 @@ import { ApiError } from '../api/authApi';
 import { getBookThickness } from '../features/room/bookExtractor';
 import { coverImageSrc, onFallbackCover } from '../lib/coverImage';
 
+// ISBN 인식 대기 중 중앙 '인식 결과' 영역에 재생할 로딩 프레임 (CLIAR-285)
+// loading_0 → 1 → 2 → 3 → 4 → full 순서로 순차 재생한다.
+const LOADING_FRAMES = [
+  '/loading/loading_0.png',
+  '/loading/loading_1.png',
+  '/loading/loading_2.png',
+  '/loading/loading_3.png',
+  '/loading/loading_4.png',
+  '/loading/loading_full.png',
+];
+
 /**
- * ISBN 인식 대기 중 표시하는 Paw 애니메이션 (CLIAR-285).
- * 로그인 페이지 '비밀번호 보기'에 쓰는 paw_gray/paw_pink 에셋을 재사용해
- * 5개를 나란히 두고, 0.6초 간격으로 하나씩 분홍(pink)으로 켜지게 한다.
+ * ISBN 인식 대기 중 표시하는 로딩 애니메이션 (CLIAR-285).
+ * loading_0부터 full까지 프레임을 순차적으로 넘기며, 인식이 끝나기 전까지 반복한다.
  */
-function PawLoadingAnimation() {
-  const [activePaw, setActivePaw] = useState(0);
+function LoadingSequence() {
+  const [frame, setFrame] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setActivePaw((prev) => (prev + 1) % 5);
-    }, 600);
+      setFrame((prev) => (prev + 1) % LOADING_FRAMES.length);
+    }, 450);
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      {[0, 1, 2, 3, 4].map((index) => (
-        <img
-          key={index}
-          src={`/button/paw_${activePaw === index ? 'pink' : 'gray'}.webp`}
-          alt=""
-          draggable={false}
-          style={{
-            width: 22,
-            height: 22,
-            transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
-            opacity: activePaw === index ? 1 : 0.5,
-            transform: activePaw === index ? 'scale(1.15)' : 'scale(1)',
-          }}
-        />
-      ))}
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 14,
+        padding: '32px 12px',
+      }}
+    >
+      <img
+        src={LOADING_FRAMES[frame]}
+        alt="분석 중"
+        draggable={false}
+        style={{ width: 140, height: 'auto' }}
+      />
+      <span style={{ color: 'var(--text)', fontSize: 14 }}>분석 중이에요...</span>
     </div>
   );
 }
@@ -481,10 +492,9 @@ export default function RegisterBook() {
             <div
               style={{
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
-                gap: 12,
-                padding: '16px 12px',
+                gap: 8,
+                padding: '10px 12px',
                 background: 'var(--code-bg)',
                 borderRadius: 8,
                 border: '1px solid var(--border)',
@@ -492,8 +502,17 @@ export default function RegisterBook() {
                 color: 'var(--text)',
               }}
             >
-              <PawLoadingAnimation />
-              <span>ISBN 인식 중입니다...</span>
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid transparent',
+                  borderTop: '2px solid var(--accent)',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
+              ISBN 인식 중입니다...
             </div>
           )}
           {ocrError && <span style={{ fontSize: 13, color: '#e05a4e' }}>{ocrError}</span>}
@@ -526,7 +545,9 @@ export default function RegisterBook() {
             )}
           </div>
 
-          {!ocrDone ? (
+          {ocrLoading ? (
+            <LoadingSequence />
+          ) : !ocrDone ? (
             <p style={{ color: 'var(--text)', fontSize: 14 }}>
               왼쪽에서 ISBN 바코드 번호를 촬영하거나 업로드하면 제목·저자를 자동으로 인식합니다.
             </p>
