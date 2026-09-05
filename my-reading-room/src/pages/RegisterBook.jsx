@@ -10,53 +10,7 @@ import { setVisual } from '../store/bookVisuals';
 import { ApiError } from '../api/authApi';
 import { getBookThickness } from '../features/room/bookExtractor';
 import { coverImageSrc, onFallbackCover } from '../lib/coverImage';
-
-// ISBN 인식 대기 중 중앙 '인식 결과' 영역에 재생할 로딩 프레임 (CLIAR-285)
-// loading_0 → 1 → 2 → 3 → 4 → full 순서로 순차 재생한다.
-const LOADING_FRAMES = [
-  '/loading/loading_0.png',
-  '/loading/loading_1.png',
-  '/loading/loading_2.png',
-  '/loading/loading_3.png',
-  '/loading/loading_4.png',
-  '/loading/loading_full.png',
-];
-
-/**
- * ISBN 인식 대기 중 표시하는 로딩 애니메이션 (CLIAR-285).
- * loading_0부터 full까지 프레임을 순차적으로 넘기며, 인식이 끝나기 전까지 반복한다.
- */
-function LoadingSequence() {
-  const [frame, setFrame] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setFrame((prev) => (prev + 1) % LOADING_FRAMES.length);
-    }, 450);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 14,
-        padding: '32px 12px',
-      }}
-    >
-      <img
-        src={LOADING_FRAMES[frame]}
-        alt="분석 중"
-        draggable={false}
-        style={{ width: 140, height: 'auto' }}
-      />
-      <span style={{ color: 'var(--text)', fontSize: 14 }}>분석 중이에요...</span>
-    </div>
-  );
-}
+import LoadingSequence from '../components/LoadingSequence';
 
 /**
  * 표지 OCR(ISBN 인식) 실패 원인을 사용자에게 구체적으로 안내한다.

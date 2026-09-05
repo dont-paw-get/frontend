@@ -4,6 +4,7 @@ import { useBooks } from '../../store/booksStore';
 import { createOcrSentence } from '../../api/recordApi';
 import { ApiError } from '../../api/authApi';
 import WebcamCaptureModal from './WebcamCaptureModal';
+import LoadingSequence from '../../components/LoadingSequence';
 
 /**
  * OCR 실패 원인을 사용자에게 구체적으로 안내한다.
@@ -194,7 +195,7 @@ export default function SentenceCollectModal({ book, onClose }) {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr 320px', gap: 28, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '220px minmax(0, 1fr) 320px', gap: 28, alignItems: 'start', width: '100%' }}>
               {/* 왼쪽: OCR 촬영/선택 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <span style={{ fontWeight: 600, fontSize: 13 }}>문장 스캔</span>
@@ -286,6 +287,18 @@ export default function SentenceCollectModal({ book, onClose }) {
 
               {/* 중앙: 인식 결과 + 메모 + 페이지 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* OCR 진행 중에는 인식 결과 영역에 순차 로딩 애니메이션을 노출 (CLIAR-285) */}
+                {ocrLoading && (
+                  <div
+                    style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 8,
+                      background: 'var(--code-bg)',
+                    }}
+                  >
+                    <LoadingSequence size={110} label="문장을 분석 중이에요..." padding={24} />
+                  </div>
+                )}
                 <label style={labelStyle}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{editingQuoteId ? '문장 수정' : '인식된 문장'}</span>
                   <textarea
