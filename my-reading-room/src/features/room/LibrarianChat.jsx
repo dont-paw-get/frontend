@@ -64,6 +64,23 @@ function getContextualLoadingMessage(message, librarianId) {
 }
 
 /**
+ * 도서 추천 의도 질문인지 판별 (CLIAR-285)
+ */
+function isBookRecommendationQuery(message) {
+  const q = (message || '').trim().toLowerCase();
+  return /(추천|골라|책\s*찾|도서\s*찾|소설|인문|경제|경영|스릴러|미스터리)/i.test(q);
+}
+
+/**
+ * 도서 추천 대기 문구 (사서별)
+ */
+function getRecommendationLoadingMessage(librarianId) {
+  return librarianId === 'stork'
+    ? '🪿 슈빌 사서가 전문 분야의 맞춤 명저를 선별하고 있습니다... 🪶'
+    : '어떤 책이 좋을지 생각해볼게 냥…📖🐈';
+}
+
+/**
  * LibrarianChat — 오른쪽 하단 질문 입력 패널.
  * 백엔드(/api/v1/chat)로 동기 요청(stream: false)하고, 실패 시 로컬 chatEngine을 fallback으로 사용합니다.
  *
@@ -425,8 +442,11 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
                   따스한 햇살 아래 포근히 잠든{' '}
                   <strong>{librarianNames[librarian.id] || librarian.name} 사서</strong>를 살며시 깨우고 있어요...
                 </>
+              ) : isBookRecommendationQuery(lastUserMessage) ? (
+                getRecommendationLoadingMessage(librarian.id)
               ) : (
-                getContextualLoadingMessage(lastUserMessage, librarian.id)
+                // 2번째 질문부터 추천 질문이 아니면 로딩 애니메이션만 표시 (CLIAR-285)
+                ''
               )
             }
           />
