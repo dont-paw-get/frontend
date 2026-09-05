@@ -513,7 +513,8 @@ export default function LibraryScene() {
             top: 'var(--my, 50%)',
             transform: 'translate(-50%, calc(-100% - 18px))',
             maxWidth: 220,
-            background: 'var(--bg)',
+            // CLIAR-301: 사서 말풍선·채팅창과 동일한 배경 톤으로 통일
+            background: 'var(--bubble-bg)',
             color: 'var(--text-h)',
             border: '1px solid var(--border)',
             borderRadius: 14,
