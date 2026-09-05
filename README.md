@@ -18,6 +18,7 @@
 - [배포](#배포)
 - [개발 규칙](#개발-규칙)
 - [관련 저장소](#관련-저장소)
+- [라이선스 / 저작권](#라이선스--저작권)
 
 ---
 
@@ -239,3 +240,16 @@ npm run lint
 | `backend-librarian` | 사서 페르소나, 날씨·무드 시그널 |
 | `backend-record` | 이미지 OCR |
 | `infra` | 관측 스택(Prometheus/Grafana/Loki), RCA Agent |
+
+## 라이선스 / 저작권
+
+이 프로젝트에 사용된 **UI 이미지·버튼·일러스트 등 모든 시각 에셋**은 [Clia Lim](https://github.com/clialim)이 직접 제작한 창작물입니다.
+
+> **© 2026 Clia Lim. All Rights Reserved.**
+
+- **대상**: `my-reading-room/public/`의 이미지 에셋(`button/`, `room/`, `profile/`, `cursors/`, `Input_field/`, 로고 등)과 `design-src/`의 원본 디자인 파일
+- 저작권자의 사전 서면 허락 없이 **복제·재배포·2차 가공(수정·파생물 제작)·상업적 이용을 금지**합니다.
+- 문의·이용 허락: [github.com/clialim](https://github.com/clialim)
+
+폰트 등 서드파티 리소스는 각 제작자의 라이선스를 따릅니다.
+소스 코드의 저작권/라이선스는 시각 에셋과 별개이며, 팀 프로젝트 정책을 따릅니다.
