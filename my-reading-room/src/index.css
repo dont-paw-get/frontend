@@ -1,3 +1,27 @@
+/*
+ * UI 폰트 (CLIAR-290).
+ * - 영어(라틴): Chau Philomene One
+ * - 한글: Memoment Kkukkukk
+ * 폰트 스택에서 영어 폰트를 앞에, 한글 폰트를 뒤에 두면 글자별로 글리프가 있는 폰트가
+ * 선택된다. Chau Philomene One은 한글 글리프가 없어 한글은 자동으로 Memoment로 넘어간다.
+ * 대용량(한글 ttf ~5MB) 로딩 동안 텍스트가 사라지지 않도록 font-display: swap 사용.
+ */
+@font-face {
+  font-family: 'Chau Philomene One';
+  src: url('/fonts/english/ChauPhilomeneOne-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Memoment Kkukkukk';
+  src: url('/fonts/korean/MemomentKkukkukk.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* 기본(다크) 톤 — CLIAR-181: 더 어둡게 조정 */
   --text: #c9b294;
@@ -13,8 +37,8 @@
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
   /* 한글 폰트 명시: Mac(Apple SD Gothic Neo) / Windows(Malgun Gothic) 폴백 포함 */
-  --sans: system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', Roboto, sans-serif;
+  --sans: 'Chau Philomene One', 'Memoment Kkukkukk', system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', Roboto, sans-serif;
+  --heading: 'Chau Philomene One', 'Memoment Kkukkukk', system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
