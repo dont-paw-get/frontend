@@ -127,7 +127,8 @@ export default function LibrarianCursor({ librarian, answer, active }) {
               left: '78%',
               bottom: '72%',
               width: 210,
-              background: 'var(--bg)',
+              // CLIAR-301: 말풍선 배경을 기존보다 50% 흰색에 가깝게(더 밝게) 조정
+              background: 'var(--bubble-bg)',
               color: 'var(--text-h)',
               border: '1px solid var(--border)',
               borderRadius: 14,
