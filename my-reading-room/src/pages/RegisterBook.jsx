@@ -396,7 +396,7 @@ export default function RegisterBook() {
   const compactViewStyle = { fontSize: 14, color: 'var(--text-h)', lineHeight: 1.4, wordBreak: 'break-word' };
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px', textAlign: 'left' }}>
+    <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', padding: '24px 16px', textAlign: 'left', boxSizing: 'border-box' }}>
       <h2 style={{ textAlign: 'center', marginBottom: 16 }}>책 등록</h2>
 
       {fromRecommendation && (
