@@ -464,9 +464,9 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
           style={{
             marginBottom: 8,
             padding: '10px 12px',
-            background: 'var(--code-bg)',
+            // CLIAR-301: 답변 배경/테두리를 기존보다 50% 흰색에 가깝게(더 밝게) 조정
+            background: 'var(--answer-bg)',
             borderRadius: 10,
-            // CLIAR-301: 답변 테두리를 기존보다 50% 흰색에 가깝게(더 밝게) 조정
             border: '1px solid var(--answer-border)',
             maxHeight: 220,
             overflowY: 'auto',
