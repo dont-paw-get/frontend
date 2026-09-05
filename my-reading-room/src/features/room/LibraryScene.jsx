@@ -305,7 +305,10 @@ export default function LibraryScene() {
       ref={sceneRef}
       style={{
         position: 'relative',
-        width: '100%',
+        // CLIAR-288: 서재는 몰입형 화면이라 #root(1126px) 좌우 레터박스 여백을 없애고
+        // 뷰포트 전체 폭으로 채운다(full-bleed). 배경 비율(16:9)은 3D 정합 위해 유지.
+        width: '100vw',
+        marginLeft: 'calc(50% - 50vw)',
         aspectRatio: String(BG_ASPECT),
         backgroundImage: `url(${librarianId === 'stork' ? BG_SRC_STORK : BG_SRC_CAT})`,
         backgroundSize: 'contain',

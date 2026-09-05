@@ -105,6 +105,9 @@ body {
  */
 body.reading-room {
   cursor: none;
+  /* CLIAR-288: 서재 씬을 100vw full-bleed로 확장할 때 세로 스크롤바 폭 때문에
+     가로 스크롤이 생기지 않도록 서재에 있는 동안만 가로 오버플로를 숨긴다. */
+  overflow-x: hidden;
 }
 
 /*
