@@ -137,6 +137,8 @@ export default function LibraryScene() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [selectedId, setSelectedId] = useState(null);
+  // CLIAR-280: 책 위에 커서를 올리면(클릭 없이) 제목/저자를 말풍선으로 보여준다.
+  const [hoveredBook, setHoveredBook] = useState(null);
   const [calibrating, setCalibrating] = useState(false);
   // 사서 상태는 전역(LibrarianProvider) — Gnb·사서 프로필 페이지와 공유
   const { activeId: librarianId, setActiveId, librarian, names } = useLibrarian();
@@ -340,6 +342,9 @@ export default function LibraryScene() {
             selected={selectedId === b.id}
             glowColor={getGlowColor(librarianId, isDark)}
             onSelect={() => setSelectedId((prev) => (prev === b.id ? null : b.id))}
+            onHover={(over) =>
+              setHoveredBook((cur) => (over ? b : cur?.id === b.id ? null : cur))
+            }
           />
         ))}
       </Canvas>
@@ -473,6 +478,53 @@ export default function LibraryScene() {
           <span style={{ color: '#999', lineHeight: 1.4 }}>
             수치 조절은 우측 leva 슬라이더에서. 다 맞추면 JSON 복사 → shelfLayout.js의 DEFAULT_* 교체.
           </span>
+        </div>
+      )}
+
+      {/* CLIAR-280: 책 호버 시 제목/저자 말풍선 툴팁.
+          커서(--mx/--my)를 따라 커서 위쪽에 뜨며, 클릭(선택)한 책에는 표시하지 않는다. */}
+      {!calibrating && hoveredBook && hoveredBook.id !== selectedId && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 'var(--mx, 50%)',
+            top: 'var(--my, 50%)',
+            transform: 'translate(-50%, calc(-100% - 18px))',
+            maxWidth: 220,
+            background: 'var(--bg)',
+            color: 'var(--text-h)',
+            border: '1px solid var(--border)',
+            borderRadius: 14,
+            padding: '8px 12px',
+            fontSize: 13,
+            lineHeight: 1.45,
+            textAlign: 'center',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            pointerEvents: 'none',
+            wordBreak: 'break-word',
+            zIndex: 10,
+          }}
+        >
+          <span style={{ fontWeight: 700 }}>📖 {hoveredBook.title || '제목 미상'}</span>
+          {hoveredBook.author && (
+            <span style={{ display: 'block', fontSize: 12, color: 'var(--text)', marginTop: 2 }}>
+              ✍️ {hoveredBook.author}
+            </span>
+          )}
+          {/* 말풍선 아래쪽 꼬리 */}
+          <span
+            style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: -7,
+              transform: 'translateX(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '7px solid transparent',
+              borderRight: '7px solid transparent',
+              borderTop: '7px solid var(--border)',
+            }}
+          />
         </div>
       )}
 
