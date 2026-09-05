@@ -12,6 +12,42 @@ import { getBookThickness } from '../features/room/bookExtractor';
 import { coverImageSrc, onFallbackCover } from '../lib/coverImage';
 
 /**
+ * ISBN 인식 대기 중 표시하는 Paw 애니메이션 (CLIAR-285).
+ * 로그인 페이지 '비밀번호 보기'에 쓰는 paw_gray/paw_pink 에셋을 재사용해
+ * 5개를 나란히 두고, 0.6초 간격으로 하나씩 분홍(pink)으로 켜지게 한다.
+ */
+function PawLoadingAnimation() {
+  const [activePaw, setActivePaw] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActivePaw((prev) => (prev + 1) % 5);
+    }, 600);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {[0, 1, 2, 3, 4].map((index) => (
+        <img
+          key={index}
+          src={`/button/paw_${activePaw === index ? 'pink' : 'gray'}.webp`}
+          alt=""
+          draggable={false}
+          style={{
+            width: 22,
+            height: 22,
+            transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+            opacity: activePaw === index ? 1 : 0.5,
+            transform: activePaw === index ? 'scale(1.15)' : 'scale(1)',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
  * 표지 OCR(ISBN 인식) 실패 원인을 사용자에게 구체적으로 안내한다.
  * 상태코드 규약은 SentenceCollectModal의 문장 OCR과 동일하되, 422는
  * '문장 없음'이 아니라 'ISBN을 못 찾음'으로 읽는다.
@@ -441,7 +477,25 @@ export default function RegisterBook() {
             </div>
           )}
 
-          {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중입니다...</span>}
+          {ocrLoading && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 12,
+                padding: '16px 12px',
+                background: 'var(--code-bg)',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                fontSize: 13,
+                color: 'var(--text)',
+              }}
+            >
+              <PawLoadingAnimation />
+              <span>ISBN 인식 중입니다...</span>
+            </div>
+          )}
           {ocrError && <span style={{ fontSize: 13, color: '#e05a4e' }}>{ocrError}</span>}
           {ocrNotice && <span style={{ fontSize: 13, color: 'var(--text-h)' }}>{ocrNotice}</span>}
           {isbn && !ocrLoading && (
@@ -520,7 +574,21 @@ export default function RegisterBook() {
                   {
                     key: 'genre',
                     // CLIAR-241: 자동 분류 결과를 기본값으로, 수정 모드에서 변경 가능
-                    label: genreLoading ? '장르 (분류 중...)' : '장르',
+                    label: genreLoading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <div
+                          style={{
+                            width: 12,
+                            height: 12,
+                            border: '1.5px solid transparent',
+                            borderTop: '1.5px solid var(--accent)',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                          }}
+                        />
+                        장르 (분류 중...)
+                      </span>
+                    ) : '장르',
                     node: editing ? (
                       <select value={genre} onChange={(e) => setGenre(e.target.value)} style={compactFieldStyle}>
                         <option value={GENRE_NONE}>미지정</option>
@@ -627,8 +695,24 @@ export default function RegisterBook() {
               background: allFilled && !submitting ? 'var(--accent)' : 'var(--border)',
               color: allFilled && !submitting ? '#fff' : 'var(--text)',
               cursor: allFilled && !submitting ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
             }}
           >
+            {submitting && (
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  border: '2px solid transparent',
+                  borderTop: '2px solid currentColor',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                }}
+              />
+            )}
             {submitting ? '등록 중...' : '등록하고 서재에 꽂기'}
           </button>
         </div>

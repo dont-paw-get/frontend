@@ -254,7 +254,33 @@ export default function SentenceCollectModal({ book, onClose }) {
                   </div>
                 )}
 
-                {ocrLoading && <span style={{ fontSize: 12, color: 'var(--text)' }}>문장을 인식하는 중이에요...</span>}
+                {ocrLoading && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 10px',
+                      background: 'var(--code-bg)',
+                      borderRadius: 8,
+                      border: '1px solid var(--border)',
+                      fontSize: 12,
+                      color: 'var(--text)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 14,
+                        height: 14,
+                        border: '1.5px solid transparent',
+                        borderTop: '1.5px solid var(--accent)',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                      }}
+                    />
+                    문장을 인식하는 중이에요...
+                  </div>
+                )}
                 {ocrError && <span style={{ fontSize: 12, color: '#e05a4e' }}>{ocrError}</span>}
               </div>
 
@@ -304,8 +330,21 @@ export default function SentenceCollectModal({ book, onClose }) {
                       background: canSave ? 'var(--accent)' : 'var(--border)',
                       color: canSave ? '#fff' : 'var(--text)',
                       fontWeight: 700, cursor: canSave ? 'pointer' : 'not-allowed', fontSize: 13,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     }}
                   >
+                    {saving && (
+                      <div
+                        style={{
+                          width: 14,
+                          height: 14,
+                          border: '1.5px solid transparent',
+                          borderTop: '1.5px solid currentColor',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite',
+                        }}
+                      />
+                    )}
                     {saving ? '저장 중...' : editingQuoteId ? '수정 저장' : '문장 저장'}
                   </button>
                   {editingQuoteId && (
@@ -331,7 +370,31 @@ export default function SentenceCollectModal({ book, onClose }) {
                 <span style={{ fontWeight: 600, fontSize: 13 }}>저장된 문장 ({quotes.length})</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 480, overflowY: 'auto' }}>
                   {quotesLoading && (
-                    <p style={{ fontSize: 12, color: 'var(--text)' }}>문장을 불러오는 중이에요...</p>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '10px 12px',
+                        background: 'var(--code-bg)',
+                        borderRadius: 8,
+                        border: '1px solid var(--border)',
+                        fontSize: 12,
+                        color: 'var(--text)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 14,
+                          height: 14,
+                          border: '1.5px solid transparent',
+                          borderTop: '1.5px solid var(--accent)',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite',
+                        }}
+                      />
+                      문장을 불러오는 중이에요...
+                    </div>
                   )}
                   {!quotesLoading && quotes.length === 0 && (
                     <p style={{ fontSize: 12, color: 'var(--text)' }}>아직 저장된 문장이 없어요 📖</p>

@@ -398,6 +398,36 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
         </div>
       </div>
 
+      {/* 로딩 중일 때 맥락 맞춤형 안내 메시지 표시 (CLIAR-285) */}
+      {loading && (
+        <div
+          style={{
+            marginBottom: 8,
+            padding: '10px 12px',
+            background: 'var(--code-bg)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            fontSize: 13,
+            color: 'var(--text)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              border: '2px solid transparent',
+              borderTop: '2px solid var(--accent)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }}
+          />
+          {getContextualLoadingMessage(lastUserMessage, librarian.id)}
+        </div>
+      )}
+
       {/* 날씨·무드 컨텍스트 뱃지 (백엔드 signals 기반) */}
       {answer?.signals && !loading && <WeatherMoodBadge signals={answer.signals} />}
 
