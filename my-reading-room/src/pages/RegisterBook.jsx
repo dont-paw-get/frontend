@@ -12,6 +12,40 @@ import { getBookThickness } from '../features/room/bookExtractor';
 import { coverImageSrc, onFallbackCover } from '../lib/coverImage';
 
 /**
+ * Paw 애니메이션 컴포넌트 - 5개의 paw가 순차적으로 gray에서 pink로 바뀝니다.
+ */
+function PawLoadingAnimation() {
+  const [currentPaw, setCurrentPaw] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPaw(prev => (prev + 1) % 5);
+    }, 600); // 0.6초마다 다음 paw로 이동
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {[0, 1, 2, 3, 4].map((index) => (
+        <img
+          key={index}
+          src={`/button/paw_${currentPaw === index ? 'pink' : 'gray'}.webp`}
+          alt=""
+          style={{
+            width: 20,
+            height: 20,
+            transition: 'all 0.3s ease-in-out',
+            opacity: currentPaw === index ? 1 : 0.6,
+            transform: currentPaw === index ? 'scale(1.1)' : 'scale(1)',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
  * 표지 OCR(ISBN 인식) 실패 원인을 사용자에게 구체적으로 안내한다.
  * 상태코드 규약은 SentenceCollectModal의 문장 OCR과 동일하되, 422는
  * '문장 없음'이 아니라 'ISBN을 못 찾음'으로 읽는다.
@@ -441,7 +475,38 @@ export default function RegisterBook() {
             </div>
           )}
 
-          {ocrLoading && <span style={{ fontSize: 13, color: 'var(--text)' }}>ISBN 인식 중입니다...</span>}
+          {ocrLoading && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 12,
+                padding: '16px 12px',
+                background: 'var(--code-bg)',
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                fontSize: 13,
+                color: 'var(--text)',
+              }}
+            >
+              {/* Paw 애니메이션 */}
+              <PawLoadingAnimation />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div
+                  style={{
+                    width: 16,
+                    height: 16,
+                    border: '2px solid transparent',
+                    borderTop: '2px solid var(--accent)',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+                ISBN 인식 중입니다...
+              </div>
+            </div>
+          )}
           {ocrError && <span style={{ fontSize: 13, color: '#e05a4e' }}>{ocrError}</span>}
           {ocrNotice && <span style={{ fontSize: 13, color: 'var(--text-h)' }}>{ocrNotice}</span>}
           {isbn && !ocrLoading && (
