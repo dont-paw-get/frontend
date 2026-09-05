@@ -33,7 +33,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -104,13 +104,13 @@
 }
 
 .mypage-info dt {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text);
 }
 
 .mypage-info dd {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--text-h);
   margin: 0;
 }
@@ -132,7 +132,7 @@
   border-radius: 6px;
   background: transparent;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -155,7 +155,7 @@
   border-radius: 6px;
   background: var(--bg);
   color: var(--text-h);
-  font-size: 13px;
+  font-size: 17px;
   outline: none;
   flex: 1;
 }
@@ -169,7 +169,7 @@
   padding: 4px 10px;
   border: none;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -191,7 +191,7 @@
 }
 
 .mypage-section-title {
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--text-h);
   margin: 0;
@@ -211,7 +211,7 @@
 }
 
 .mypage-field-label {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text);
 }
@@ -231,7 +231,7 @@
 }
 
 .mypage-field-value {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--text-h);
 }
 
@@ -249,7 +249,7 @@
   border-radius: 8px;
   background: var(--bg);
   color: var(--text-h);
-  font-size: 13px;
+  font-size: 17px;
   outline: none;
 }
 
@@ -258,20 +258,20 @@
 }
 
 .mypage-hint {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--text);
   line-height: 1.5;
   margin: 0;
 }
 
 .mypage-error {
-  font-size: 12px;
+  font-size: 16px;
   color: #e74c3c;
   margin: 0;
 }
 
 .mypage-success {
-  font-size: 12px;
+  font-size: 16px;
   color: var(--accent);
   margin: 0;
 }
@@ -289,7 +289,7 @@
   padding: 7px 14px;
   border: none;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -315,7 +315,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 18px;
   color: var(--text-h);
   cursor: pointer;
 }
@@ -335,7 +335,7 @@
   border-radius: 6px;
   background: transparent;
   color: #e74c3c;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -369,14 +369,14 @@
 }
 
 .mypage-modal-title {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-h);
   margin: 0 0 10px;
 }
 
 .mypage-modal-desc {
-  font-size: 12px;
+  font-size: 16px;
   color: var(--text);
   line-height: 1.5;
   margin: 0 0 20px;

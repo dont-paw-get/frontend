@@ -343,11 +343,11 @@ export default function RegisterBook() {
     }
   }
 
-  const fieldStyle = { padding: 8, fontSize: 15, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)' };
+  const fieldStyle = { padding: 8, fontSize: 19, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)' };
   const labelStyle = { display: 'flex', flexDirection: 'column', gap: 6 };
   // 표지 아래 인식 정보(제목·저자·장르)용 축소 스타일
-  const compactFieldStyle = { ...fieldStyle, padding: '5px 8px', fontSize: 14 };
-  const compactViewStyle = { fontSize: 14, color: 'var(--text-h)', lineHeight: 1.4, wordBreak: 'break-word' };
+  const compactFieldStyle = { ...fieldStyle, padding: '5px 8px', fontSize: 18 };
+  const compactViewStyle = { fontSize: 18, color: 'var(--text-h)', lineHeight: 1.4, wordBreak: 'break-word' };
 
   return (
     <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', padding: '24px 16px', textAlign: 'left', boxSizing: 'border-box' }}>
@@ -364,7 +364,7 @@ export default function RegisterBook() {
             borderRadius: 10,
             padding: '10px 16px',
             marginBottom: 20,
-            fontSize: 14,
+            fontSize: 18,
             color: 'var(--text-h)',
           }}
         >
@@ -372,7 +372,7 @@ export default function RegisterBook() {
           <button
             type="button"
             onClick={() => setFromRecommendation(false)}
-            style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 13 }}
+            style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 17 }}
           >
             ✕
           </button>
@@ -390,7 +390,7 @@ export default function RegisterBook() {
         */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={{ fontWeight: 600 }}>ISBN 촬영</span>
-          <span style={{ fontSize: 12, color: 'var(--text)' }}>
+          <span style={{ fontSize: 16, color: 'var(--text)' }}>
             책 뒷면이나 표지 안쪽 바코드 아래에 있는 13자리 ISBN 숫자를 촬영해주세요.
             <br />
             예: ISBN 979-11-6479-434-8
@@ -452,7 +452,7 @@ export default function RegisterBook() {
                 background: 'var(--code-bg)',
                 borderRadius: 8,
                 border: '1px solid var(--border)',
-                fontSize: 13,
+                fontSize: 17,
                 color: 'var(--text)',
               }}
             >
@@ -469,10 +469,10 @@ export default function RegisterBook() {
               ISBN 인식 중입니다...
             </div>
           )}
-          {ocrError && <span style={{ fontSize: 13, color: '#e05a4e' }}>{ocrError}</span>}
-          {ocrNotice && <span style={{ fontSize: 13, color: 'var(--text-h)' }}>{ocrNotice}</span>}
+          {ocrError && <span style={{ fontSize: 17, color: '#e05a4e' }}>{ocrError}</span>}
+          {ocrNotice && <span style={{ fontSize: 17, color: 'var(--text-h)' }}>{ocrNotice}</span>}
           {isbn && !ocrLoading && (
-            <span style={{ fontSize: 12, color: 'var(--text)' }}>인식된 ISBN: {isbn}</span>
+            <span style={{ fontSize: 16, color: 'var(--text)' }}>인식된 ISBN: {isbn}</span>
           )}
         </div>
 
@@ -485,7 +485,7 @@ export default function RegisterBook() {
                 type="button"
                 onClick={() => setEditing((v) => !v)}
                 style={{
-                  fontSize: 12,
+                  fontSize: 16,
                   padding: '4px 10px',
                   borderRadius: 999,
                   border: '1px solid var(--accent-border)',
@@ -502,7 +502,7 @@ export default function RegisterBook() {
           {ocrLoading ? (
             <LoadingSequence label="잠시만 기다려주세요..." />
           ) : !ocrDone ? (
-            <p style={{ color: 'var(--text)', fontSize: 14 }}>
+            <p style={{ color: 'var(--text)', fontSize: 18 }}>
               왼쪽에서 ISBN 바코드 번호를 촬영하거나 업로드하면 제목·저자를 자동으로 인식합니다.
             </p>
           ) : (
@@ -577,7 +577,7 @@ export default function RegisterBook() {
                   },
                 ].map(({ key, label, node }) => (
                   <label key={key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: 12, color: 'var(--text)' }}>{label}</span>
+                    <span style={{ fontSize: 16, color: 'var(--text)' }}>{label}</span>
                     {node}
                   </label>
                 ))}
@@ -640,14 +640,14 @@ export default function RegisterBook() {
           </label>
 
           {totalPage && currentPage !== '' && (
-            <span style={{ fontSize: 12, color: 'var(--text)' }}>
+            <span style={{ fontSize: 16, color: 'var(--text)' }}>
               진행 상태: {deriveStatus(currentPage, totalPage)}
             </span>
           )}
 
           {/* 두께는 총 페이지 수로 자동 계산되므로 별도 입력 없이 안내만 표시 (CLIAR-247) */}
           {String(totalPage).trim() !== '' && (
-            <span style={{ fontSize: 12, color: 'var(--text)' }}>
+            <span style={{ fontSize: 16, color: 'var(--text)' }}>
               책 두께는 총 페이지 수에 맞춰 자동으로 정해져요.
             </span>
           )}
@@ -656,14 +656,14 @@ export default function RegisterBook() {
         {/* 완료 버튼 */}
         <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 8 }}>
           {submitError && (
-            <span style={{ color: '#e05a4e', fontSize: 13 }}>{submitError}</span>
+            <span style={{ color: '#e05a4e', fontSize: 17 }}>{submitError}</span>
           )}
           <button
             type="submit"
             disabled={!allFilled || submitting}
             style={{
               padding: '10px 32px',
-              fontSize: 16,
+              fontSize: 20,
               fontWeight: 700,
               borderRadius: 8,
               border: 'none',

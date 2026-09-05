@@ -36,12 +36,12 @@
 }
 
 .signup-title {
-  font-size: 22px;
+  font-size: 26px;
   margin: 0;
 }
 
 .signup-subtitle {
-  font-size: 13px;
+  font-size: 17px;
   color: var(--text);
 }
 
@@ -60,7 +60,7 @@
 }
 
 .signup-field>label {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
@@ -74,7 +74,7 @@
   border-radius: 8px;
   background: var(--bg);
   color: var(--text-h);
-  font-size: 14px;
+  font-size: 18px;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -114,7 +114,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -133,17 +133,17 @@
 
 /* 유효성 메시지 */
 .signup-error {
-  font-size: 11px;
+  font-size: 15px;
   color: #e74c3c;
 }
 
 .signup-success {
-  font-size: 11px;
+  font-size: 15px;
   color: #27ae60;
 }
 
 .signup-hint {
-  font-size: 11px;
+  font-size: 15px;
   color: var(--text);
   opacity: 0.7;
   line-height: 1.4;
@@ -160,7 +160,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 13px;
+  font-size: 17px;
   color: var(--text-h);
   cursor: pointer;
 }
@@ -181,7 +181,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 16px;
   color: var(--text);
   cursor: pointer;
 }
@@ -200,7 +200,7 @@
   border-radius: 8px;
   background: var(--accent);
   color: #fff;
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -220,7 +220,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 16px;
   color: var(--text);
 }
 
@@ -228,7 +228,7 @@
   background: none;
   border: none;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
@@ -253,7 +253,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--text);
-  font-size: 11px;
+  font-size: 15px;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }

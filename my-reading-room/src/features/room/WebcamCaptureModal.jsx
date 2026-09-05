@@ -106,17 +106,17 @@ export default function WebcamCaptureModal({ onCapture, onClose }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <h3 style={{ margin: 0, fontSize: 16 }}>📷 웹캠으로 촬영</h3>
+          <h3 style={{ margin: 0, fontSize: 20 }}>📷 웹캠으로 촬영</h3>
           <button
             onClick={handleClose}
-            style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 18 }}
+            style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 22 }}
           >
             ✕
           </button>
         </div>
 
         {error ? (
-          <p style={{ fontSize: 13, color: '#e05a4e', textAlign: 'center', padding: '32px 0' }}>{error}</p>
+          <p style={{ fontSize: 17, color: '#e05a4e', textAlign: 'center', padding: '32px 0' }}>{error}</p>
         ) : (
           <div
             style={{
@@ -135,7 +135,7 @@ export default function WebcamCaptureModal({ onCapture, onClose }) {
               <span
                 style={{
                   position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#fff', fontSize: 13,
+                  color: '#fff', fontSize: 17,
                 }}
               >
                 카메라를 여는 중이에요...
@@ -153,7 +153,7 @@ export default function WebcamCaptureModal({ onCapture, onClose }) {
               flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
               background: ready && !error ? 'var(--accent)' : 'var(--border)',
               color: ready && !error ? '#fff' : 'var(--text)',
-              fontWeight: 700, cursor: ready && !error ? 'pointer' : 'not-allowed', fontSize: 14,
+              fontWeight: 700, cursor: ready && !error ? 'pointer' : 'not-allowed', fontSize: 18,
             }}
           >
             📸 촬영
@@ -161,7 +161,7 @@ export default function WebcamCaptureModal({ onCapture, onClose }) {
           <button
             type="button"
             onClick={handleClose}
-            style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-h)', cursor: 'pointer', fontSize: 14 }}
+            style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-h)', cursor: 'pointer', fontSize: 18 }}
           >
             취소
           </button>

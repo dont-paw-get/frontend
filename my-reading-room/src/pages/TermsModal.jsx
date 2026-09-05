@@ -48,21 +48,21 @@ export default function TermsModal({ name, content, loading, error, onClose }) {
             borderBottom: '1px solid var(--border)',
           }}
         >
-          <strong style={{ fontSize: 15, color: 'var(--text-h)' }}>{name}</strong>
+          <strong style={{ fontSize: 19, color: 'var(--text-h)' }}>{name}</strong>
           <button
             onClick={onClose}
             aria-label="닫기"
-            style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 18 }}
+            style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 22 }}
           >
             ✕
           </button>
         </div>
 
         <div style={{ padding: '18px 20px', overflowY: 'auto', flex: 1 }}>
-          {loading && <p style={{ color: 'var(--text)', fontSize: 13 }}>약관을 불러오는 중입니다...</p>}
+          {loading && <p style={{ color: 'var(--text)', fontSize: 17 }}>약관을 불러오는 중입니다...</p>}
           {!loading && error && <p className="signup-error">{error}</p>}
           {!loading && !error && (
-            <p style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.7, color: 'var(--text)', margin: 0 }}>
+            <p style={{ whiteSpace: 'pre-wrap', fontSize: 17, lineHeight: 1.7, color: 'var(--text)', margin: 0 }}>
               {content}
             </p>
           )}

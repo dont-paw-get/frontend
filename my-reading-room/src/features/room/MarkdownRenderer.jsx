@@ -68,7 +68,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
             alignItems: 'center',
             gap: 6,
             fontWeight: 700,
-            fontSize: 13.5,
+            fontSize: 17.5,
             color: isLibrary ? '#10b981' : 'var(--accent, #6366f1)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -76,7 +76,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
             flex: 1,
           }}
         >
-          <span style={{ fontSize: 15 }}>{isLibrary ? '📚' : '📖'}</span>
+          <span style={{ fontSize: 19 }}>{isLibrary ? '📚' : '📖'}</span>
           <span>{title}</span>
         </div>
 
@@ -86,7 +86,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
             type="button"
             onClick={() => onOpenDetail({ title, author, status })}
             style={{
-              fontSize: 11,
+              fontSize: 15,
               fontWeight: 600,
               padding: '4px 10px',
               borderRadius: 6,
@@ -105,7 +105,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
             type="button"
             onClick={() => onRegister(bookData || { title, author })}
             style={{
-              fontSize: 11,
+              fontSize: 15,
               fontWeight: 600,
               padding: '4px 10px',
               borderRadius: 6,
@@ -129,7 +129,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              fontSize: 11.5,
+              fontSize: 15.5,
               color: 'var(--text-muted, #666)',
               backgroundColor: 'rgba(0, 0, 0, 0.03)',
               padding: '2px 8px',
@@ -147,7 +147,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              fontSize: 11.5,
+              fontSize: 15.5,
               color: 'var(--accent, #6366f1)',
               backgroundColor: 'rgba(99, 102, 241, 0.08)',
               padding: '2px 8px',
@@ -165,7 +165,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              fontSize: 11.5,
+              fontSize: 15.5,
               color: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.08)',
               padding: '2px 8px',
@@ -183,7 +183,7 @@ function BookCardView({ type = 'recommend', title, author, reason, status, genre
       {reason && (
         <div
           style={{
-            fontSize: 12.5,
+            fontSize: 16.5,
             color: 'var(--text-h)',
             lineHeight: 1.6,
             marginTop: 2,
@@ -256,7 +256,7 @@ export default function MarkdownRenderer({ text, recommendedBooks = [], onRegist
           }}
         >
           {currentList.map((item, idx) => (
-            <li key={idx} style={{ color: 'var(--text-h)', fontSize: 12.5 }}>
+            <li key={idx} style={{ color: 'var(--text-h)', fontSize: 16.5 }}>
               {renderInline(item)}
             </li>
           ))}
@@ -359,7 +359,7 @@ export default function MarkdownRenderer({ text, recommendedBooks = [], onRegist
           key={idx}
           style={{
             fontWeight: 700,
-            fontSize: 13.5,
+            fontSize: 17.5,
             color: 'var(--accent)',
             marginTop: elements.length > 0 ? 10 : 2,
             marginBottom: 4,
@@ -390,7 +390,7 @@ export default function MarkdownRenderer({ text, recommendedBooks = [], onRegist
           key={idx}
           style={{
             margin: '4px 0',
-            fontSize: 12.5,
+            fontSize: 16.5,
             color: 'var(--text-h)',
             lineHeight: 1.5,
           }}
@@ -409,7 +409,7 @@ export default function MarkdownRenderer({ text, recommendedBooks = [], onRegist
         key={idx}
         style={{
           margin: '4px 0',
-          fontSize: 12.5,
+          fontSize: 16.5,
           color: 'var(--text-h)',
           lineHeight: 1.55,
         }}

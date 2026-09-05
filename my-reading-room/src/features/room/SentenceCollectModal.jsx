@@ -162,7 +162,7 @@ export default function SentenceCollectModal({ book, onClose }) {
   }
 
   const fieldStyle = {
-    padding: 8, fontSize: 14, borderRadius: 6, border: '1px solid var(--border)',
+    padding: 8, fontSize: 18, borderRadius: 6, border: '1px solid var(--border)',
     background: 'var(--code-bg)', color: 'var(--text-h)', width: '100%', boxSizing: 'border-box',
   };
   const labelStyle = { display: 'flex', flexDirection: 'column', gap: 6 };
@@ -186,10 +186,10 @@ export default function SentenceCollectModal({ book, onClose }) {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-              <h3 style={{ margin: 0, fontSize: 18 }}>📝 문장 수집 — {book.title}</h3>
+              <h3 style={{ margin: 0, fontSize: 22 }}>📝 문장 수집 — {book.title}</h3>
               <button
                 onClick={onClose}
-                style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 18 }}
+                style={{ border: 'none', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontSize: 22 }}
               >
                 ✕
               </button>
@@ -198,7 +198,7 @@ export default function SentenceCollectModal({ book, onClose }) {
             <div style={{ display: 'grid', gridTemplateColumns: '220px minmax(0, 1fr) 320px', gap: 28, alignItems: 'start', width: '100%' }}>
               {/* 왼쪽: OCR 촬영/선택 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>문장 스캔</span>
+                <span style={{ fontWeight: 600, fontSize: 17 }}>문장 스캔</span>
 
                 <input
                   ref={captureInputRef}
@@ -220,7 +220,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                   type="button"
                   onClick={() => captureInputRef.current?.click()}
                   disabled={ocrLoading}
-                  style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: ocrLoading ? 0.6 : 1 }}
+                  style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 17, opacity: ocrLoading ? 0.6 : 1 }}
                 >
                   📷 사진 촬영
                 </button>
@@ -228,7 +228,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                   type="button"
                   onClick={() => uploadInputRef.current?.click()}
                   disabled={ocrLoading}
-                  style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: ocrLoading ? 0.6 : 1 }}
+                  style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 17, opacity: ocrLoading ? 0.6 : 1 }}
                 >
                   🖼️ 이미지 선택
                 </button>
@@ -241,11 +241,11 @@ export default function SentenceCollectModal({ book, onClose }) {
                   type="button"
                   onClick={() => setWebcamOpen(true)}
                   disabled={ocrLoading}
-                  style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 13, opacity: ocrLoading ? 0.6 : 1 }}
+                  style={{ padding: '9px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--code-bg)', color: 'var(--text-h)', cursor: ocrLoading ? 'not-allowed' : 'pointer', fontSize: 17, opacity: ocrLoading ? 0.6 : 1 }}
                 >
                   💻 웹캠으로 촬영
                 </button>
-                <span style={{ fontSize: 11, color: 'var(--text)', lineHeight: 1.5 }}>
+                <span style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.5 }}>
                   사진을 스캔하면 인식된 문장이 오른쪽에 채워집니다. 내용을 확인·수정하고 페이지·메모를 입력한 뒤 저장하세요.
                 </span>
 
@@ -265,7 +265,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                       background: 'var(--code-bg)',
                       borderRadius: 8,
                       border: '1px solid var(--border)',
-                      fontSize: 12,
+                      fontSize: 16,
                       color: 'var(--text)',
                     }}
                   >
@@ -282,7 +282,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                     문장을 인식하는 중이에요...
                   </div>
                 )}
-                {ocrError && <span style={{ fontSize: 12, color: '#e05a4e' }}>{ocrError}</span>}
+                {ocrError && <span style={{ fontSize: 16, color: '#e05a4e' }}>{ocrError}</span>}
               </div>
 
               {/* 중앙: 인식 결과 + 메모 + 페이지 */}
@@ -300,7 +300,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                   </div>
                 )}
                 <label style={labelStyle}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{editingQuoteId ? '문장 수정' : '인식된 문장'}</span>
+                  <span style={{ fontSize: 17, fontWeight: 600 }}>{editingQuoteId ? '문장 수정' : '인식된 문장'}</span>
                   <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
@@ -311,7 +311,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                 </label>
 
                 <label style={labelStyle}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>메모</span>
+                  <span style={{ fontSize: 17, fontWeight: 600 }}>메모</span>
                   <textarea
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
@@ -322,7 +322,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                 </label>
 
                 <label style={labelStyle}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>페이지</span>
+                  <span style={{ fontSize: 17, fontWeight: 600 }}>페이지</span>
                   <input
                     type="number"
                     min={0}
@@ -342,7 +342,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                       flex: 1, padding: '9px 0', borderRadius: 8, border: 'none',
                       background: canSave ? 'var(--accent)' : 'var(--border)',
                       color: canSave ? '#fff' : 'var(--text)',
-                      fontWeight: 700, cursor: canSave ? 'pointer' : 'not-allowed', fontSize: 13,
+                      fontWeight: 700, cursor: canSave ? 'pointer' : 'not-allowed', fontSize: 17,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     }}
                   >
@@ -364,7 +364,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                     <button
                       type="button"
                       onClick={resetForm}
-                      style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-h)', cursor: 'pointer', fontSize: 13 }}
+                      style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-h)', cursor: 'pointer', fontSize: 17 }}
                     >
                       취소
                     </button>
@@ -372,7 +372,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                 </div>
                 {/* 새 문장은 사진 스캔이 있어야 저장 가능(원본 이미지가 필요) */}
                 {!editingQuoteId && !pendingImageUrl && text.trim() && (
-                  <span style={{ fontSize: 11, color: 'var(--text)' }}>
+                  <span style={{ fontSize: 15, color: 'var(--text)' }}>
                     저장하려면 왼쪽에서 사진을 먼저 스캔해 주세요.
                   </span>
                 )}
@@ -380,7 +380,7 @@ export default function SentenceCollectModal({ book, onClose }) {
 
               {/* 오른쪽: 저장된 문장 목록 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>저장된 문장 ({quotes.length})</span>
+                <span style={{ fontWeight: 600, fontSize: 17 }}>저장된 문장 ({quotes.length})</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 480, overflowY: 'auto' }}>
                   {quotesLoading && (
                     <div
@@ -392,7 +392,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                         background: 'var(--code-bg)',
                         borderRadius: 8,
                         border: '1px solid var(--border)',
-                        fontSize: 12,
+                        fontSize: 16,
                         color: 'var(--text)',
                       }}
                     >
@@ -410,29 +410,29 @@ export default function SentenceCollectModal({ book, onClose }) {
                     </div>
                   )}
                   {!quotesLoading && quotes.length === 0 && (
-                    <p style={{ fontSize: 12, color: 'var(--text)' }}>아직 저장된 문장이 없어요 📖</p>
+                    <p style={{ fontSize: 16, color: 'var(--text)' }}>아직 저장된 문장이 없어요 📖</p>
                   )}
                   {quotes.map((q) => (
                     <div
                       key={q.id}
                       style={{
                         padding: 10, borderRadius: 8, border: '1px solid var(--border)',
-                        background: 'var(--code-bg)', fontSize: 12.5,
+                        background: 'var(--code-bg)', fontSize: 16.5,
                       }}
                     >
                       <p style={{ margin: '0 0 6px', lineHeight: 1.5, color: 'var(--text-h)' }}>“{q.text}”</p>
                       {q.memo && (
-                        <p style={{ margin: '0 0 6px', color: 'var(--text)', fontSize: 11.5 }}>💭 {q.memo}</p>
+                        <p style={{ margin: '0 0 6px', color: 'var(--text)', fontSize: 15.5 }}>💭 {q.memo}</p>
                       )}
                       {q.page != null && (
-                        <p style={{ margin: '0 0 8px', color: 'var(--text)', fontSize: 11 }}>p. {q.page}</p>
+                        <p style={{ margin: '0 0 8px', color: 'var(--text)', fontSize: 15 }}>p. {q.page}</p>
                       )}
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button
                           onClick={() => handleEditQuote(q)}
                           style={{
                             flex: 1, padding: '4px 0', borderRadius: 6, border: '1px solid var(--accent)',
-                            background: 'transparent', color: 'var(--accent)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            background: 'transparent', color: 'var(--accent)', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                           }}
                         >
                           수정
@@ -441,7 +441,7 @@ export default function SentenceCollectModal({ book, onClose }) {
                           onClick={() => handleDeleteQuote(q.id)}
                           style={{
                             flex: 1, padding: '4px 0', borderRadius: 6, border: '1px solid #e74c3c',
-                            background: 'transparent', color: '#e74c3c', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            background: 'transparent', color: '#e74c3c', fontSize: 15, fontWeight: 600, cursor: 'pointer',
                           }}
                         >
                           삭제

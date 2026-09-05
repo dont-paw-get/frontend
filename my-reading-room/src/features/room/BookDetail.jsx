@@ -175,7 +175,7 @@ export default function BookDetail({ book, onClose }) {
     boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
     color: 'var(--text-h)',
     zIndex: 25,
-    fontSize: 14,
+    fontSize: 18,
     lineHeight: 1.6,
   }
 
@@ -197,7 +197,7 @@ export default function BookDetail({ book, onClose }) {
     border: 'none',
     fontWeight: 700,
     cursor: 'pointer',
-    fontSize: 12,
+    fontSize: 16,
   }
 
   // 삭제 확인 팝업
@@ -207,7 +207,7 @@ export default function BookDetail({ book, onClose }) {
         <p
           style={{
             margin: '0 0 16px',
-            fontSize: 15,
+            fontSize: 19,
             fontWeight: 600,
             textAlign: 'center',
           }}
@@ -217,7 +217,7 @@ export default function BookDetail({ book, onClose }) {
         <p
           style={{
             margin: '0 0 20px',
-            fontSize: 12,
+            fontSize: 16,
             color: 'var(--text)',
             textAlign: 'center',
           }}
@@ -274,7 +274,7 @@ export default function BookDetail({ book, onClose }) {
                 border: '1px solid var(--accent)',
                 background: 'var(--accent)',
                 color: '#fff',
-                fontSize: 11,
+                fontSize: 15,
                 fontWeight: 700,
                 cursor: saving ? 'not-allowed' : 'pointer',
                 opacity: saving ? 0.6 : 1,
@@ -296,7 +296,7 @@ export default function BookDetail({ book, onClose }) {
                 border: '1px solid var(--border)',
                 background: 'transparent',
                 color: 'var(--text)',
-                fontSize: 11,
+                fontSize: 15,
                 fontWeight: 600,
                 cursor: saving ? 'not-allowed' : 'pointer',
               }}
@@ -314,7 +314,7 @@ export default function BookDetail({ book, onClose }) {
                 border: '1px solid var(--accent)',
                 background: 'transparent',
                 color: 'var(--accent)',
-                fontSize: 11,
+                fontSize: 15,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -329,7 +329,7 @@ export default function BookDetail({ book, onClose }) {
                 border: '1px solid #e74c3c',
                 background: 'transparent',
                 color: '#e74c3c',
-                fontSize: 11,
+                fontSize: 15,
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -351,7 +351,7 @@ export default function BookDetail({ book, onClose }) {
           border: 'none',
           color: 'var(--text)',
           cursor: 'pointer',
-          fontSize: 16,
+          fontSize: 20,
         }}
       >
         ✕
@@ -387,7 +387,7 @@ export default function BookDetail({ book, onClose }) {
           <h3
             style={{
               margin: '0 0 6px',
-              fontSize: 17,
+              fontSize: 21,
               fontWeight: 700,
               wordBreak: 'break-word',
             }}
@@ -427,7 +427,7 @@ export default function BookDetail({ book, onClose }) {
               alignItems: 'center',
               gap: '6px 8px',
               marginBottom: 6,
-              fontSize: 12,
+              fontSize: 16,
             }}
           >
             {/* 저자 */}
@@ -457,7 +457,7 @@ export default function BookDetail({ book, onClose }) {
                 style={{
                   padding: '2px 6px',
                   borderRadius: 8,
-                  fontSize: 12,
+                  fontSize: 16,
                   border: '1px solid var(--border)',
                   background: 'var(--code-bg)',
                   color: 'var(--text-h)',
@@ -511,7 +511,7 @@ export default function BookDetail({ book, onClose }) {
                   boxSizing: 'border-box',
                   padding: '2px 4px',
                   borderRadius: 6,
-                  fontSize: 12,
+                  fontSize: 16,
                   textAlign: 'right',
                   border: '1px solid var(--border)',
                   background: 'var(--code-bg)',
@@ -524,7 +524,7 @@ export default function BookDetail({ book, onClose }) {
 
           <span
             style={{
-              fontSize: 11,
+              fontSize: 15,
               color: 'var(--text)',
               display: 'block',
               marginBottom: 14,
@@ -541,7 +541,7 @@ export default function BookDetail({ book, onClose }) {
             <p
               style={{
                 margin: '0 0 12px',
-                fontSize: 12,
+                fontSize: 16,
                 color: '#e05a4e',
                 textAlign: 'center',
               }}
@@ -631,7 +631,7 @@ export default function BookDetail({ book, onClose }) {
                 textAlign: 'center',
               }}
             >
-              <p style={{ margin: '0 0 18px', fontSize: 14, lineHeight: 1.6 }}>
+              <p style={{ margin: '0 0 18px', fontSize: 18, lineHeight: 1.6 }}>
                 {notice.type === 'success' ? '✅ ' : '⚠️ '}
                 {notice.text}
               </p>
@@ -646,7 +646,7 @@ export default function BookDetail({ book, onClose }) {
                     notice.type === 'success' ? 'var(--accent)' : '#e74c3c',
                   color: '#fff',
                   fontWeight: 700,
-                  fontSize: 13,
+                  fontSize: 17,
                   cursor: 'pointer',
                 }}
               >

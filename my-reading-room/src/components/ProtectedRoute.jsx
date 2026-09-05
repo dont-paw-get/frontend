@@ -21,7 +21,7 @@ export default function ProtectedRoute({ children }) {
           alignItems: 'center',
           justifyContent: 'center',
           color: 'var(--text)',
-          fontSize: 14,
+          fontSize: 18,
         }}
       >
         불러오는 중이에요... 🐾

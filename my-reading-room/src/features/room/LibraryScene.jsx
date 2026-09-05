@@ -422,7 +422,7 @@ export default function LibraryScene() {
       {isDev && !calibrating && (
         <button
           onClick={() => setCalibrating(true)}
-          style={{ position: 'absolute', top: 10, left: 10, fontSize: 12, padding: '4px 8px', opacity: 0.7 }}
+          style={{ position: 'absolute', top: 10, left: 10, fontSize: 16, padding: '4px 8px', opacity: 0.7 }}
         >
           캘리브레이션
         </button>
@@ -439,7 +439,7 @@ export default function LibraryScene() {
             color: '#eee',
             padding: 10,
             borderRadius: 8,
-            fontSize: 12,
+            fontSize: 16,
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
@@ -448,7 +448,7 @@ export default function LibraryScene() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <strong>선반 편집</strong>
-            <button onClick={() => setCalibrating(false)} style={{ fontSize: 11 }}>닫기</button>
+            <button onClick={() => setCalibrating(false)} style={{ fontSize: 15 }}>닫기</button>
           </div>
 
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -458,7 +458,7 @@ export default function LibraryScene() {
                 onClick={() => setActiveIdx(i)}
                 title={s.id}
                 style={{
-                  fontSize: 11,
+                  fontSize: 15,
                   padding: '2px 7px',
                   background: i === activeIdx ? '#00e5ff' : '#333',
                   color: i === activeIdx ? '#000' : '#fff',
@@ -470,13 +470,13 @@ export default function LibraryScene() {
                 {i + 1}
               </button>
             ))}
-            <button onClick={addShelf} style={{ fontSize: 11, padding: '2px 7px' }}>+ 추가</button>
+            <button onClick={addShelf} style={{ fontSize: 15, padding: '2px 7px' }}>+ 추가</button>
           </div>
 
           <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={() => moveShelf(activeIdx, -1)} style={{ fontSize: 11 }}>↑ 순서</button>
-            <button onClick={() => moveShelf(activeIdx, 1)} style={{ fontSize: 11 }}>↓ 순서</button>
-            <button onClick={() => deleteShelf(activeIdx)} style={{ fontSize: 11, color: '#f88' }}>선반 삭제</button>
+            <button onClick={() => moveShelf(activeIdx, -1)} style={{ fontSize: 15 }}>↑ 순서</button>
+            <button onClick={() => moveShelf(activeIdx, 1)} style={{ fontSize: 15 }}>↓ 순서</button>
+            <button onClick={() => deleteShelf(activeIdx)} style={{ fontSize: 15, color: '#f88' }}>선반 삭제</button>
           </div>
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -495,7 +495,7 @@ export default function LibraryScene() {
             <button onClick={copyJson} style={{ flex: 1, padding: '6px 0', fontWeight: 700 }}>
               {copied ? '복사됨!' : '설정 JSON 복사'}
             </button>
-            <button onClick={resetToDefaults} style={{ fontSize: 11 }}>기본값 초기화</button>
+            <button onClick={resetToDefaults} style={{ fontSize: 15 }}>기본값 초기화</button>
           </div>
           <span style={{ color: '#999', lineHeight: 1.4 }}>
             수치 조절은 우측 leva 슬라이더에서. 다 맞추면 JSON 복사 → shelfLayout.js의 DEFAULT_* 교체.
@@ -519,7 +519,7 @@ export default function LibraryScene() {
             border: '1px solid var(--border)',
             borderRadius: 14,
             padding: '8px 12px',
-            fontSize: 13,
+            fontSize: 17,
             lineHeight: 1.45,
             textAlign: 'center',
             boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
@@ -530,7 +530,7 @@ export default function LibraryScene() {
         >
           <span style={{ fontWeight: 700 }}>📖 {hoveredBook.title || '제목 미상'}</span>
           {hoveredBook.author && (
-            <span style={{ display: 'block', fontSize: 12, color: 'var(--text)', marginTop: 2 }}>
+            <span style={{ display: 'block', fontSize: 16, color: 'var(--text)', marginTop: 2 }}>
               ✍️ {hoveredBook.author}
             </span>
           )}
