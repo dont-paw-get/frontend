@@ -500,7 +500,7 @@ export default function RegisterBook() {
           </div>
 
           {ocrLoading ? (
-            <LoadingSequence />
+            <LoadingSequence label="잠시만 기다려주세요..." />
           ) : !ocrDone ? (
             <p style={{ color: 'var(--text)', fontSize: 14 }}>
               왼쪽에서 ISBN 바코드 번호를 촬영하거나 업로드하면 제목·저자를 자동으로 인식합니다.
