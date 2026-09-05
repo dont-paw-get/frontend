@@ -47,7 +47,7 @@ function getContextualLoadingMessage(message, librarianId) {
   if (/(추천|골라|책\s*찾|도서\s*찾|소설|인문|경제|경영|스릴러|미스터리)/i.test(q)) {
     return isStork
       ? '🪿 슈빌 사서가 전문 분야의 맞춤 명저를 선별하고 있습니다... 🪶'
-      : '🐾 블루 사서가 딱 맞는 좋은 책을 찾고 있다냥...';
+      : '어떤 책이 좋을지 생각해볼게 냥…📖🐈';
   }
 
   // 4. 날씨 / 분위기 / 기분
@@ -94,6 +94,12 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   const [lastUserMessage, setLastUserMessage] = useState(() => {
     const saved = loadSavedChatSession();
     return saved?.lastUserMessage || '';
+  });
+  // 로딩 문구 분기용 대화 턴 수 (CLIAR-285): 첫 질문엔 환영 문구, 이후엔 맥락 문구.
+  // 복원된 세션(이전 대화 존재)은 이미 첫 질문을 지난 것으로 간주해 1로 시작한다.
+  const [turnCount, setTurnCount] = useState(() => {
+    const saved = loadSavedChatSession();
+    return saved?.lastUserMessage ? 1 : 0;
   });
 
   // CLIAR-257: 대화 응답이나 세션 정보 변경 시 sessionStorage에 동기화
@@ -234,6 +240,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
   const sendQuery = async (message, targetLibrarianId = librarian.id) => {
     setLoading(true);
     setLastUserMessage(message);
+    setTurnCount((c) => c + 1);
 
     // 질문 의도(인사/서재/추천/날씨 등)에 따른 사서별 맥락 맞춤형 로딩 안내 멘트
     const initialLoadingMsg = getContextualLoadingMessage(message, targetLibrarianId);
@@ -413,10 +420,14 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
             size={120}
             padding={20}
             label={
-              <>
-                따스한 햇살 아래 포근히 잠든{' '}
-                <strong>{librarianNames[librarian.id] || librarian.name} 사서</strong>를 살며시 깨우고 있어요...
-              </>
+              turnCount <= 1 ? (
+                <>
+                  따스한 햇살 아래 포근히 잠든{' '}
+                  <strong>{librarianNames[librarian.id] || librarian.name} 사서</strong>를 살며시 깨우고 있어요...
+                </>
+              ) : (
+                getContextualLoadingMessage(lastUserMessage, librarian.id)
+              )
             }
           />
         </div>
@@ -425,8 +436,9 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
       {/* 날씨·무드 컨텍스트 뱃지 (백엔드 signals 기반) */}
       {answer?.signals && !loading && <WeatherMoodBadge signals={answer.signals} />}
 
-      {/* 사서 답변 메시지 뷰 (마크다운 포매팅 렌더링 - ADR 0006: ### 📖 추천, ### 📚 내 서재 카드 실시간 렌더링) */}
-      {answer?.text && (
+      {/* 사서 답변 메시지 뷰 (마크다운 포매팅 렌더링 - ADR 0006: ### 📖 추천, ### 📚 내 서재 카드 실시간 렌더링)
+          로딩 중에는 아래 로딩 애니메이션이 단독 표시되도록 답변 말풍선을 숨긴다 (CLIAR-285) */}
+      {answer?.text && !loading && (
         <div
           style={{
             marginBottom: 8,
