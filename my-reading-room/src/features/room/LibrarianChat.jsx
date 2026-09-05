@@ -360,7 +360,8 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
     <div
       style={{
         ...box,
-        background: 'var(--bg)',
+        // CLIAR-301: 채팅창 패널 배경을 사서 말풍선(--bubble-bg)과 동일하게 맞춤
+        background: 'var(--bubble-bg)',
         border: '1px solid var(--border)',
         borderRadius: 14,
         padding: 12,
