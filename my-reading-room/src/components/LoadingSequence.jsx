@@ -47,7 +47,7 @@ export default function LoadingSequence({ size = 140, label = '분석 중이에�
         style={{ width: size, height: 'auto' }}
       />
       {label && (
-        <span style={{ color: 'var(--text)', fontSize: 14, textAlign: 'center', lineHeight: 1.5 }}>
+        <span style={{ color: 'var(--text)', fontSize: 18, textAlign: 'center', lineHeight: 1.5 }}>
           {label}
         </span>
       )}

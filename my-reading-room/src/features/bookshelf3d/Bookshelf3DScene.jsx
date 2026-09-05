@@ -99,7 +99,7 @@ export default function Bookshelf3DScene() {
             color: '#fff',
             padding: '8px 14px',
             borderRadius: 8,
-            fontSize: 14,
+            fontSize: 18,
           }}
         >
           선택된 책: {selectedBook.title}

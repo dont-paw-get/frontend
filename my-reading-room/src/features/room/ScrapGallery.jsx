@@ -291,7 +291,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
     border: '1px solid var(--border)',
     background: 'var(--code-bg)',
     color: 'var(--text-h)',
-    fontSize: 12,
+    fontSize: 16,
     fontFamily: 'inherit',
     lineHeight: 1.5,
     resize: 'vertical',
@@ -300,10 +300,10 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 600 }}>
+        <span style={{ fontSize: 17, fontWeight: 600 }}>
           수집한 문장 {totalElements != null ? `(${totalElements})` : ''}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--text)' }}>
+        <span style={{ fontSize: 15, color: 'var(--text)' }}>
           {editing
             ? '문장·메모를 고치고 “완료”를 누르세요. 사진의 ✕는 그 문장을 삭제해요'
             : items.length > 0
@@ -355,7 +355,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
               ) : (
-                <span style={{ fontSize: 11, color: 'var(--text)' }}>사진 없음</span>
+                <span style={{ fontSize: 15, color: 'var(--text)' }}>사진 없음</span>
               )}
 
               {/* 수정 모드: 사진 우측 상단 ✕ 로 이 문장 삭제 (누르면 확인 팝업) */}
@@ -376,7 +376,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                     border: '1px solid rgba(255,255,255,0.5)',
                     background: 'rgba(0,0,0,0.6)',
                     color: '#fff',
-                    fontSize: 13,
+                    fontSize: 17,
                     lineHeight: 1,
                     display: 'flex',
                     alignItems: 'center',
@@ -391,7 +391,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
             </div>
 
             {/* 문장 + 메모 + 페이지 */}
-            <figcaption style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--text-h)' }}>
+            <figcaption style={{ fontSize: 16, lineHeight: 1.5, color: 'var(--text-h)' }}>
               {editing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <textarea
@@ -430,7 +430,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                     <p
                       style={{
                         margin: '6px 0 0',
-                        fontSize: 11.5,
+                        fontSize: 15.5,
                         color: 'var(--text)',
                         display: '-webkit-box',
                         WebkitLineClamp: 3,
@@ -444,7 +444,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                 </>
               )}
               {it.page != null && (
-                <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text)' }}>p. {it.page}</p>
+                <p style={{ margin: '6px 0 0', fontSize: 15, color: 'var(--text)' }}>p. {it.page}</p>
               )}
             </figcaption>
           </figure>
@@ -458,7 +458,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
               alignItems: 'center',
               justifyContent: 'center',
               minHeight: 200,
-              fontSize: 12,
+              fontSize: 16,
               color: 'var(--text)',
             }}
           >
@@ -468,12 +468,12 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
       </div>
 
       {!loading && items.length === 0 && !error && (
-        <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text)' }}>
+        <p style={{ margin: 0, fontSize: 16.5, color: 'var(--text)' }}>
           아직 수집한 문장이 없어요 📖 왼쪽의 “문장 수집”으로 첫 문장을 담아보세요.
         </p>
       )}
-      {error && <p style={{ margin: 0, fontSize: 12, color: '#e05a4e' }}>{error}</p>}
-      {editError && <p style={{ margin: 0, fontSize: 12, color: '#e05a4e' }}>{editError}</p>}
+      {error && <p style={{ margin: 0, fontSize: 16, color: '#e05a4e' }}>{error}</p>}
+      {editError && <p style={{ margin: 0, fontSize: 16, color: '#e05a4e' }}>{editError}</p>}
 
       {/* 문장 삭제 확인 팝업 (CLIAR-241) — ✕를 눌러도 바로 지우지 않고 한 번 더 확인한다 */}
       {pendingDelete &&
@@ -495,10 +495,10 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                 boxShadow: '0 16px 48px rgba(0,0,0,0.5)', textAlign: 'center',
               }}
             >
-              <p style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 600 }}>
+              <p style={{ margin: '0 0 6px', fontSize: 19, fontWeight: 600 }}>
                 이 문장을 삭제하시겠어요?
               </p>
-              <p style={{ margin: '0 0 18px', fontSize: 12.5, color: 'var(--text)', lineHeight: 1.5 }}>
+              <p style={{ margin: '0 0 18px', fontSize: 16.5, color: 'var(--text)', lineHeight: 1.5 }}>
                 사진과 메모가 함께 지워지고, 되돌릴 수 없어요.
               </p>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -507,7 +507,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                   disabled={deletingId === pendingDelete.id}
                   style={{
                     padding: '8px 20px', borderRadius: 8, border: 'none',
-                    background: '#e74c3c', color: '#fff', fontWeight: 700, fontSize: 13,
+                    background: '#e74c3c', color: '#fff', fontWeight: 700, fontSize: 17,
                     cursor: deletingId === pendingDelete.id ? 'not-allowed' : 'pointer',
                     opacity: deletingId === pendingDelete.id ? 0.7 : 1,
                   }}
@@ -519,7 +519,7 @@ export default function ScrapGallery({ bookId, editing = false, ref }) {
                   disabled={deletingId === pendingDelete.id}
                   style={{
                     padding: '8px 20px', borderRadius: 8, border: '1px solid var(--border)',
-                    background: 'transparent', color: 'var(--text-h)', fontWeight: 600, fontSize: 13,
+                    background: 'transparent', color: 'var(--text-h)', fontWeight: 600, fontSize: 17,
                     cursor: 'pointer',
                   }}
                 >

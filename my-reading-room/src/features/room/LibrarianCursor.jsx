@@ -116,7 +116,7 @@ export default function LibrarianCursor({ librarian, answer, active }) {
             draggable={false}
           />
         ) : (
-          <div style={{ fontSize: 90, lineHeight: 1 }}>{librarian.icon}</div>
+          <div style={{ fontSize: 94, lineHeight: 1 }}>{librarian.icon}</div>
         )}
 
         {/* 우상단 말풍선 (가벼운 1~2줄 리액션) */}
@@ -133,7 +133,7 @@ export default function LibrarianCursor({ librarian, answer, active }) {
               border: '1px solid var(--border)',
               borderRadius: 14,
               padding: '10px 12px',
-              fontSize: 13,
+              fontSize: 17,
               lineHeight: 1.5,
               whiteSpace: 'pre-line',
               boxShadow: '0 8px 24px rgba(0,0,0,0.35)',

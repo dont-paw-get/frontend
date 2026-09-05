@@ -100,7 +100,7 @@
     padding: 6px 16px;
     border-radius: 999px;
     text-decoration: none;
-    font-size: 13px;
+    font-size: 17px;
     color: #c1470c;
     transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -203,7 +203,7 @@
 }
 
 .gnb-profile-name {
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -236,7 +236,7 @@
     border: none;
     background: none;
     color: var(--text-h);
-    font-size: 13px;
+    font-size: 17px;
     text-align: left;
     cursor: pointer;
     transition: background 0.15s;
@@ -301,7 +301,7 @@
     border-radius: 999px;
     background: transparent;
     color: var(--text);
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;

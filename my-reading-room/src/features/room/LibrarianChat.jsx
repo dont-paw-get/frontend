@@ -326,7 +326,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
     bottom: 'min(16px, 2vh)', // 작은 화면에서 여백 조정 (CLIAR-284)
     zIndex: 20,
     width: open ? 'min(340px, calc(100vw - 32px))' : 'auto', // 작은 화면에서 반응형 조정 (CLIAR-284)
-    fontSize: 13,
+    fontSize: 17,
     cursor: 'auto',
   };
 
@@ -349,7 +349,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
             cursor: 'pointer',
           }}
         >
-          <span style={{ fontSize: 18 }}>{librarian.icon}</span>
+          <span style={{ fontSize: 22 }}>{librarian.icon}</span>
           사서에게 질문하기
         </button>
       </div>
@@ -389,7 +389,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
             background: 'var(--accent-bg)', color: 'var(--text-h)', cursor: 'pointer',
           }}
         >
-          <span style={{ fontSize: 16 }}>{answer.switchTo.icon}</span>
+          <span style={{ fontSize: 20 }}>{answer.switchTo.icon}</span>
           {librarianNames[answer.switchTo.id] || answer.switchTo.name}로 바꾸기
         </button>
       )}
@@ -494,7 +494,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
             overflowY: 'auto',
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
             📖 내 서재 도서 ({libraryBooks.length}권):
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -518,9 +518,9 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
                 >
                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                     <span style={{ fontWeight: 600 }}>{b.title}</span>
-                    {b.author && <span style={{ fontSize: 11, color: 'var(--text)', marginLeft: 4 }}>({b.author})</span>}
+                    {b.author && <span style={{ fontSize: 15, color: 'var(--text)', marginLeft: 4 }}>({b.author})</span>}
                     {(statusKr || progress) && (
-                      <span style={{ fontSize: 10, color: 'var(--accent)', marginLeft: 6, fontWeight: 500 }}>
+                      <span style={{ fontSize: 14, color: 'var(--accent)', marginLeft: 6, fontWeight: 500 }}>
                         [{statusKr}{progress ? ` · ${progress}` : ''}]
                       </span>
                     )}
@@ -529,7 +529,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
                     type="button"
                     onClick={() => handleOpenDetail(b)}
                     style={{
-                      fontSize: 11,
+                      fontSize: 15,
                       fontWeight: 600,
                       padding: '4px 10px',
                       borderRadius: 6,
@@ -562,7 +562,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
             overflowY: 'auto',
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>
             📚 추천 도서 바로 서재에 등록하기:
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -582,13 +582,13 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
               >
                 <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                   <span style={{ fontWeight: 600 }}>{b.title}</span>
-                  {b.author && <span style={{ fontSize: 11, color: 'var(--text)', marginLeft: 4 }}>({b.author})</span>}
+                  {b.author && <span style={{ fontSize: 15, color: 'var(--text)', marginLeft: 4 }}>({b.author})</span>}
                 </div>
                 <button
                   type="button"
                   onClick={() => handleRegisterBook(b)}
                   style={{
-                    fontSize: 11,
+                    fontSize: 15,
                     fontWeight: 600,
                     padding: '3px 8px',
                     borderRadius: 6,
@@ -631,7 +631,7 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
           <span
             style={{
               alignSelf: 'flex-end',
-              fontSize: 11,
+              fontSize: 15,
               color: input.length >= MAX_MESSAGE_LENGTH ? '#e05a4e' : 'var(--text)',
             }}
           >

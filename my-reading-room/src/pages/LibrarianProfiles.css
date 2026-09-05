@@ -7,13 +7,13 @@
 }
 
 .lp-heading {
-  font-size: 22px;
+  font-size: 26px;
   color: var(--text-h);
   margin: 0;
 }
 
 .lp-desc {
-  font-size: 13px;
+  font-size: 17px;
   color: var(--text);
   text-align: center;
   margin: 0 0 20px;
@@ -56,7 +56,7 @@
   top: 10px;
   padding: 3px 9px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -94,7 +94,7 @@
 }
 
 .lp-avatar-fallback {
-  font-size: 42px;
+  font-size: 46px;
   line-height: 1;
 }
 
@@ -109,7 +109,7 @@
 }
 
 .lp-name {
-  font-size: 16px;
+  font-size: 20px;
   color: var(--text-h);
 }
 
@@ -122,7 +122,7 @@
   border-radius: 6px;
   background: var(--bg);
   color: var(--text-h);
-  font-size: 13px;
+  font-size: 17px;
   outline: none;
 }
 
@@ -134,7 +134,7 @@
   padding: 4px 10px;
   border-radius: 6px;
   border: none;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -169,7 +169,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 10px;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .lp-meta dt {
@@ -193,7 +193,7 @@
   border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.15s;
