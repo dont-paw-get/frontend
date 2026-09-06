@@ -616,8 +616,8 @@ export default function LibrarianChat({ librarian, answer, onAnswer, onSwitch, o
             maxLength={MAX_MESSAGE_LENGTH}
             placeholder={loading ? '사서가 답변 중...' : '무엇이든 물어보세요 (추천·검색·날씨 등)'}
             disabled={loading}
-            // CLIAR-301: 질문 입력창도 답변 박스와 동일한 배경 톤 공유
-            style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--answer-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
+            // CLIAR-301: 질문 입력창도 답변 박스와 같은 표면(배경·테두리)을 공유
+            style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--answer-border)', background: 'var(--answer-bg)', color: 'var(--text-h)', opacity: loading ? 0.6 : 1 }}
           />
           <button
             type="submit"
