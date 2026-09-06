@@ -43,8 +43,8 @@ const chipStyle = {
   gap: 4,
   padding: '3px 9px',
   borderRadius: 999,
-  border: '1px solid var(--border)',
-  // CLIAR-301: 채팅 답변 박스와 동일한 배경 톤 공유
+  // CLIAR-301: 답변 박스와 같은 표면(배경·테두리)을 공유해 톤을 통일
+  border: '1px solid var(--answer-border)',
   background: 'var(--answer-bg)',
   color: 'var(--text-h)',
   fontSize: 15,

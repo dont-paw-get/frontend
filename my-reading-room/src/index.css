@@ -36,21 +36,21 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
   /*
-   * 채팅창 전용 컬러 (CLIAR-301):
-   * --answer-border: 사서 답변 박스의 테두리
-   * --bubble-bg: 채팅 패널·사서 말풍선·책 호버 툴팁의 배경
-   * 기본 배경(--bg)보다 밝게 띄우되, 회색 톤 대신 포인트 색상(주황) 계열의
-   * 저채도 브라운을 써서 야간에 눈부시지 않게 한다.
+   * 서재 채팅 UI 표면 컬러 (CLIAR-301).
+   *
+   * 톤 통일 규칙: 색조(H29)와 채도(S50 전후)를 기본 팔레트(--bg/--code-bg/--border,
+   * H28~32·S48~68)에 맞추고, 명도만 단계로 나눠 위계를 만든다.
+   *   씬 L5 < 패널 L22 < 답변/태그/입력 L25~30 < 답변 테두리 L38
+   * 예전에는 패널만 채도가 낮아(S35) 주변보다 회색빛으로 떠 보였고, 답변 배경이
+   * 패널 명도(22%)를 위아래로 넘나들어 위계가 흐려졌다.
+   *
+   * --bubble-bg:     채팅 패널·사서 말풍선·책 호버 툴팁 배경 (프레임 역할)
+   * --answer-bg:     답변 박스·컨텍스트 태그·질문 입력창 배경 (콘텐츠 역할, 패널보다 밝게)
+   * --answer-border: 위 콘텐츠 표면들의 공통 테두리
    */
-  --answer-border: #8a6239;
-  --bubble-bg: #4a3524;
-  /*
-   * --answer-bg: 채팅 답변 박스 배경 (CLIAR-301).
-   * 포인트 색상(--accent) 계열의 두 톤으로 만든 그라데이션. 회색 톤 대신 사서별
-   * 테마색(고양이=주황, 황새=보라)이 드러나게 한다.
-   * 답변 위 컨텍스트 태그(날씨·무드 칩)와 질문 입력창도 이 배경을 공유한다.
-   */
-  --answer-bg: linear-gradient(160deg, #73451b 0%, #4d2e12 100%);
+  --answer-border: #8d6135;
+  --bubble-bg: #54371c;
+  --answer-bg: linear-gradient(160deg, #744b25 0%, #613f1f 100%);
 
   /* 한글 폰트 명시: Mac(Apple SD Gothic Neo) / Windows(Malgun Gothic) 폴백 포함 */
   --sans: 'Chau Philomene One', 'Memoment Kkukkukk', system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', Roboto, sans-serif;
@@ -62,8 +62,15 @@
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
-  /* Windows 한글 폰트(맑은 고딕)에서 볼드가 안 걸리는 문제 방지: weight 합성은 허용 */
-  font-synthesis: weight;
+  /*
+   * 합성(가짜) 볼드를 전역에서 끈다 (CLIAR-301).
+   * 지정 폰트(메모먼트꾹꾹체 / Chau Philomene One)는 Regular 한 종류만 있어,
+   * font-weight: 700을 주면 브라우저가 획을 두껍게 그려내는 합성 볼드가 적용된다.
+   * 이 합성이 손그림 기반 디자인과 어울리지 않아 모든 페이지에서 사용하지 않는다.
+   * 합성을 끄면 볼드 굵기가 없는 폰트는 자동으로 Regular로 렌더된다
+   * (컴포넌트의 fontWeight 값은 그대로 두어 의미 구조는 유지).
+   */
+  font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -86,11 +93,15 @@
   --social-bg: rgba(240, 200, 142, 0.6);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-  /* CLIAR-301: 채팅창 답변 테두리/사서 말풍선 배경 전용 (라이트, 고양이) */
-  --answer-border: #ead4b6;
-  --bubble-bg: #faead2;
-  /* 붉은 기 도는 피치 대신 노란 기가 섞인 버터·앰버 계열 (색조 25도 -> 42도) */
-  --answer-bg: linear-gradient(160deg, #fbeec6 0%, #f5d489 100%);
+  /*
+   * 서재 채팅 UI 표면 컬러 (라이트, 고양이) — CLIAR-301.
+   * 색조를 H39로 통일해 노란 기를 유지하면서도 기본 팔레트(H35~36)와 어긋나지 않게
+   * 한다. 예전에는 답변 배경만 H42~45로 튀어 다른 표면과 계열이 달라 보였다.
+   * 명도 위계: 패널 L91 > 답변/태그/입력 L79~86 > 테두리 L72
+   */
+  --answer-border: #e1c48e;
+  --bubble-bg: #faeed6;
+  --answer-bg: linear-gradient(160deg, #f9e4be 0%, #f4d69f 100%);
 }
 
 /* 황새(슈빌) 사서 다크 모드 — CLIAR-181: 보라색에 더 가깝게 조정 */
@@ -166,15 +177,6 @@ body.reading-room {
   /* CLIAR-288: 서재 씬을 100vw full-bleed로 확장할 때 세로 스크롤바 폭 때문에
      가로 스크롤이 생기지 않도록 서재에 있는 동안만 가로 오버플로를 숨긴다. */
   overflow-x: hidden;
-  /*
-   * 서재에서는 볼드체를 쓰지 않는다 (CLIAR-301).
-   * 지정 폰트(메모먼트꾹꾹체 / Chau Philomene One)는 Regular 한 종류만 있어서,
-   * font-weight: 700을 주면 브라우저가 획을 두껍게 그리는 '합성 볼드'가 적용된다.
-   * 이 합성이 손그림 배경의 서재 분위기와 어울리지 않아 서재에 있는 동안만 끈다.
-   * 합성을 끄면 폰트에 볼드 굵기가 없으므로 자동으로 Regular로 렌더된다
-   * (컴포넌트의 fontWeight 값은 그대로 두어 의미 구조는 유지).
-   */
-  font-synthesis: none;
 }
 
 /*
