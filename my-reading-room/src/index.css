@@ -32,6 +32,15 @@
   --accent: #ff9a3c;
   --accent-bg: rgba(255, 154, 60, 0.12);
   --accent-border: rgba(255, 154, 60, 0.5);
+  /*
+   * 내비게이션(GNB) 컬러 — 사서 테마를 모든 페이지에 반영하기 위한 변수 (CLIAR-301).
+   * --nav-fg:     비활성 메뉴 글자색. 페이지 배경(--bg) 위에서 4.5:1 이상이 되도록
+   *               테마별로 accent 계열에서 명도를 조정한 값을 쓴다.
+   *               (--accent를 그대로 쓰면 라이트 테마에서 배경과 붙어 대비가 낮아진다)
+   * --accent-fg:  accent 배경 위에 올라가는 글자색(활성 메뉴 등).
+   */
+  --nav-fg: #ff9a3c;
+  --accent-fg: #2d1808;
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
@@ -90,6 +99,9 @@
   --accent: #e06a10;
   --accent-bg: rgba(224, 106, 16, 0.14);
   --accent-border: rgba(224, 106, 16, 0.5);
+  /* 밝은 배경 위에서는 accent보다 진한 주황을 써야 글자가 읽힌다 (4.98:1) */
+  --nav-fg: #8e440b;
+  --accent-fg: #2d1808;
   --social-bg: rgba(240, 200, 142, 0.6);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
@@ -114,6 +126,11 @@
   --accent: #9b7bf0;
   --accent-bg: rgba(155, 123, 240, 0.12);
   --accent-border: rgba(155, 123, 240, 0.5);
+  /* 내비게이션도 보라 계열로 (CLIAR-301) */
+  --nav-fg: #9b7bf0;
+  --accent-fg: #221e40;
+  /* 고양이 값을 상속해 크림색이 섞이던 문제 방지 — 보라 계열로 재정의 */
+  --social-bg: rgba(236, 230, 248, 0.5);
   /*
    * CLIAR-301: 채팅 컬러 (다크, 황새).
    * 고양이 테마와 같은 원칙 — 회색 톤을 쓰지 않고 포인트 색상(보라) 계열로 맞춘다.
@@ -135,6 +152,10 @@
   --accent: #7d50c0;
   --accent-bg: rgba(125, 80, 192, 0.12);
   --accent-border: rgba(125, 80, 192, 0.5);
+  /* 밝은 배경 위에서는 accent보다 진한 보라를 써야 글자가 읽힌다 (6.35:1) */
+  --nav-fg: #4d2786;
+  --accent-fg: #ffffff;
+  --social-bg: rgba(206, 192, 237, 0.6);
   /* CLIAR-301: 채팅창 답변 테두리/사서 말풍선 배경 전용 (라이트, 황새) */
   --answer-border: #d6ccea;
   --bubble-bg: #e6e0f6;
