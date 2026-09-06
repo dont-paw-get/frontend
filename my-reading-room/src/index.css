@@ -166,6 +166,15 @@ body.reading-room {
   /* CLIAR-288: 서재 씬을 100vw full-bleed로 확장할 때 세로 스크롤바 폭 때문에
      가로 스크롤이 생기지 않도록 서재에 있는 동안만 가로 오버플로를 숨긴다. */
   overflow-x: hidden;
+  /*
+   * 서재에서는 볼드체를 쓰지 않는다 (CLIAR-301).
+   * 지정 폰트(메모먼트꾹꾹체 / Chau Philomene One)는 Regular 한 종류만 있어서,
+   * font-weight: 700을 주면 브라우저가 획을 두껍게 그리는 '합성 볼드'가 적용된다.
+   * 이 합성이 손그림 배경의 서재 분위기와 어울리지 않아 서재에 있는 동안만 끈다.
+   * 합성을 끄면 폰트에 볼드 굵기가 없으므로 자동으로 Regular로 렌더된다
+   * (컴포넌트의 fontWeight 값은 그대로 두어 의미 구조는 유지).
+   */
+  font-synthesis: none;
 }
 
 /*
