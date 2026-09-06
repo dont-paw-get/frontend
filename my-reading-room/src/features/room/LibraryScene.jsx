@@ -377,6 +377,7 @@ export default function LibraryScene() {
           {/*
            * 어둡게 하는 비네트 (CLIAR-181: 손전등이 비추는 부분만 보이도록 훨씬 더 어둡게)
            * CLIAR-249: 비추는 범위를 30% 넓힘 (75px→98px, 140px→182px)
+           * CLIAR-301: 야간 모드 시야를 조금 더 확보하기 위해 15% 추가 확대 (98px→113px, 182px→209px)
            */}
           <div
             style={{
@@ -385,12 +386,13 @@ export default function LibraryScene() {
               pointerEvents: 'none',
               zIndex: 5,
               background:
-                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(5,3,1,0) 0px, rgba(5,3,1,0.55) 98px, rgba(5,3,1,0.97) 182px)',
+                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(5,3,1,0) 0px, rgba(5,3,1,0.55) 113px, rgba(5,3,1,0.97) 209px)',
             }}
           />
           {/*
            * 커서 주변 밝은 글로우 (빛을 더함, CLIAR-181: 범위 50% 축소)
            * CLIAR-249: 비네트와 함께 30% 넓힘 (60px→78px, 115px→150px)
+           * CLIAR-301: 비네트와 같은 비율로 15% 추가 확대 (78px→90px, 150px→173px)
            */}
           <div
             style={{
@@ -400,7 +402,7 @@ export default function LibraryScene() {
               zIndex: 6,
               mixBlendMode: 'screen',
               background:
-                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,214,150,0.4) 0px, rgba(255,200,130,0.2) 78px, rgba(255,190,120,0) 150px)',
+                'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,214,150,0.4) 0px, rgba(255,200,130,0.2) 90px, rgba(255,190,120,0) 173px)',
             }}
           />
         </>
